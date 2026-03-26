@@ -13,7 +13,7 @@ const FamilyLegacyPage = () => {
         <title>Family Legacy | Sumlin Family Reunion 2026</title>
         <meta
           name="description"
-          content="Learn the meaning behind the Sumlin Family crest and support the reunion through our family raffle challenge."
+          content="Learn the meaning behind the Sumlin Family crest and support the reunion through our family fundraiser challenge."
         />
       </Helmet>
 
@@ -105,7 +105,7 @@ const FamilyLegacyPage = () => {
             <div className="text-center mb-12">
               <h2 className="text-4xl md:text-5xl font-bold mb-4">The 25-Ticket Challenge</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Support the Sumlin Family Reunion by purchasing raffle tickets. Every ticket helps
+                Support the Sumlin Family Reunion by purchasing fundraiser entries. Every entry helps
                 support the family gathering, family efforts, and the legacy we are building together.
               </p>
             </div>
@@ -117,7 +117,7 @@ const FamilyLegacyPage = () => {
                 <div className="w-16 h-16 rounded-xl gradient-gold flex items-center justify-center mx-auto mb-4">
                   <DollarSign className="w-8 h-8 text-foreground" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">$1 Per Ticket</h3>
+                <h3 className="text-xl font-bold mb-2">$1 Per Entry</h3>
                 <p className="text-muted-foreground text-sm">
                   A simple way for everyone in the family to contribute
                 </p>
@@ -131,7 +131,7 @@ const FamilyLegacyPage = () => {
                 </div>
                 <h3 className="text-xl font-bold mb-2">May 2 Deadline</h3>
                 <p className="text-muted-foreground text-sm">
-                  Purchase your tickets before the deadline
+                  Purchase your entries before the deadline
                 </p>
               </div>
             </SmoothScroller>
@@ -151,13 +151,13 @@ const FamilyLegacyPage = () => {
         </div>
       </section>
 
-      <section className="section-spacing bg-background" id="raffle-baskets">
+      <section className="section-spacing bg-background" id="fundraiser-baskets">
         <div className="container-custom">
           <SmoothScroller>
             <div className="text-center mb-12">
               <h2 className="text-4xl md:text-5xl font-bold mb-4">Support Our Family Legacy</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Purchase your raffle tickets below. Every ticket supports the 2026 reunion and helps
+                Choose your fundraiser basket entries below. Every entry supports the 2026 reunion and helps
                 move the family legacy forward.
               </p>
             </div>
