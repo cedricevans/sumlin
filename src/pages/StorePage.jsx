@@ -8,11 +8,11 @@ import ProductsList from '@/components/ProductsList';
 const fundraiserHighlights = [
   {
     title: 'Family support goal',
-    description: 'Reunion support helps cover shared costs like venue needs, hospitality, food, and family weekend planning.',
+    description: 'Reunion support helps cover shared needs like venue costs, hospitality, meals, and family weekend planning.',
   },
   {
     title: 'Fair family fun',
-    description: 'Everyone can take part in a clear, welcoming, and family-friendly way as we build excitement for reunion weekend.',
+    description: 'Everyone can take part in a clear, welcoming, family-friendly experience as excitement builds for reunion weekend.',
   },
   {
     title: 'Shared celebration',
@@ -24,7 +24,7 @@ const howItWorksSteps = [
   {
     number: '1',
     title: 'Choose a basket',
-    description: 'Pick the basket your household loves most and choose the entries you want to add.',
+    description: 'Pick the basket your household loves most and choose the number of entries you want to add.',
     tone: 'gold',
   },
   {
@@ -46,7 +46,7 @@ const StorePage = () => {
     <>
       <Helmet>
         <title>Fundraiser - Sumlin Family Reunion Support</title>
-        <meta name="description" content="Support the Sumlin Family Reunion fundraiser and review the official disclaimer, entry language, and basket options." />
+        <meta name="description" content="Support the Sumlin Family Reunion fundraiser, explore basket options, and review the official entry rules." />
       </Helmet>
 
       <section className="section-spacing bg-background pt-24 md:pt-32">
@@ -56,11 +56,11 @@ const StorePage = () => {
               <h1 className="text-5xl md:text-6xl font-bold mb-6">Family fundraiser baskets</h1>
               <div className="max-w-4xl mx-auto space-y-4">
                 <p className="text-xl text-muted-foreground leading-relaxed">
-                  Support the Sumlin Family Reunion through our family fundraiser baskets and reunion support entries.
+                  Support the Sumlin Family Reunion through our fundraiser baskets and family entry options.
                 </p>
                 <p className="text-base text-muted-foreground leading-relaxed">
                   These baskets are one more way for the family to celebrate together, help cover reunion weekend needs,
-                  and keep the spirit of giving joyful and easy to follow.
+                  and keep the spirit of giving joyful, simple, and easy to follow.
                 </p>
               </div>
             </div>
@@ -126,7 +126,7 @@ const StorePage = () => {
                 <h3 className="text-2xl font-bold mb-4">Need help?</h3>
                 <div className="space-y-3 text-muted-foreground leading-relaxed">
                   <p>If you have questions about fundraiser baskets, entry options, or reunion support, the family can help.</p>
-                  <p>Please contact a family organizer listed in the footer or visit the Business Corner page for more family planning information.</p>
+                  <p>Please contact a family organizer listed in the footer or visit the Business Corner page for more planning information.</p>
                 </div>
               </div>
             </div>

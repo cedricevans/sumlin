@@ -13,7 +13,7 @@ const FamilyLegacyPage = () => {
         <title>Family Legacy | Sumlin Family Reunion 2026</title>
         <meta
           name="description"
-          content="Learn the meaning behind the Sumlin Family crest and support the reunion through our family fundraiser challenge."
+          content="Learn the meaning behind the Sumlin Family crest and support the reunion through our family fundraiser."
         />
       </Helmet>
 
@@ -32,17 +32,16 @@ const FamilyLegacyPage = () => {
                 <h2 className="text-4xl md:text-5xl font-bold mb-6">The Sumlin Family Crest</h2>
 
                 <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                  This crest represents the Sumlin family’s strength, protection, and ancestral pride.
-                  Rooted in Nigerian heritage and carried through the African American experience,
-                  it stands as a symbol of origin, resilience, and legacy.
+                  The Sumlin crest reflects our family&apos;s strength, protection, and enduring pride.
+                  Rooted in heritage and carried forward through generations, it stands as a symbol of
+                  identity, resilience, and legacy.
                 </p>
 
                 <p className="text-muted-foreground mb-8 leading-relaxed">
-                  The banner honors family roots. The leopard reflects courage, leadership, and
-                  noble strength. The axes, helmet, and swords represent honor and defense. Within
-                  the shield, the Old English S stands for the Sumlin name, the castles reflect
-                  stability and endurance, and the final symbol points to order and the protection
-                  of the family house.
+                  Every part of the crest carries meaning. The banner honors our roots. The leopard
+                  speaks to courage, leadership, and strength. The axes, helmet, and swords represent
+                  honor and protection. Within the shield, the Old English S marks the Sumlin name,
+                  while the castles point to stability, endurance, and the safeguarding of home.
                 </p>
 
                 <div className="space-y-4">
@@ -53,7 +52,7 @@ const FamilyLegacyPage = () => {
                     <div>
                       <span className="font-semibold text-lg block mb-1">Identity</span>
                       <p className="text-muted-foreground text-sm">
-                        The Old English S marks the Sumlin name with pride, memory, and family identity.
+                        The Old English S carries the Sumlin name with pride, memory, and belonging.
                       </p>
                     </div>
                   </div>
@@ -65,7 +64,7 @@ const FamilyLegacyPage = () => {
                     <div>
                       <span className="font-semibold text-lg block mb-1">Strength</span>
                       <p className="text-muted-foreground text-sm">
-                        The castles stand for stability, protection, and a legacy built to last.
+                        The castles stand for stability, protection, and a foundation built to last.
                       </p>
                     </div>
                   </div>
@@ -77,7 +76,7 @@ const FamilyLegacyPage = () => {
                     <div>
                       <span className="font-semibold text-lg block mb-1">Honor</span>
                       <p className="text-muted-foreground text-sm">
-                        The swords, axes, and helmet represent courage, resilience, and the duty to defend family legacy.
+                        The swords, axes, and helmet reflect courage, resilience, and the duty to protect what matters.
                       </p>
                     </div>
                   </div>
@@ -105,8 +104,8 @@ const FamilyLegacyPage = () => {
             <div className="text-center mb-12">
               <h2 className="text-4xl md:text-5xl font-bold mb-4">The 25-Ticket Challenge</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Support the Sumlin Family Reunion by purchasing fundraiser entries. Every entry helps
-                support the family gathering, family efforts, and the legacy we are building together.
+                Support the Sumlin Family Reunion through our fundraiser baskets. Every entry helps
+                support the gathering and the memories we are building together.
               </p>
             </div>
           </SmoothScroller>
@@ -119,7 +118,7 @@ const FamilyLegacyPage = () => {
                 </div>
                 <h3 className="text-xl font-bold mb-2">$1 Per Entry</h3>
                 <p className="text-muted-foreground text-sm">
-                  A simple way for everyone in the family to contribute
+                  A simple way for family and friends to join in
                 </p>
               </div>
             </SmoothScroller>
@@ -131,7 +130,7 @@ const FamilyLegacyPage = () => {
                 </div>
                 <h3 className="text-xl font-bold mb-2">May 2 Deadline</h3>
                 <p className="text-muted-foreground text-sm">
-                  Purchase your entries before the deadline
+                  Be sure to enter before the deadline
                 </p>
               </div>
             </SmoothScroller>
@@ -143,7 +142,7 @@ const FamilyLegacyPage = () => {
                 </div>
                 <h3 className="text-xl font-bold mb-2">May 9 Drawing</h3>
                 <p className="text-muted-foreground text-sm">
-                  Winners will be announced during the reunion
+                  Winners will be announced with the family
                 </p>
               </div>
             </SmoothScroller>
@@ -157,8 +156,8 @@ const FamilyLegacyPage = () => {
             <div className="text-center mb-12">
               <h2 className="text-4xl md:text-5xl font-bold mb-4">Support Our Family Legacy</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Choose your fundraiser basket entries below. Every entry supports the 2026 reunion and helps
-                move the family legacy forward.
+                Choose your fundraiser basket entries below. Every entry supports the 2026 reunion
+                and helps carry the family legacy forward.
               </p>
             </div>
           </SmoothScroller>

@@ -12,7 +12,7 @@ const MOCK_FUNDRAISER_BASKETS = [
   {
     id: 'mock_bbq_1',
     title: "Men's BBQ Basket",
-    description: "OSU 3 piece grill set, featuring a high-quality grill spatula, tongs, and a basting brush, along with 2 jars of the famous Kinders Seasoning that adds delightful flavor to any meat dish. Included are also 2 bottles of Stubbs BBQ sauce, renowned for its rich, smoky taste. As an ideal complement, you'll receive the Rodney Scott World of BBQ cookbook, packed with delicious recipes and grilling tips. To ensure you cook your meat perfectly, a digital meat thermometer is included, allowing for precise cooking temperatures. Additionally, a $25 Dicks gift card is provided, perfect for shopping for your favorite sports gear or outdoor equipment. To stay refreshed, there are 2 sports drinks and 2 bottles of root beer to quench your thirst. You will also enjoy 1 mug, stylishly designed, and 6 delectable snacks to indulge in while you grill.",
+    description: "A cookout-ready basket with grilling tools, seasonings, barbecue sauce, a BBQ cookbook, snacks, drinks, and a gift card for the grill master in the family.",
     image: "https://horizons-cdn.hostinger.com/6ddbc4c1-b479-4ef4-be4a-ff36b8b1842e/be567f8a47ffdaa2f39d977fd2d9cf10.png",
     price_in_cents: 100,
     variants: [{
@@ -30,7 +30,7 @@ const MOCK_FUNDRAISER_BASKETS = [
   {
     id: 'mock_spa_2',
     title: "Women's Spa Basket",
-    description: "2016 Boeschen Vineyards, a fine cabernet sauvignon wine that is celebrated for its rich and robust flavor, bath and body lotion that leaves your skin feeling soft and rejuvenated, and the bath and body work refresh & revitalize spa treatment set which includes an array of luxurious items. This delightful set consists of 4 relaxing bath bombs that fizz delightfully in your tub, a beautifully designed tin of the secret garden organic ginger peach tea, a soothing sweet dreams teal calming herbal tea blend, a jar of pure, golden honey that is perfect for sweetening your beverages or enjoying by the spoonful. Additionally, the package includes a stylish mug for enjoying your drinks, a lovely journal for capturing your thoughts and ideas, a refreshing coconut coffee scrub that invigorates your skin, a charming 3 wick candle that fills your space with a warm ambiance, delectable chocolate truffles that melt in your mouth, and delightful shortbread cookies that are perfect for a cozy afternoon treat.",
+    description: "A relaxing self-care basket filled with spa treats, teas, sweets, a candle, a journal, and other cozy touches for a peaceful day in.",
     image: "https://horizons-cdn.hostinger.com/6ddbc4c1-b479-4ef4-be4a-ff36b8b1842e/4e17bdac7a15fc4de24fd0d3a1a19629.png",
     price_in_cents: 100,
     variants: [{
@@ -48,7 +48,7 @@ const MOCK_FUNDRAISER_BASKETS = [
   {
     id: 'mock_fun_3',
     title: "Children's Fun Basket",
-    description: "3 coloring books filled with intricate designs, a variety of colorful bubbles in different sizes, a set of vibrant sidewalk chalk perfect for drawing on pavement, an exciting monopoly game to enjoy with family and friends, a beautifully crafted frame to display your favorite memories, a pack of colored pencils featuring a rainbow of colors, 2 packs of crayons that include both classic and bold shades, 2 challenging puzzles that promise hours of fun, and 6 bags of candy with assorted flavors to satisfy any sweet tooth.",
+    description: "A playful basket packed with games, coloring supplies, bubbles, chalk, puzzles, candy, and family-friendly fun for the kids.",
     image: "https://horizons-cdn.hostinger.com/6ddbc4c1-b479-4ef4-be4a-ff36b8b1842e/bbde91523509fa15237854796570ffb9.png",
     price_in_cents: 100,
     variants: [{
@@ -65,6 +65,19 @@ const MOCK_FUNDRAISER_BASKETS = [
   }
 ];
 
+function formatProductDescription(description) {
+  if (!description) {
+    return 'Basket details coming soon.';
+  }
+
+  return description
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 const ProductCard = ({ product, index }) => {
   const { addToCart } = useCart();
   const { toast } = useToast();
@@ -72,6 +85,7 @@ const ProductCard = ({ product, index }) => {
   const displayVariant = product.variants[0];
   const hasSale = displayVariant && displayVariant.sale_price_in_cents !== null;
   const displayPrice = hasSale ? displayVariant.sale_price_formatted : displayVariant.price_formatted;
+  const description = formatProductDescription(product.description);
 
   const handleAddToCart = useCallback(async (e) => {
     e.preventDefault();
@@ -83,7 +97,7 @@ const ProductCard = ({ product, index }) => {
       await addToCart(product, defaultVariant, 1, defaultVariant.inventory_quantity || 999);
       toast({
         title: "Entry Added! 🎟️",
-        description: `1x ${product.title} entry added to your cart.`,
+        description: `${product.title} was added to your cart.`,
       });
     } catch (error) {
       toast({
@@ -120,7 +134,7 @@ const ProductCard = ({ product, index }) => {
               Fundraiser basket
             </div>
             <p className="text-muted-foreground leading-relaxed text-sm">
-              {product.description}
+              {description}
             </p>
           </div>
           <div className="mt-auto pt-4 border-t border-border/50">
@@ -129,7 +143,7 @@ const ProductCard = ({ product, index }) => {
               className="w-full gradient-burgundy text-white py-3.5 rounded-xl font-semibold hover:shadow-burgundy hover:scale-[1.02] transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
             >
               <ShoppingCart className="w-5 h-5" /> 
-              Add Entry
+              Add to cart
             </button>
           </div>
         </div>
