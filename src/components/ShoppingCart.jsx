@@ -33,7 +33,7 @@ const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
     if (cartItems.length === 0) {
       toast({
         title: 'Your cart is empty',
-        description: 'Add some tickets to your cart before checking out.',
+        description: 'Add some entries to your cart before checking out.',
         variant: 'destructive',
       });
       return;
@@ -154,7 +154,7 @@ const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
                     <Ticket size={32} className="text-muted-foreground/50" />
                   </div>
                   <p className="text-lg font-medium text-foreground">Your cart is empty</p>
-                  <p className="text-sm mt-2">Looks like you haven't added any raffle tickets yet.</p>
+                  <p className="text-sm mt-2">Looks like you haven't added any fundraiser entries yet.</p>
                   <Button 
                     onClick={() => {
                       setIsCartOpen(false);
@@ -173,7 +173,7 @@ const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
                         <img src={item.product.image} alt={item.product.title} className="w-20 h-20 object-cover rounded-lg" />
                         <div className="flex-grow">
                           <h3 className="font-semibold text-foreground line-clamp-1">{item.product.title}</h3>
-                          <p className="text-sm text-muted-foreground">Ticket</p>
+                          <p className="text-sm text-muted-foreground">Entry</p>
                           <p className="text-sm text-primary font-bold mt-1">
                             {item.variant.sale_price_formatted || item.variant.price_formatted}
                           </p>
