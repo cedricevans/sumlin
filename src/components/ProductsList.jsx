@@ -12,7 +12,7 @@ const MOCK_RAFFLE_BASKETS = [
   {
     id: 'mock_bbq_1',
     title: "Men's BBQ Basket",
-    description: "Everything the grill master needs for the perfect cookout. Premium tools, gourmet sauces, and essential accessories.",
+    description: "Perfect for the grill master! Premium BBQ tools, gourmet sauces, seasonings, and essential grilling accessories for unforgettable cookouts.",
     image: "https://horizons-cdn.hostinger.com/6ddbc4c1-b479-4ef4-be4a-ff36b8b1842e/be567f8a47ffdaa2f39d977fd2d9cf10.png",
     price_in_cents: 100,
     variants: [{
@@ -30,7 +30,7 @@ const MOCK_RAFFLE_BASKETS = [
   {
     id: 'mock_spa_2',
     title: "Women's Spa Basket",
-    description: "A luxurious collection for relaxation and self-care. Pamper yourself with premium spa essentials.",
+    description: "Relaxation and self-care essentials! Luxurious spa products, aromatherapy items, bath accessories, and pampering treats for ultimate relaxation.",
     image: "https://horizons-cdn.hostinger.com/6ddbc4c1-b479-4ef4-be4a-ff36b8b1842e/4e17bdac7a15fc4de24fd0d3a1a19629.png",
     price_in_cents: 100,
     variants: [{
@@ -48,7 +48,7 @@ const MOCK_RAFFLE_BASKETS = [
   {
     id: 'mock_fun_3',
     title: "Children's Fun Basket",
-    description: "Hours of entertainment with games, toys, and activities. Perfect for kids of all ages.",
+    description: "Games, toys, and activities! Hours of entertainment with board games, craft supplies, outdoor toys, and fun activities perfect for kids of all ages.",
     image: "https://horizons-cdn.hostinger.com/6ddbc4c1-b479-4ef4-be4a-ff36b8b1842e/bbde91523509fa15237854796570ffb9.png",
     price_in_cents: 100,
     variants: [{
