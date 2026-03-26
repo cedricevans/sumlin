@@ -8,7 +8,7 @@ import { getProducts, getProductQuantities } from '@/api/EcommerceApi';
 
 // Fallback mock products to ensure the 3 fundraiser baskets ALWAYS display
 // even if the backend API is empty or fails to load.
-const MOCK_RAFFLE_BASKETS = [
+const MOCK_FUNDRAISER_BASKETS = [
   {
     id: 'mock_bbq_1',
     title: "Men's BBQ Basket",
@@ -17,7 +17,7 @@ const MOCK_RAFFLE_BASKETS = [
     price_in_cents: 100,
     variants: [{
       id: 'var_bbq_1',
-      title: '1 Ticket',
+      title: '1 Entry',
       price_in_cents: 100,
       sale_price_in_cents: null,
       price_formatted: '$1.00',
@@ -35,7 +35,7 @@ const MOCK_RAFFLE_BASKETS = [
     price_in_cents: 100,
     variants: [{
       id: 'var_spa_2',
-      title: '1 Ticket',
+      title: '1 Entry',
       price_in_cents: 100,
       sale_price_in_cents: null,
       price_formatted: '$1.00',
@@ -53,7 +53,7 @@ const MOCK_RAFFLE_BASKETS = [
     price_in_cents: 100,
     variants: [{
       id: 'var_fun_3',
-      title: '1 Ticket',
+      title: '1 Entry',
       price_in_cents: 100,
       sale_price_in_cents: null,
       price_formatted: '$1.00',
@@ -150,8 +150,8 @@ const ProductsList = () => {
 
         if (!productsResponse || !productsResponse.products || productsResponse.products.length === 0) {
           // Fallback to mock products if API returns empty
-          console.log("API returned empty products, using fallback raffle baskets.");
-          setProducts(MOCK_RAFFLE_BASKETS);
+          console.log("API returned empty products, using fallback fundraiser baskets.");
+          setProducts(MOCK_FUNDRAISER_BASKETS);
           return;
         }
 
@@ -179,7 +179,7 @@ const ProductsList = () => {
         setProducts(productsWithQuantities);
       } catch (err) {
         console.error('Failed to load products from API, using fallback:', err);
-        setProducts(MOCK_RAFFLE_BASKETS);
+        setProducts(MOCK_FUNDRAISER_BASKETS);
       } finally {
         setLoading(false);
       }
