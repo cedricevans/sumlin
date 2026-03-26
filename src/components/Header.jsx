@@ -50,16 +50,30 @@ const Header = ({ setIsCartOpen }) => {
   return (
     <header className="sticky top-0 z-50 bg-navbar border-b border-white/10 shadow-md">
       <nav className="w-full px-4 md:px-6 xl:px-10 py-3 md:py-4">
-        <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 group">
+        <div className="relative flex items-center justify-between lg:justify-between">
+          <div className="lg:hidden w-10 flex justify-start">
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-xl hover:bg-white/10 transition-colors duration-200 text-white drop-shadow-sm"
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
+            </button>
+          </div>
+
+          <Link to="/" className="flex items-center gap-3 group lg:static lg:translate-x-0 absolute left-1/2 -translate-x-1/2">
             <img 
               src="https://horizons-cdn.hostinger.com/6ddbc4c1-b479-4ef4-be4a-ff36b8b1842e/84d9ab8efcec41799c1c6b1d68bfb5f9.jpg" 
               alt="Sumlin family crest - ornate heraldic shield with crossed swords, lion emblem, castle towers"
               className="h-12 md:h-14 w-auto object-contain rounded-md group-hover:scale-105 transition-transform duration-300"
             />
-            <div className="hidden sm:block text-white text-shadow-sm">
-              <span className="font-bold text-xl tracking-wide">Sumlin Family</span>
-              <p className="text-xs text-white/80 uppercase tracking-widest font-semibold">Reunion 2026</p>
+            <div className="text-white text-shadow-sm">
+              <span className="block font-bold text-base sm:text-xl tracking-wide leading-tight">Sumlin Family</span>
+              <p className="hidden sm:block text-xs text-white/80 uppercase tracking-widest font-semibold">Reunion 2026</p>
             </div>
           </Link>
 
@@ -89,7 +103,7 @@ const Header = ({ setIsCartOpen }) => {
           <div className="flex items-center gap-3 sm:gap-4">
             <button
               onClick={() => setIsCartOpen(true)}
-              className="relative p-2.5 rounded-xl hover:bg-white/10 transition-colors duration-200 group"
+              className="hidden lg:block relative p-2.5 rounded-xl hover:bg-white/10 transition-colors duration-200 group"
               aria-label="Open cart"
             >
               <ShoppingCartIcon className="w-6 h-6 text-white group-hover:text-[#d4af37] transition-colors drop-shadow-sm" />
@@ -115,18 +129,7 @@ const Header = ({ setIsCartOpen }) => {
               <span className="hidden xl:inline">Support Reunion</span>
               <span className="xl:hidden">Support</span>
             </Link>
-
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl hover:bg-white/10 transition-colors duration-200 text-white drop-shadow-sm"
-              aria-label="Toggle menu"
-            >
-              {isMobileMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
-            </button>
+            <div className="lg:hidden w-10" />
           </div>
         </div>
 
@@ -164,6 +167,17 @@ const Header = ({ setIsCartOpen }) => {
                   <Ticket className="w-5 h-5" />
                   Support Reunion
                 </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsCartOpen(true);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 bg-white/10 text-white px-6 py-3 rounded-xl font-bold tracking-wide hover:bg-white/15 transition-colors duration-200"
+                >
+                  <ShoppingCartIcon className="w-5 h-5" />
+                  Open Cart
+                </button>
               </div>
             </motion.div>
           )}
