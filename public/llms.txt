@@ -1,8 +1,8 @@
 ## Pages
 - [- Our Store](/productdetail): No description available
 - [About the Reunion | Sumlin Family Reunion 2026](/about): Learn more about the Sumlin Family Reunion 2026, our purpose, our legacy, and the family members helping bring this gathering to life.
-- [Admin Dashboard | Sumlin Family](/admin): Manage Sumlin family fundraiser entries, service requests, business services, and events.
-- [Business Corner | Sumlin Family](/familybusiness): Browse and support family-owned businesses across the Sumlin family network in the Business Corner.
+- [Admin Dashboard | Sumlin Family](/admin): Manage the Sumlin family business directory, family calendar links, events, signups, and reunion support records.
+- [Business Corner | Sumlin Family](/familybusiness): Browse the Sumlin Business Corner, sign up for family events, and submit your business for the directory.
 - [Contact Us - Midcentury Decor](/contact): Get in touch with Midcentury Decor. We
 - [Family Legacy | Sumlin Family Reunion 2026](/familylegacy): Learn the meaning behind the Sumlin Family crest and support the reunion through our family raffle challenge.
 - [Family Portraits - Sumlin Family Reunion 2026](/familyportraits): Professional family portrait sessions at the Sumlin Family Reunion. Capture precious memories with multi-generational photos and candid moments.

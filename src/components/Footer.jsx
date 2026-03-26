@@ -11,7 +11,8 @@ const Footer = () => {
     { name: 'Fundraiser', path: '/store' },
     { name: 'Business Corner', path: '/family-business' },
     { name: 'Family Legacy', path: '/family-legacy' },
-    { name: 'Official Rules', path: '/fundraiser-rules' }
+    { name: 'Official Rules', path: '/fundraiser-rules' },
+    { name: 'Admin Command Central', path: '/admin' }
   ];
 
   const familyOfficers = [
@@ -123,7 +124,7 @@ const Footer = () => {
                   to="/admin"
                   className="text-background/80 hover:text-primary transition-colors duration-200"
                 >
-                  Admin dashboard
+                  Admin Command Central
                 </Link>
               </li>
             </ul>

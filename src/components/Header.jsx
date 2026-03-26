@@ -1,30 +1,55 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Ticket, ShoppingCart as ShoppingCartIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/hooks/useCart';
+import { getAdminSession, watchAdminSession } from '@/lib/sumlinData';
 
 const Header = ({ setIsCartOpen }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [hasAdminSession, setHasAdminSession] = useState(false);
   const location = useLocation();
   const { cartItems } = useCart();
 
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  useEffect(() => {
+    let active = true;
+
+    const initialize = async () => {
+      const session = await getAdminSession();
+      if (active) {
+        setHasAdminSession(Boolean(session));
+      }
+    };
+
+    initialize();
+
+    const unsubscribe = watchAdminSession((session) => {
+      setHasAdminSession(Boolean(session));
+    });
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, []);
 
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Business Corner', path: '/family-business' },
     { name: 'Family Portraits', path: '/family-portraits' },
     { name: 'Testimonials', path: '/testimonials' },
-    { name: 'Family Legacy', path: '/family-legacy' }
+    { name: 'Family Legacy', path: '/family-legacy' },
+    ...(hasAdminSession ? [{ name: 'Admin', path: '/admin' }] : [])
   ];
 
   const isActive = (path) => location.pathname === path;
 
   return (
     <header className="sticky top-0 z-50 bg-navbar border-b border-white/10 shadow-md">
-      <nav className="container-custom py-3 md:py-4">
+      <nav className="w-full px-4 md:px-6 xl:px-10 py-3 md:py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3 group">
             <img 
@@ -38,7 +63,7 @@ const Header = ({ setIsCartOpen }) => {
             </div>
           </Link>
 
-          <div className="hidden lg:flex items-center gap-6 xl:gap-8">
+          <div className="hidden lg:flex flex-1 items-center justify-center gap-6 xl:gap-8 px-8">
             {navLinks.map((link) => (
               <Link
                 key={link.path}

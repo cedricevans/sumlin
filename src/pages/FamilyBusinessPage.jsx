@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { Calendar, CreditCard, HeartHandshake, Mail, MapPin, PartyPopper, Phone, Send, Store, Users } from 'lucide-react';
+import { CalendarDays, CreditCard, HeartHandshake, Mail, MapPin, Phone, Send, Store, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { submitServiceRequest, fetchBusinessSnapshot, formatDateTime } from '@/lib/sumlinData';
+import { fetchBusinessSnapshot, formatDateTime, submitEventSignup, submitServiceRequest } from '@/lib/sumlinData';
 import { useToast } from '@/hooks/use-toast';
 
-const initialForm = {
+const initialBusinessForm = {
 	requester_name: '',
 	email: '',
 	phone: '',
@@ -16,8 +16,20 @@ const initialForm = {
 	message: '',
 };
 
+const initialSignupForm = {
+	event_id: '',
+	attendee_name: '',
+	email: '',
+	phone: '',
+	party_size: '1',
+	notes: '',
+};
+
 const FamilyBusinessPage = () => {
 	const { toast } = useToast();
+	const [businessSearch, setBusinessSearch] = useState('');
+	const [activeCategory, setActiveCategory] = useState('All');
+	const [visibleBusinessCount, setVisibleBusinessCount] = useState(8);
 	const [snapshot, setSnapshot] = useState({
 		tenant: null,
 		services: [],
@@ -25,8 +37,10 @@ const FamilyBusinessPage = () => {
 		status: 'loading',
 		error: null,
 	});
-	const [formData, setFormData] = useState(initialForm);
-	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [businessForm, setBusinessForm] = useState(initialBusinessForm);
+	const [signupForm, setSignupForm] = useState(initialSignupForm);
+	const [savingBusiness, setSavingBusiness] = useState(false);
+	const [savingSignup, setSavingSignup] = useState(false);
 
 	useEffect(() => {
 		let active = true;
@@ -45,44 +59,112 @@ const FamilyBusinessPage = () => {
 		};
 	}, []);
 
+	useEffect(() => {
+		if (!signupForm.event_id && snapshot.events.length > 0) {
+			setSignupForm((current) => ({
+				...current,
+				event_id: snapshot.events[0].id,
+			}));
+		}
+	}, [snapshot.events, signupForm.event_id]);
+
 	const tenant = snapshot.tenant;
-	const featuredServices = useMemo(
-		() => snapshot.services.filter((service) => service.is_featured),
+	const businessCount = snapshot.services.length;
+	const featuredCount = useMemo(
+		() => snapshot.services.filter((service) => service.is_featured).length,
 		[snapshot.services],
+	);
+	const businessCategories = useMemo(
+		() => ['All', ...new Set(snapshot.services.map((service) => service.category).filter(Boolean))],
+		[snapshot.services],
+	);
+	const filteredServices = useMemo(() => {
+		const query = businessSearch.trim().toLowerCase();
+
+		return snapshot.services.filter((service) => {
+			const matchesCategory = activeCategory === 'All' || service.category === activeCategory;
+			const haystack = [service.title, service.category, service.description, service.price_label]
+				.filter(Boolean)
+				.join(' ')
+				.toLowerCase();
+			const matchesSearch = !query || haystack.includes(query);
+			return matchesCategory && matchesSearch;
+		});
+	}, [activeCategory, businessSearch, snapshot.services]);
+	const visibleServices = useMemo(
+		() => filteredServices.slice(0, visibleBusinessCount),
+		[filteredServices, visibleBusinessCount],
 	);
 	const hasCalendarLink = Boolean(tenant?.google_calendar_public_url);
 	const hasCalendarEmbed = Boolean(tenant?.google_calendar_embed_url);
-	const hasCalendarEvents = snapshot.events.length > 0;
 
-	const handleChange = (event) => {
+	useEffect(() => {
+		setVisibleBusinessCount(8);
+	}, [activeCategory, businessSearch, snapshot.services]);
+
+	const handleBusinessChange = (event) => {
 		const { name, value } = event.target;
-		setFormData((current) => ({
+		setBusinessForm((current) => ({
 			...current,
 			[name]: value,
 		}));
 	};
 
-	const handleSubmit = async (event) => {
-		event.preventDefault();
-		setIsSubmitting(true);
+	const handleSignupChange = (event) => {
+		const { name, value } = event.target;
+		setSignupForm((current) => ({
+			...current,
+			[name]: value,
+		}));
+	};
 
-		const result = await submitServiceRequest(formData);
+	const handleBusinessSubmit = async (event) => {
+		event.preventDefault();
+		setSavingBusiness(true);
+
+		const result = await submitServiceRequest(businessForm);
 
 		if (result.ok) {
 			toast({
-				title: 'Request saved',
+				title: 'Business submitted',
 				description: result.message,
 			});
-			setFormData(initialForm);
+			setBusinessForm(initialBusinessForm);
 		} else {
 			toast({
-				title: 'Request not saved',
+				title: 'Submission failed',
 				description: result.message,
 				variant: 'destructive',
 			});
 		}
 
-		setIsSubmitting(false);
+		setSavingBusiness(false);
+	};
+
+	const handleSignupSubmit = async (event) => {
+		event.preventDefault();
+		setSavingSignup(true);
+
+		const result = await submitEventSignup(signupForm);
+
+		if (result.ok) {
+			toast({
+				title: 'Signup saved',
+				description: result.message,
+			});
+			setSignupForm((current) => ({
+				...initialSignupForm,
+				event_id: current.event_id,
+			}));
+		} else {
+			toast({
+				title: 'Signup failed',
+				description: result.message,
+				variant: 'destructive',
+			});
+		}
+
+		setSavingSignup(false);
 	};
 
 	return (
@@ -91,7 +173,7 @@ const FamilyBusinessPage = () => {
 				<title>Business Corner | Sumlin Family</title>
 				<meta
 					name="description"
-					content="Browse and support family-owned businesses across the Sumlin family network in the Business Corner."
+					content="Browse the Sumlin Business Corner, sign up for family events, and submit your business for the directory."
 				/>
 			</Helmet>
 
@@ -103,36 +185,27 @@ const FamilyBusinessPage = () => {
 								<HeartHandshake className="h-4 w-4" />
 								Sumlin Business Corner
 							</div>
-							<h1 className="text-5xl md:text-6xl font-bold mb-6">
-								Business Corner
-							</h1>
-							<p className="text-xl text-muted-foreground max-w-3xl leading-relaxed mb-8">
+							<h1 className="text-5xl md:text-6xl font-bold mb-6">A directory of family businesses</h1>
+							<p className="text-xl text-muted-foreground max-w-3xl leading-relaxed mb-6">
 								{tenant?.business_summary
-									|| 'This page highlights family-owned businesses so we can support one another, share referrals, and keep our dollars moving through the family.'}
+									|| 'Explore family-owned businesses, side hustles, brands, and professional services so we can support one another and keep referrals inside the family.'}
 							</p>
 							<p className="text-base text-muted-foreground max-w-2xl leading-relaxed mb-8">
-								Each family member can use this page to share a personal business, side hustle, brand, or professional service with the rest of the family.
+								Use this page to find businesses, share your own listing, and sign up for family events and activities.
 							</p>
 
-							<div className="grid sm:grid-cols-2 gap-4 mb-8">
+							<div className="grid sm:grid-cols-3 gap-4 mb-8">
 								<div className="bg-card border border-border/50 rounded-2xl p-5 shadow-sm">
-									<div className="flex items-center gap-3 mb-3">
-										<Store className="h-5 w-5 text-primary" />
-										<h2 className="font-semibold">Support family businesses</h2>
-									</div>
-									<p className="text-sm text-muted-foreground leading-relaxed">
-										Find family-owned brands, service providers, food businesses, photographers, and other trusted contacts.
-									</p>
+									<p className="text-sm font-semibold text-primary mb-2">Listed businesses</p>
+									<p className="text-3xl font-bold">{businessCount}</p>
 								</div>
-
 								<div className="bg-card border border-border/50 rounded-2xl p-5 shadow-sm">
-									<div className="flex items-center gap-3 mb-3">
-										<Calendar className="h-5 w-5 text-primary" />
-										<h2 className="font-semibold">Family dates and highlights</h2>
-									</div>
-									<p className="text-sm text-muted-foreground leading-relaxed">
-										Keep important family dates, business pop-ups, and reunion reminders easy to find.
-									</p>
+									<p className="text-sm font-semibold text-primary mb-2">Featured listings</p>
+									<p className="text-3xl font-bold">{featuredCount}</p>
+								</div>
+								<div className="bg-card border border-border/50 rounded-2xl p-5 shadow-sm">
+									<p className="text-sm font-semibold text-primary mb-2">Upcoming events</p>
+									<p className="text-3xl font-bold">{snapshot.events.length}</p>
 								</div>
 							</div>
 
@@ -152,7 +225,7 @@ const FamilyBusinessPage = () => {
 									</a>
 								) : (
 									<span className="bg-card border border-border/60 px-6 py-3 rounded-xl font-semibold text-muted-foreground">
-										Calendar details coming soon
+										Calendar link coming soon
 									</span>
 								)}
 							</div>
@@ -161,8 +234,7 @@ const FamilyBusinessPage = () => {
 						<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-xl">
 							<h2 className="text-2xl font-bold mb-4">Directory details</h2>
 							<p className="text-muted-foreground leading-relaxed mb-6">
-								Keep contact details, payment options, and shared family links together so relatives know
-								how to connect and support one another.
+								Keep contact details, payment options, and family links together so everyone knows how to connect.
 							</p>
 
 							<div className="space-y-4 text-sm">
@@ -183,15 +255,11 @@ const FamilyBusinessPage = () => {
 								<div className="flex items-start gap-3">
 									<CreditCard className="h-4 w-4 text-primary mt-1" />
 									<div>
-										<p className="font-medium">Peer payment handles</p>
+										<p className="font-medium">Payment handles</p>
+										<p className="text-muted-foreground">Cash App {tenant?.cash_app_handle || '$SumlinReunionClub'}</p>
+										<p className="text-muted-foreground">Venmo {tenant?.venmo_handle || '@sumlin-family'}</p>
 										<p className="text-muted-foreground">
-											Cash App {tenant?.cash_app_handle || '$SumlinReunionClub'}
-										</p>
-										<p className="text-muted-foreground">
-											Venmo {tenant?.venmo_handle || '@sumlin-family'}
-										</p>
-										<p className="text-muted-foreground">
-											PayPal {tenant?.paypal_donate_url ? 'Configured in tenant settings' : 'Add your donate link in Supabase'}
+											PayPal {tenant?.paypal_donate_url ? 'Configured for the family' : 'Add your PayPal link in admin'}
 										</p>
 									</div>
 								</div>
@@ -201,8 +269,8 @@ const FamilyBusinessPage = () => {
 										<p className="font-medium">Page status</p>
 										<p className="text-muted-foreground">
 											{snapshot.status === 'live'
-												? 'Connected to the family business records'
-												: 'Showing starter directory information until the family business records are finished'}
+												? 'Connected to the family records'
+												: 'Showing starter information until the family records are finished'}
 										</p>
 									</div>
 								</div>
@@ -218,101 +286,181 @@ const FamilyBusinessPage = () => {
 					</div>
 
 					<div className="mt-16 grid lg:grid-cols-[1.05fr_0.95fr] gap-10">
-						<div>
-							<div className="flex items-center gap-3 mb-5">
-								<PartyPopper className="h-6 w-6 text-primary" />
-								<h2 className="text-3xl font-bold">Business Corner listings</h2>
-							</div>
-							<div className="grid md:grid-cols-2 gap-6">
-								{snapshot.services.map((service) => (
-									<div key={service.id} className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
-										<div className="flex items-center justify-between gap-4 mb-4">
-											<span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
-												{service.category}
-											</span>
-											{service.is_featured && (
-												<span className="inline-flex rounded-full bg-secondary/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
-													Featured
-												</span>
-											)}
+						<div className="space-y-10">
+							<div>
+								<div className="flex items-center gap-3 mb-5">
+									<Store className="h-6 w-6 text-primary" />
+									<h2 className="text-3xl font-bold">Business directory</h2>
+								</div>
+								<div className="bg-card border border-border/50 rounded-3xl p-6 shadow-sm mb-5">
+									<div className="grid lg:grid-cols-[1fr_auto] gap-4 items-start">
+										<div>
+											<input
+												type="text"
+												value={businessSearch}
+												onChange={(event) => setBusinessSearch(event.target.value)}
+												placeholder="Search by name, category, service, or city"
+												className="w-full"
+											/>
 										</div>
-										<h3 className="text-xl font-bold mb-3">{service.title}</h3>
-										<p className="text-muted-foreground leading-relaxed mb-4">{service.description}</p>
-										<p className="text-sm font-semibold text-primary">{service.price_label || 'Location coming soon'}</p>
+										<div className="text-sm text-muted-foreground lg:text-right">
+											Showing {visibleServices.length} of {filteredServices.length} businesses
+										</div>
 									</div>
-								))}
-							</div>
-
-							<div id="calendar" className="mt-10 bg-muted rounded-3xl p-8 border border-border/50">
-								<h2 className="text-3xl font-bold mb-4">Family calendar</h2>
-								<p className="text-muted-foreground leading-relaxed mb-6">
-									Reunion dates, birthday reminders, planning calls, and event updates will be shared here
-									once the family calendar is connected.
-								</p>
-								{(hasCalendarLink || hasCalendarEmbed) ? (
-									<div className="grid md:grid-cols-2 gap-5">
-										{hasCalendarLink && (
-											<div className="bg-card rounded-2xl p-5 border border-border/50">
-												<p className="text-sm font-semibold mb-2">Calendar link</p>
-												<a
-													href={tenant.google_calendar_public_url}
-													className="text-sm text-primary break-all underline"
-												>
-													{tenant.google_calendar_public_url}
-												</a>
-											</div>
-										)}
-										{hasCalendarEmbed && (
-											<div className="bg-card rounded-2xl p-5 border border-border/50">
-												<p className="text-sm font-semibold mb-2">Embedded calendar</p>
-												<p className="text-sm text-muted-foreground break-all">
-													{tenant.google_calendar_embed_url}
-												</p>
-											</div>
-										)}
-									</div>
-								) : (
-									<div className="bg-card rounded-2xl p-5 border border-border/50">
-										<p className="text-sm text-muted-foreground">
-											Calendar details will be added here once they are ready.
-										</p>
-									</div>
-								)}
-
-								{hasCalendarEvents && (
-									<div className="mt-6 grid md:grid-cols-3 gap-4">
-										{snapshot.events.map((eventItem) => (
-											<div key={eventItem.id} className="rounded-2xl border border-border/50 bg-card p-5">
-												<p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold mb-2">
-													{eventItem.event_type}
-												</p>
-												<h3 className="font-bold text-lg mb-2">{eventItem.title}</h3>
-												<p className="text-sm text-muted-foreground mb-3">{eventItem.description}</p>
-												<p className="text-sm font-medium">{formatDateTime(eventItem.starts_at)}</p>
-												<p className="text-sm text-muted-foreground">{eventItem.location || 'Location TBD'}</p>
-											</div>
+									<div className="flex flex-wrap gap-2 mt-4">
+										{businessCategories.map((category) => (
+											<button
+												key={category}
+												type="button"
+												onClick={() => setActiveCategory(category)}
+												className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200 ${
+													activeCategory === category
+														? 'bg-primary text-primary-foreground'
+														: 'bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary'
+												}`}
+											>
+												{category}
+											</button>
 										))}
 									</div>
+								</div>
+								<div className="bg-card border border-border/50 rounded-3xl shadow-sm overflow-hidden">
+									<div className="divide-y divide-border/50">
+										{visibleServices.map((service) => (
+											<div key={service.id} className="p-6 md:p-7">
+												<div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+													<div className="min-w-0">
+														<div className="flex flex-wrap items-center gap-2 mb-3">
+															<span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+																{service.category}
+															</span>
+															{service.is_featured && (
+																<span className="inline-flex rounded-full bg-secondary/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
+																	Featured
+																</span>
+															)}
+														</div>
+														<h3 className="text-2xl font-bold mb-2">{service.title}</h3>
+														<p className="text-muted-foreground leading-relaxed">{service.description}</p>
+													</div>
+													<div className="md:text-right md:min-w-[180px]">
+														<p className="text-sm font-semibold text-primary">
+															{service.price_label || 'Details coming soon'}
+														</p>
+													</div>
+												</div>
+											</div>
+										))}
+										{filteredServices.length === 0 && (
+											<div className="p-6 md:p-7">
+												<p className="text-muted-foreground">
+													No businesses match that search yet. Try another category or a shorter search.
+												</p>
+											</div>
+										)}
+									</div>
+								</div>
+								{filteredServices.length > visibleServices.length && (
+									<div className="mt-5 flex justify-center">
+										<button
+											type="button"
+											onClick={() => setVisibleBusinessCount((current) => current + 8)}
+											className="bg-card border border-border/60 px-6 py-3 rounded-xl font-semibold hover:bg-muted transition-colors duration-200"
+										>
+											Show more businesses
+										</button>
+									</div>
 								)}
+							</div>
+
+							<div id="calendar" className="bg-muted rounded-3xl p-8 border border-border/50">
+								<div className="flex items-center gap-3 mb-4">
+									<CalendarDays className="h-6 w-6 text-primary" />
+									<h2 className="text-3xl font-bold">Event calendar</h2>
+								</div>
+								<p className="text-muted-foreground leading-relaxed mb-6">
+									Family events, signups, and important dates will show here as they are added.
+								</p>
+
+								{hasCalendarEmbed && (
+									<div className="bg-card border border-border/50 rounded-3xl overflow-hidden mb-6">
+										<iframe
+											title="Sumlin Family Calendar"
+											src={tenant.google_calendar_embed_url}
+											className="w-full min-h-[480px]"
+										/>
+									</div>
+								)}
+
+								{snapshot.events.length > 0 ? (
+									<div className="bg-card border border-border/50 rounded-3xl overflow-hidden">
+										<div className="divide-y divide-border/50">
+											{snapshot.events.map((eventItem) => (
+												<div key={eventItem.id} className="p-6 md:p-7 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+													<div>
+														<div className="flex flex-wrap items-center gap-2 mb-2">
+															<span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+																{eventItem.event_type}
+															</span>
+															<span className="inline-flex rounded-full bg-secondary/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
+																{eventItem.status}
+															</span>
+														</div>
+														<h3 className="text-2xl font-bold mb-2">{eventItem.title}</h3>
+														<p className="text-muted-foreground mb-3">{eventItem.description || 'Details coming soon.'}</p>
+														<p className="text-sm font-medium">{formatDateTime(eventItem.starts_at)}</p>
+														<p className="text-sm text-muted-foreground">{eventItem.location || 'Location TBD'}</p>
+													</div>
+													<div className="md:text-right md:min-w-[180px]">
+														<p className="text-sm text-muted-foreground">
+															{eventItem.capacity ? `${eventItem.capacity} spots planned` : 'Open signup'}
+														</p>
+													</div>
+												</div>
+											))}
+										</div>
+									</div>
+								) : !hasCalendarEmbed ? (
+									<div className="bg-card rounded-2xl p-5 border border-border/50">
+										<p className="text-sm text-muted-foreground">
+											No events have been added yet. Once the family adds them in admin, everyone will be able to sign up here.
+										</p>
+									</div>
+								) : null}
 							</div>
 						</div>
 
-						<div>
+						<div className="space-y-6">
 							<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-xl">
 								<div className="flex items-center gap-3 mb-4">
 									<Send className="h-5 w-5 text-primary" />
-									<h2 className="text-3xl font-bold">Add your business to the corner</h2>
+									<h2 className="text-3xl font-bold">Sign up for an event</h2>
 								</div>
 								<p className="text-muted-foreground leading-relaxed mb-6">
-									Use this form to submit a family-owned business, side hustle, creative service, or professional practice for the directory.
+									Use this form to sign up for reunions, planning calls, business spotlights, and other family activities.
 								</p>
-								<form className="space-y-4" onSubmit={handleSubmit}>
+								<form className="space-y-4" onSubmit={handleSignupSubmit}>
+									<select
+										name="event_id"
+										value={signupForm.event_id}
+										onChange={handleSignupChange}
+										required
+										className="w-full"
+										disabled={snapshot.events.length === 0}
+									>
+										<option value="">Select an event</option>
+										{snapshot.events.map((eventItem) => (
+											<option key={eventItem.id} value={eventItem.id}>
+												{eventItem.title}
+											</option>
+										))}
+									</select>
 									<input
 										type="text"
-										name="requester_name"
-										placeholder="Owner or contact name"
-										value={formData.requester_name}
-										onChange={handleChange}
+										name="attendee_name"
+										placeholder="Full name"
+										value={signupForm.attendee_name}
+										onChange={handleSignupChange}
 										required
 										className="w-full"
 									/>
@@ -321,8 +469,8 @@ const FamilyBusinessPage = () => {
 											type="email"
 											name="email"
 											placeholder="Email"
-											value={formData.email}
-											onChange={handleChange}
+											value={signupForm.email}
+											onChange={handleSignupChange}
 											required
 											className="w-full"
 										/>
@@ -330,13 +478,82 @@ const FamilyBusinessPage = () => {
 											type="tel"
 											name="phone"
 											placeholder="Phone"
-											value={formData.phone}
-											onChange={handleChange}
+											value={signupForm.phone}
+											onChange={handleSignupChange}
+											className="w-full"
+										/>
+									</div>
+									<input
+										type="number"
+										min="1"
+										name="party_size"
+										placeholder="Party size"
+										value={signupForm.party_size}
+										onChange={handleSignupChange}
+										className="w-full"
+									/>
+									<textarea
+										name="notes"
+										placeholder="Anything the family should know?"
+										value={signupForm.notes}
+										onChange={handleSignupChange}
+										rows={4}
+										className="w-full"
+									/>
+									<button
+										type="submit"
+										disabled={savingSignup || snapshot.events.length === 0}
+										className="w-full gradient-gold text-foreground py-3 rounded-xl font-semibold hover:shadow-gold transition-all duration-200 disabled:opacity-70"
+									>
+										{savingSignup ? 'Saving signup...' : 'Save my signup'}
+									</button>
+								</form>
+							</div>
+
+							<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-xl">
+								<div className="flex items-center gap-3 mb-4">
+									<Users className="h-5 w-5 text-primary" />
+									<h2 className="text-3xl font-bold">Add your business</h2>
+								</div>
+								<p className="text-muted-foreground leading-relaxed mb-6">
+									Use this form to submit a family-owned business, side hustle, creative service, or professional practice for the directory.
+								</p>
+								<form className="space-y-4" onSubmit={handleBusinessSubmit}>
+									<input
+										type="text"
+										name="requester_name"
+										placeholder="Owner or contact name"
+										value={businessForm.requester_name}
+										onChange={handleBusinessChange}
+										required
+										className="w-full"
+									/>
+									<div className="grid sm:grid-cols-2 gap-4">
+										<input
+											type="email"
+											name="email"
+											placeholder="Email"
+											value={businessForm.email}
+											onChange={handleBusinessChange}
+											required
+											className="w-full"
+										/>
+										<input
+											type="tel"
+											name="phone"
+											placeholder="Phone"
+											value={businessForm.phone}
+											onChange={handleBusinessChange}
 											className="w-full"
 										/>
 									</div>
 									<div className="grid sm:grid-cols-2 gap-4">
-										<select name="category" value={formData.category} onChange={handleChange} className="w-full">
+										<select
+											name="category"
+											value={businessForm.category}
+											onChange={handleBusinessChange}
+											className="w-full"
+										>
 											<option value="professional-services">Professional services</option>
 											<option value="food">Food and catering</option>
 											<option value="beauty">Beauty and wellness</option>
@@ -349,8 +566,8 @@ const FamilyBusinessPage = () => {
 											type="text"
 											name="event_type"
 											placeholder="Business name"
-											value={formData.event_type}
-											onChange={handleChange}
+											value={businessForm.event_type}
+											onChange={handleBusinessChange}
 											className="w-full"
 										/>
 									</div>
@@ -359,49 +576,36 @@ const FamilyBusinessPage = () => {
 											type="text"
 											name="event_date"
 											placeholder="Website or social link"
-											value={formData.event_date}
-											onChange={handleChange}
+											value={businessForm.event_date}
+											onChange={handleBusinessChange}
 											className="w-full"
 										/>
 										<input
 											type="text"
 											name="budget_label"
 											placeholder="City, state or service area"
-											value={formData.budget_label}
-											onChange={handleChange}
+											value={businessForm.budget_label}
+											onChange={handleBusinessChange}
 											className="w-full"
 										/>
 									</div>
 									<textarea
 										name="message"
-										placeholder="Describe the business, services, and how family members can contact or book you."
-										value={formData.message}
-										onChange={handleChange}
+										placeholder="Describe the business, services, and how family members can reach you."
+										value={businessForm.message}
+										onChange={handleBusinessChange}
 										required
 										rows={5}
 										className="w-full"
 									/>
 									<button
 										type="submit"
-										disabled={isSubmitting}
-										className="w-full gradient-gold text-foreground py-3 rounded-xl font-semibold hover:shadow-gold transition-all duration-200 disabled:opacity-70"
+										disabled={savingBusiness}
+										className="w-full gradient-burgundy text-white py-3 rounded-xl font-semibold hover:shadow-burgundy transition-all duration-200 disabled:opacity-70"
 									>
-										{isSubmitting ? 'Sending...' : 'Submit business'}
+										{savingBusiness ? 'Sending...' : 'Submit business'}
 									</button>
 								</form>
-							</div>
-
-							<div className="mt-6 bg-muted rounded-3xl p-8 border border-border/50">
-								<h2 className="text-2xl font-bold mb-4">Featured in the corner</h2>
-								<div className="space-y-4">
-									{featuredServices.map((service) => (
-										<div key={service.id} className="rounded-2xl bg-card border border-border/50 p-5">
-											<p className="text-sm font-semibold text-primary mb-1">{service.category}</p>
-											<h3 className="font-bold text-lg mb-2">{service.title}</h3>
-											<p className="text-sm text-muted-foreground">{service.description}</p>
-										</div>
-									))}
-								</div>
 							</div>
 						</div>
 					</div>

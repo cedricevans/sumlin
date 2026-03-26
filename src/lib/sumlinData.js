@@ -1,4 +1,4 @@
-import { getSupabaseConnectionLabel, supabase } from '@/lib/supabase';
+import { getSupabaseConnectionLabel, supabase, sumlinDb } from '@/lib/supabase';
 
 export const DEFAULT_TENANT_SLUG = 'sumlin';
 
@@ -258,11 +258,49 @@ const fallbackDashboard = {
 		{ id: 'REQ-1', requester_name: 'Carrie Farley', category: 'birthday', status: 'new', event_date: '2026-05-08' },
 		{ id: 'REQ-2', requester_name: 'Mike Cranford', category: 'reunion', status: 'contacted', event_date: '2026-06-14' },
 	],
+	businesses: fallbackServices,
 	tickets: [
 		{ id: 'T-301', order_id: 'SUM-1041', ticket_number: 301, status: 'active' },
 		{ id: 'T-302', order_id: 'SUM-1041', ticket_number: 302, status: 'active' },
 		{ id: 'T-303', order_id: 'SUM-1040', ticket_number: 303, status: 'active' },
 	],
+	events: [
+		{
+			id: 'event-fallback-1',
+			title: 'Family planning call',
+			event_type: 'planning',
+			status: 'open',
+			location: 'Online',
+			starts_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+		},
+		{
+			id: 'event-fallback-2',
+			title: 'Summer business spotlight',
+			event_type: 'business',
+			status: 'planned',
+			location: 'Dayton, Ohio',
+			starts_at: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+		},
+	],
+	eventSignups: [
+		{
+			id: 'signup-1',
+			attendee_name: 'Alicia Sumlin',
+			email: 'family@example.com',
+			party_size: 2,
+			status: 'confirmed',
+			events: { title: 'Family planning call', starts_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() },
+		},
+	],
+	admins: [
+		{
+			id: 'admin-1',
+			email: '1bassdebi@gmail.com',
+			role: 'owner',
+			created_at: new Date().toISOString(),
+		},
+	],
+	adminInvites: [],
 };
 
 function sortByDate(items, key) {
@@ -287,7 +325,7 @@ function normalizeError(error) {
 	) {
 		return {
 			type: 'schema_missing',
-			message: 'Supabase is connected, but the schema has not been created yet. Run supabase/schema.sql in the dashboard SQL editor.',
+			message: 'Supabase is connected, but the Sumlin schema is not ready yet. Run supabase/sumlin_schema.sql, expose the sumlin schema in Supabase API settings, and then rerun the move script if needed.',
 		};
 	}
 
@@ -318,6 +356,29 @@ export function formatMoney(cents) {
 	}).format((cents || 0) / 100);
 }
 
+async function getTenantIdForSlug(slug) {
+	const tenantResult = await sumlinDb
+		.from('tenants')
+		.select('id')
+		.eq('slug', slug)
+		.maybeSingle();
+
+	if (tenantResult.error || !tenantResult.data?.id) {
+		return {
+			id: null,
+			error: normalizeError(tenantResult.error) || {
+				type: 'tenant_missing',
+				message: 'The Sumlin tenant is not available yet.',
+			},
+		};
+	}
+
+	return {
+		id: tenantResult.data.id,
+		error: null,
+	};
+}
+
 export async function fetchBusinessSnapshot(slug = DEFAULT_TENANT_SLUG) {
 	if (!supabase) {
 		return {
@@ -329,7 +390,7 @@ export async function fetchBusinessSnapshot(slug = DEFAULT_TENANT_SLUG) {
 		};
 	}
 
-	const tenantResult = await supabase
+	const tenantResult = await sumlinDb
 		.from('tenants')
 		.select('*')
 		.eq('slug', slug)
@@ -356,18 +417,18 @@ export async function fetchBusinessSnapshot(slug = DEFAULT_TENANT_SLUG) {
 			status: 'fallback',
 			error: {
 				type: 'tenant_missing',
-				message: 'The Sumlin tenant record was not found. Run supabase/schema.sql to seed it.',
+				message: 'The Sumlin tenant record was not found in the sumlin schema. Run supabase/sumlin_schema.sql to seed it.',
 			},
 		};
 	}
 
 	const [servicesResult, eventsResult] = await Promise.all([
-		supabase
+		sumlinDb
 			.from('business_services')
 			.select('*')
 			.eq('tenant_id', tenantId)
 			.order('sort_order', { ascending: true }),
-		supabase
+		sumlinDb
 			.from('events')
 			.select('*')
 			.eq('tenant_id', tenantId)
@@ -393,23 +454,19 @@ export async function submitServiceRequest(payload, slug = DEFAULT_TENANT_SLUG) 
 		};
 	}
 
-	const tenantResult = await supabase
-		.from('tenants')
-		.select('id')
-		.eq('slug', slug)
-		.maybeSingle();
+	const tenantResult = await getTenantIdForSlug(slug);
 
-	if (tenantResult.error || !tenantResult.data?.id) {
+	if (tenantResult.error || !tenantResult.id) {
 		return {
 			ok: false,
-			message: normalizeError(tenantResult.error)?.message || 'The Sumlin tenant is not available yet.',
+			message: tenantResult.error?.message || 'The Sumlin tenant is not available yet.',
 		};
 	}
 
-	const insertResult = await supabase
+	const insertResult = await sumlinDb
 		.from('service_requests')
 		.insert({
-			tenant_id: tenantResult.data.id,
+			tenant_id: tenantResult.id,
 			category: payload.category,
 			requester_name: payload.requester_name,
 			email: payload.email,
@@ -433,6 +490,192 @@ export async function submitServiceRequest(payload, slug = DEFAULT_TENANT_SLUG) 
 	};
 }
 
+export async function submitEventSignup(payload, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return {
+			ok: false,
+			message: 'Supabase is not configured yet.',
+		};
+	}
+
+	const tenantResult = await getTenantIdForSlug(slug);
+
+	if (tenantResult.error || !tenantResult.id) {
+		return {
+			ok: false,
+			message: tenantResult.error?.message || 'The Sumlin tenant is not available yet.',
+		};
+	}
+
+	const insertResult = await sumlinDb
+		.from('event_signups')
+		.insert({
+			tenant_id: tenantResult.id,
+			event_id: payload.event_id,
+			attendee_name: payload.attendee_name,
+			email: payload.email,
+			phone: payload.phone,
+			party_size: Number(payload.party_size) || 1,
+			notes: payload.notes,
+		});
+
+	if (insertResult.error) {
+		return {
+			ok: false,
+			message: normalizeError(insertResult.error)?.message || 'Unable to save the signup right now.',
+		};
+	}
+
+	return {
+		ok: true,
+		message: 'Signup received. The family admin team can see it in the dashboard.',
+	};
+}
+
+export async function saveBusinessListing(payload, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return {
+			ok: false,
+			message: 'Supabase is not configured yet.',
+		};
+	}
+
+	const tenantResult = await getTenantIdForSlug(slug);
+
+	if (tenantResult.error || !tenantResult.id) {
+		return {
+			ok: false,
+			message: tenantResult.error?.message || 'The Sumlin tenant is not available yet.',
+		};
+	}
+
+	const values = {
+		tenant_id: tenantResult.id,
+		title: payload.title,
+		category: payload.category,
+		description: payload.description,
+		price_label: payload.price_label,
+		is_featured: Boolean(payload.is_featured),
+		sort_order: Number(payload.sort_order) || 0,
+	};
+
+	const result = payload.id
+		? await sumlinDb
+			.from('business_services')
+			.update(values)
+			.eq('id', payload.id)
+			.eq('tenant_id', tenantResult.id)
+		: await sumlinDb
+			.from('business_services')
+			.insert(values);
+
+	if (result.error) {
+		return {
+			ok: false,
+			message: normalizeError(result.error)?.message || 'Unable to save the business listing.',
+		};
+	}
+
+	return {
+		ok: true,
+		message: payload.id ? 'Business listing updated.' : 'Business listing added.',
+	};
+}
+
+export async function saveEvent(payload, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return {
+			ok: false,
+			message: 'Supabase is not configured yet.',
+		};
+	}
+
+	const tenantResult = await getTenantIdForSlug(slug);
+
+	if (tenantResult.error || !tenantResult.id) {
+		return {
+			ok: false,
+			message: tenantResult.error?.message || 'The Sumlin tenant is not available yet.',
+		};
+	}
+
+	const values = {
+		tenant_id: tenantResult.id,
+		title: payload.title,
+		event_type: payload.event_type,
+		status: payload.status,
+		description: payload.description,
+		location: payload.location,
+		starts_at: payload.starts_at || null,
+		ends_at: payload.ends_at || null,
+		capacity: payload.capacity ? Number(payload.capacity) : null,
+		google_calendar_event_url: payload.google_calendar_event_url || null,
+		intake_deadline: payload.intake_deadline || null,
+	};
+
+	const result = payload.id
+		? await sumlinDb
+			.from('events')
+			.update(values)
+			.eq('id', payload.id)
+			.eq('tenant_id', tenantResult.id)
+		: await sumlinDb
+			.from('events')
+			.insert(values);
+
+	if (result.error) {
+		return {
+			ok: false,
+			message: normalizeError(result.error)?.message || 'Unable to save the event.',
+		};
+	}
+
+	return {
+		ok: true,
+		message: payload.id ? 'Event updated.' : 'Event added.',
+	};
+}
+
+export async function saveTenantProfile(payload, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return {
+			ok: false,
+			message: 'Supabase is not configured yet.',
+		};
+	}
+
+	const values = {
+		display_name: payload.display_name,
+		support_email: payload.support_email,
+		support_phone: payload.support_phone,
+		business_tagline: payload.business_tagline,
+		business_summary: payload.business_summary,
+		cash_app_handle: payload.cash_app_handle,
+		venmo_handle: payload.venmo_handle,
+		paypal_donate_url: payload.paypal_donate_url || null,
+		google_calendar_public_url: payload.google_calendar_public_url || null,
+		google_calendar_embed_url: payload.google_calendar_embed_url || null,
+		primary_cta_label: payload.primary_cta_label,
+	};
+
+	const result = await sumlinDb
+		.from('tenants')
+		.update(values)
+		.eq('slug', slug);
+
+	if (result.error) {
+		return {
+			ok: false,
+			message: normalizeError(result.error)?.message || 'Unable to save the family settings.',
+		};
+	}
+
+	return {
+		ok: true,
+		message: 'Family settings updated.',
+	};
+}
+
 export async function getAdminSession() {
 	if (!supabase) {
 		return null;
@@ -445,13 +688,44 @@ export async function getAdminSession() {
 	return session;
 }
 
-export async function signInAdmin({ email, password }) {
+export async function claimAdminInvite(slug = DEFAULT_TENANT_SLUG) {
 	if (!supabase) {
 		return { ok: false, message: 'Supabase is not configured yet.' };
 	}
 
-	const { error } = await supabase.auth.signInWithPassword({
-		email,
+	const {
+		data: { session },
+	} = await supabase.auth.getSession();
+
+	if (!session) {
+		return { ok: false, message: 'No active admin session found.' };
+	}
+
+	const result = await sumlinDb.rpc('claim_tenant_admin_invite', {
+		target_slug: slug,
+	});
+
+	if (result.error) {
+		return {
+			ok: false,
+			message: normalizeError(result.error)?.message || 'Unable to claim admin access.',
+		};
+	}
+
+	return {
+		ok: true,
+		status: result.data || 'no_invite',
+	};
+}
+
+export async function signUpAdmin({ email, password }, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return { ok: false, message: 'Supabase is not configured yet.' };
+	}
+
+	const normalizedEmail = email.trim().toLowerCase();
+	const { data, error } = await supabase.auth.signUp({
+		email: normalizedEmail,
 		password,
 	});
 
@@ -459,7 +733,40 @@ export async function signInAdmin({ email, password }) {
 		return { ok: false, message: error.message };
 	}
 
-	return { ok: true };
+	if (data.session) {
+		await claimAdminInvite(slug);
+		return {
+			ok: true,
+			message: 'Admin account created and signed in.',
+		};
+	}
+
+	return {
+		ok: true,
+		message: 'Account created. Check your email to confirm the invite, then sign in.',
+	};
+}
+
+export async function signInAdmin({ email, password }, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return { ok: false, message: 'Supabase is not configured yet.' };
+	}
+
+	const { error } = await supabase.auth.signInWithPassword({
+		email: email.trim().toLowerCase(),
+		password,
+	});
+
+	if (error) {
+		return { ok: false, message: error.message };
+	}
+
+	const claimResult = await claimAdminInvite(slug);
+
+	return {
+		ok: true,
+		claimStatus: claimResult.ok ? claimResult.status : 'no_invite',
+	};
 }
 
 export async function signOutAdmin() {
@@ -486,6 +793,49 @@ export function watchAdminSession(callback) {
 	};
 }
 
+export async function saveAdminInvite(payload, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return {
+			ok: false,
+			message: 'Supabase is not configured yet.',
+		};
+	}
+
+	const tenantResult = await getTenantIdForSlug(slug);
+
+	if (tenantResult.error || !tenantResult.id) {
+		return {
+			ok: false,
+			message: tenantResult.error?.message || 'The Sumlin tenant is not available yet.',
+		};
+	}
+
+	const values = {
+		tenant_id: tenantResult.id,
+		email: payload.email.trim().toLowerCase(),
+		role: payload.role,
+		status: 'pending',
+	};
+
+	const result = await sumlinDb
+		.from('tenant_admin_invites')
+		.upsert(values, {
+			onConflict: 'tenant_id,email',
+		});
+
+	if (result.error) {
+		return {
+			ok: false,
+			message: normalizeError(result.error)?.message || 'Unable to save the admin invite.',
+		};
+	}
+
+	return {
+		ok: true,
+		message: 'Admin invite saved. Once that person creates an account and signs in, access will be claimed automatically.',
+	};
+}
+
 export async function fetchAdminDashboard(slug = DEFAULT_TENANT_SLUG) {
 	if (!supabase) {
 		return {
@@ -493,16 +843,27 @@ export async function fetchAdminDashboard(slug = DEFAULT_TENANT_SLUG) {
 			tenant: fallbackTenant,
 			error: {
 				type: 'missing_config',
-				message: 'Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY to connect the dashboard.',
+				message: 'Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY to connect the Sumlin dashboard.',
 			},
 			...fallbackDashboard,
 		};
 	}
 
-	const membershipResult = await supabase
+	const {
+		data: { session },
+	} = await supabase.auth.getSession();
+
+	if (session) {
+		await claimAdminInvite(slug);
+	}
+
+	const currentUserId = session?.user?.id;
+
+	const membershipResult = await sumlinDb
 		.from('tenant_admins')
 		.select('tenant_id, role, tenants!inner(*)')
 		.eq('tenants.slug', slug)
+		.eq('user_id', currentUserId)
 		.limit(1)
 		.maybeSingle();
 
@@ -523,7 +884,7 @@ export async function fetchAdminDashboard(slug = DEFAULT_TENANT_SLUG) {
 			tenant: fallbackTenant,
 			error: {
 				type: 'membership_missing',
-				message: 'Sign in with an admin user and add that user to tenant_admins for the Sumlin tenant.',
+				message: 'This account does not have admin access yet. Ask Debi to add your email in the admin panel, then sign in again to claim access.',
 			},
 			...fallbackDashboard,
 		};
@@ -532,35 +893,65 @@ export async function fetchAdminDashboard(slug = DEFAULT_TENANT_SLUG) {
 	const tenant = membership.tenants || fallbackTenant;
 	const tenantId = membership.tenant_id;
 
-	const [ordersResult, requestsResult, ticketsResult, eventsResult] = await Promise.all([
-		supabase
+	const [ordersResult, requestsResult, ticketsResult, eventsResult, businessesResult, signupsResult, adminsResult, invitesResult] = await Promise.all([
+		sumlinDb
 			.from('fundraiser_orders')
 			.select('*')
 			.eq('tenant_id', tenantId)
 			.order('created_at', { ascending: false })
 			.limit(8),
-		supabase
+		sumlinDb
 			.from('service_requests')
 			.select('*')
 			.eq('tenant_id', tenantId)
 			.order('created_at', { ascending: false })
 			.limit(8),
-		supabase
+		sumlinDb
 			.from('fundraiser_tickets')
 			.select('id, order_id, ticket_number, status')
 			.eq('tenant_id', tenantId)
 			.order('ticket_number', { ascending: false })
 			.limit(8),
-		supabase
+		sumlinDb
 			.from('events')
 			.select('*')
 			.eq('tenant_id', tenantId)
 			.order('starts_at', { ascending: true })
 			.limit(8),
+		sumlinDb
+			.from('business_services')
+			.select('*')
+			.eq('tenant_id', tenantId)
+			.order('sort_order', { ascending: true })
+			.limit(25),
+		sumlinDb
+			.from('event_signups')
+			.select('id, attendee_name, email, phone, party_size, status, created_at, events(title, starts_at)')
+			.eq('tenant_id', tenantId)
+			.order('created_at', { ascending: false })
+			.limit(12),
+		sumlinDb
+			.from('tenant_admins')
+			.select('id, user_id, email, role, created_at')
+			.eq('tenant_id', tenantId)
+			.order('created_at', { ascending: true }),
+		sumlinDb
+			.from('tenant_admin_invites')
+			.select('id, email, role, status, created_at')
+			.eq('tenant_id', tenantId)
+			.order('created_at', { ascending: false })
+			.limit(20),
 	]);
 
 	const dashboardError = normalizeError(
-		ordersResult.error || requestsResult.error || ticketsResult.error || eventsResult.error,
+		ordersResult.error
+		|| requestsResult.error
+		|| ticketsResult.error
+		|| eventsResult.error
+		|| businessesResult.error
+		|| signupsResult.error
+		|| adminsResult.error
+		|| invitesResult.error
 	);
 
 	if (dashboardError) {
@@ -576,6 +967,10 @@ export async function fetchAdminDashboard(slug = DEFAULT_TENANT_SLUG) {
 	const serviceRequests = requestsResult.data || [];
 	const tickets = ticketsResult.data || [];
 	const upcomingEvents = eventsResult.data || [];
+	const businesses = businessesResult.data || [];
+	const eventSignups = signupsResult.data || [];
+	const admins = adminsResult.data || [];
+	const adminInvites = invitesResult.data || [];
 
 	const pendingPayments = recentOrders.filter((order) => order.payment_status === 'pending').length;
 	const activeTickets = tickets.filter((ticket) => ticket.status === 'active').length;
@@ -593,15 +988,22 @@ export async function fetchAdminDashboard(slug = DEFAULT_TENANT_SLUG) {
 		],
 		recentOrders,
 		serviceRequests,
+		businesses,
 		tickets,
 		events: upcomingEvents,
+		eventSignups,
+		admins,
+		adminInvites,
+		currentAdminRole: membership.role,
 	};
 }
 
 export const adminOnboardingSteps = [
-	'Run supabase/schema.sql in the Supabase SQL editor to create the tables, policies, and Sumlin tenant seed data.',
-	'Create an admin user in Supabase Authentication.',
-	'Insert that user into tenant_admins with role owner or admin for the Sumlin tenant.',
+	'Run supabase/sumlin_schema.sql in the Supabase SQL editor to create the dedicated Sumlin schema.',
+	'In Supabase API settings, add sumlin to the exposed schemas list.',
+	'If Sumlin data still lives in public, run supabase/move_sumlin_from_public_to_sumlin_schema.sql next.',
+	'Create the first admin account for 1bassdebi@gmail.com in Supabase Authentication.',
+	'Sign in at /admin so the owner invite can be claimed automatically.',
 	'Add your real PayPal donate URL and Google Calendar public/embed URLs in the tenants row.',
-	'Use the admin dashboard to review payment records, tickets, and family business requests.',
+	'Use the admin dashboard to add businesses, add events, review family signups, and invite more admins.',
 ];
