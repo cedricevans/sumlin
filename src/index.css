@@ -1,0 +1,328 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 42 25% 97%;
+    --foreground: 30 15% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 30 15% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 15% 15%;
+    --primary: 43 74% 52%;
+    --primary-foreground: 30 15% 15%;
+    --secondary: 345 75% 25%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 42 20% 92%;
+    --muted-foreground: 30 10% 40%;
+    --accent: 14 90% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 42 20% 85%;
+    --input: 42 20% 85%;
+    --ring: 43 74% 52%;
+    --radius: 0.75rem;
+    
+    /* Brand Colors */
+    --burgundy: 345 75% 25%;
+    --gold: 43 74% 52%;
+    --earth-brown: 30 35% 45%;
+    --warm-cream: 42 40% 95%;
+    
+    /* Legacy Section Colors */
+    --legacy-gold: 43 74% 52%;
+    --legacy-silver: 210 16% 82%;
+    --legacy-blue: 222 47% 25%;
+    --legacy-earth: 30 35% 45%;
+
+    /* Navbar Specific Tokens */
+    --navbar-bg: 0 0% 10%; /* #1a1a1a */
+    --navbar-text: 0 0% 100%; /* Pure white for better contrast */
+    --navbar-text-muted: 0 0% 90%; /* Slightly muted white */
+  }
+
+  .dark {
+    --background: 30 20% 8%;
+    --foreground: 42 25% 95%;
+    --card: 30 18% 12%;
+    --card-foreground: 42 25% 95%;
+    --popover: 30 18% 12%;
+    --popover-foreground: 42 25% 95%;
+    --primary: 43 74% 52%;
+    --primary-foreground: 30 15% 15%;
+    --secondary: 345 75% 35%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 30 15% 20%;
+    --muted-foreground: 42 15% 65%;
+    --accent: 14 90% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 30 15% 25%;
+    --input: 30 15% 25%;
+    --ring: 43 74% 52%;
+    
+    /* Legacy Section Colors (Dark Mode Adjustments) */
+    --legacy-gold: 43 74% 52%;
+    --legacy-silver: 210 16% 62%;
+    --legacy-blue: 222 47% 45%;
+    --legacy-earth: 30 35% 55%;
+
+    /* Navbar Specific Tokens */
+    --navbar-bg: 0 0% 10%;
+    --navbar-text: 0 0% 100%;
+    --navbar-text-muted: 0 0% 90%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-feature-settings: 'kern' 1, 'liga' 1;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 700;
+    text-wrap: balance;
+    letter-spacing: -0.02em;
+  }
+  
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold leading-tight;
+  }
+  
+  h2 {
+    @apply text-3xl md:text-4xl lg:text-5xl font-bold leading-tight;
+  }
+  
+  h3 {
+    @apply text-2xl md:text-3xl font-semibold leading-snug;
+  }
+  
+  h4 {
+    @apply text-xl md:text-2xl font-semibold leading-snug;
+  }
+  
+  p {
+    @apply leading-relaxed max-w-prose;
+  }
+  
+  button, a {
+    @apply transition-all duration-200;
+  }
+  
+  button:active, a:active {
+    @apply scale-[0.98];
+  }
+
+  /* Form Inputs Base Styles */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  textarea,
+  select {
+    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .parallax-section {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .section-spacing {
+    @apply py-16 md:py-24;
+  }
+  
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .gradient-gold {
+    background: linear-gradient(135deg, hsl(43, 74%, 52%) 0%, hsl(43, 74%, 42%) 100%);
+  }
+  
+  .gradient-burgundy {
+    background: linear-gradient(135deg, hsl(345, 75%, 25%) 0%, hsl(345, 75%, 20%) 100%);
+  }
+
+  .gradient-burgundy-gold {
+    background: linear-gradient(135deg, hsl(345, 75%, 25%) 0%, hsl(43, 74%, 45%) 100%);
+  }
+
+  .gradient-metallic {
+    background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+  }
+  
+  .shadow-gold {
+    box-shadow: 0 10px 30px -5px hsl(43 74% 52% / 0.2);
+  }
+  
+  .shadow-burgundy {
+    box-shadow: 0 10px 30px -5px hsl(345 75% 25% / 0.2);
+  }
+
+  .image-separator {
+    @apply rounded-xl overflow-hidden shadow-lg border border-border/50 transition-all duration-300 hover:shadow-xl;
+  }
+
+  /* Navbar Utilities */
+  .bg-navbar {
+    background-color: hsl(var(--navbar-bg));
+  }
+  
+  .text-navbar {
+    color: hsl(var(--navbar-text));
+  }
+
+  .text-navbar-muted {
+    color: hsl(var(--navbar-text-muted));
+  }
+
+  .text-shadow-sm {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  }
+
+  .text-shadow-md {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  }
+
+  .text-shadow-glow {
+    text-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
+  }
+
+  /* Hero Section Styling */
+  .hero-background {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .hero-overlay {
+    position: relative;
+  }
+
+  .hero-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+  }
+
+  .hero-overlay > * {
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Countdown Timer Styles */
+  .countdown-container {
+    @apply flex items-center justify-center gap-1 md:gap-1.5;
+  }
+  
+  .countdown-unit {
+    @apply flex flex-col items-center justify-center gradient-gold rounded-lg p-1.5 md:p-2 min-w-[2.75rem] md:min-w-[3.5rem] shadow-md transition-transform duration-300 hover:scale-105;
+  }
+  
+  .countdown-value {
+    @apply text-sm md:text-lg font-bold text-foreground tabular-nums leading-none;
+  }
+  
+  .countdown-label {
+    @apply text-[0.5rem] md:text-[0.65rem] text-foreground/80 uppercase tracking-wider mt-0.5 font-semibold;
+  }
+  
+  .countdown-separator {
+    @apply text-foreground/50 font-bold text-sm md:text-lg pb-2 md:pb-3 px-0.5;
+  }
+
+  /* Hero Countdown Overrides */
+  .hero-countdown .countdown-container {
+    @apply gap-2 md:gap-4 lg:gap-6;
+  }
+
+  .hero-countdown .countdown-unit {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 shadow-xl min-w-[4.5rem] md:min-w-[6rem] lg:min-w-[8rem] p-3 md:p-4 lg:p-6 rounded-2xl hover:-translate-y-1 hover:bg-white/20 hover:shadow-2xl transition-all duration-300;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .hero-countdown .countdown-value {
+    @apply text-3xl md:text-5xl lg:text-6xl text-white mb-1 md:mb-2;
+  }
+
+  .hero-countdown .countdown-label {
+    @apply text-xs md:text-sm lg:text-base text-white/90 tracking-widest;
+  }
+
+  .hero-countdown .countdown-separator {
+    @apply text-2xl md:text-4xl lg:text-5xl text-white/50 pb-4 md:pb-6 px-1 md:px-2;
+  }
+
+  /* Compact Countdown for reduced height */
+  .countdown-compact .countdown-container {
+    @apply gap-1.5 md:gap-2 lg:gap-3;
+  }
+
+  .countdown-compact .countdown-unit {
+    @apply bg-white/15 backdrop-blur-md border border-white/25 shadow-lg min-w-[3rem] md:min-w-[4rem] lg:min-w-[5rem] p-2 md:p-2.5 lg:p-3 rounded-xl hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-xl transition-all duration-300;
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .countdown-compact .countdown-value {
+    @apply text-xl md:text-3xl lg:text-4xl text-white mb-0.5 md:mb-1;
+  }
+
+  .countdown-compact .countdown-label {
+    @apply text-[0.6rem] md:text-xs lg:text-sm text-white/90 tracking-wide;
+  }
+
+  .countdown-compact .countdown-separator {
+    @apply text-lg md:text-2xl lg:text-3xl text-white/50 pb-2 md:pb-3 px-0.5 md:px-1;
+  }
+
+  /* Legacy Section Utilities */
+  .legacy-card {
+    @apply bg-card rounded-2xl overflow-hidden border border-border/60 shadow-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl flex flex-col h-full;
+  }
+
+  .legacy-card-image-wrapper {
+    @apply relative w-full aspect-[4/3] bg-muted/30 p-8 flex items-center justify-center overflow-hidden border-b border-border/40;
+  }
+
+  .legacy-card-image {
+    @apply w-full h-full object-contain transition-transform duration-700 group-hover:scale-105 drop-shadow-xl;
+  }
+
+  .legacy-card-content {
+    @apply p-8 md:p-10 flex flex-col flex-grow bg-gradient-to-b from-card to-muted/10;
+  }
+
+  .legacy-card-title {
+    @apply text-3xl font-bold mb-4 text-[hsl(var(--legacy-blue))] dark:text-foreground;
+  }
+
+  .legacy-card-text {
+    @apply text-muted-foreground leading-relaxed text-lg;
+  }
+}
