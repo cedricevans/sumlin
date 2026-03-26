@@ -115,9 +115,14 @@ const ProductCard = ({ product, index }) => {
         </div>
         <div className="p-6 flex flex-col flex-grow">
           <h3 className="text-2xl font-bold mb-3 text-balance text-foreground">{product.title}</h3>
-          <p className="text-muted-foreground mb-6 leading-relaxed flex-grow text-sm">
-            {product.description}
-          </p>
+          <div className="mb-6 flex-grow">
+            <div className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary mb-3">
+              Fundraiser basket
+            </div>
+            <p className="text-muted-foreground leading-relaxed text-sm">
+              {product.description}
+            </p>
+          </div>
           <div className="mt-auto pt-4 border-t border-border/50">
             <button 
               onClick={handleAddToCart} 

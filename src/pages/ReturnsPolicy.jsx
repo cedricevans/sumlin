@@ -10,12 +10,12 @@ const ReturnsPolicy = () => {
       <section className="p-0">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Legacy route</h2>
         <p className="text-lg text-gray-700 mb-6">
-          This older route is preserved for compatibility while the active family business and fundraiser pages move to their dedicated routes.
+          This older route is preserved for compatibility while the main family business and fundraiser pages live on their dedicated routes.
         </p>
 
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Use these pages instead</h2>
         <p className="text-lg text-gray-700 mb-6">
-          Visit <a href="/family-business" className="text-blue-600 underline">/family-business</a> for service planning and <a href="/admin" className="text-blue-600 underline">/admin</a> for the operational dashboard.
+          Visit <a href="/family-business" className="text-blue-600 underline">/family-business</a> for service planning and <a href="/store" className="text-blue-600 underline">/store</a> for fundraiser baskets.
         </p>
       </section>
     </div>;

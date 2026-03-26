@@ -10,12 +10,12 @@ const ShippingPolicy = () => {
       <section className="p-0">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Replaced route</h2>
         <p className="text-lg text-gray-700 mb-6">
-          This legacy route remains in place so older links do not break. The active fundraiser disclaimer and rules now live on the dedicated official rules page.
+          This legacy route remains in place so older links do not break. The current fundraiser information now lives on the official rules page.
         </p>
 
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Current location</h2>
         <p className="text-lg text-gray-700 mb-6">
-          Use <a href="/fundraiser-rules" className="text-blue-600 underline">/fundraiser-rules</a> for the fundraiser disclaimer and <a href="/family-business" className="text-blue-600 underline">/family-business</a> for the planning hub.
+          Visit <a href="/fundraiser-rules" className="text-blue-600 underline">/fundraiser-rules</a> for fundraiser details and <a href="/family-business" className="text-blue-600 underline">/family-business</a> for the family planning hub.
         </p>
       </section>
     </div>;

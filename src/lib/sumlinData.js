@@ -18,21 +18,21 @@ export const fundraiserRules = {
 			title: 'Use of funds',
 			items: [
 				'Family support donations are intended to help reunion expenses such as venue, food, hospitality, and shared event logistics.',
-				'Administrative records should be retained for donations, entry requests, payments received, and any prizes awarded.',
+				'The family should keep clear records for support gifts, entry requests, and any prizes awarded.',
 			],
 		},
 		{
 			title: 'Payment channels',
 			items: [
-				'Cash App, Venmo, PayPal, and other peer-payment channels should be treated as payment methods only.',
-				'Ticket numbers or entries should be issued from the admin system after the family confirms a payment or accepts a free entry request.',
-				'PayPal donation links should return to this site, but final ticket issuance should still happen from the admin panel after the record is created.',
+				'Cash App, Venmo, PayPal, and similar services may be used to send family support.',
+				'Follow the posted entry instructions so every request is handled fairly and consistently.',
+				'If you use PayPal, return to this site afterward for the latest fundraiser details and updates.',
 			],
 		},
 		{
-			title: 'Administrative safeguard',
+			title: 'Family safeguard',
 			items: [
-				'This page is an operational disclaimer, not legal advice.',
+				'This page shares general fundraiser information and is not legal advice.',
 				'Before taking live payments, the family should confirm the final program structure, rules, and entity status with Ohio counsel or a qualified advisor.',
 			],
 		},
@@ -325,7 +325,7 @@ function normalizeError(error) {
 	) {
 		return {
 			type: 'schema_missing',
-			message: 'Supabase is connected, but the Sumlin schema is not ready yet. Run supabase/sumlin_schema.sql, expose the sumlin schema in Supabase API settings, and then rerun the move script if needed.',
+			message: 'Live family updates are still being connected. Starter information is showing for now.',
 		};
 	}
 
@@ -368,7 +368,7 @@ async function getTenantIdForSlug(slug) {
 			id: null,
 			error: normalizeError(tenantResult.error) || {
 				type: 'tenant_missing',
-				message: 'The Sumlin tenant is not available yet.',
+				message: 'Live family updates are not available just yet.',
 			},
 		};
 	}
@@ -417,7 +417,7 @@ export async function fetchBusinessSnapshot(slug = DEFAULT_TENANT_SLUG) {
 			status: 'fallback',
 			error: {
 				type: 'tenant_missing',
-				message: 'The Sumlin tenant record was not found in the sumlin schema. Run supabase/sumlin_schema.sql to seed it.',
+				message: 'Live family updates are not available just yet.',
 			},
 		};
 	}
@@ -450,7 +450,7 @@ export async function submitServiceRequest(payload, slug = DEFAULT_TENANT_SLUG) 
 	if (!supabase) {
 		return {
 			ok: false,
-			message: 'Supabase is not configured yet.',
+			message: 'Online requests are not ready yet. Please try again soon.',
 		};
 	}
 
@@ -459,7 +459,7 @@ export async function submitServiceRequest(payload, slug = DEFAULT_TENANT_SLUG) 
 	if (tenantResult.error || !tenantResult.id) {
 		return {
 			ok: false,
-			message: tenantResult.error?.message || 'The Sumlin tenant is not available yet.',
+			message: tenantResult.error?.message || 'Live family updates are not available just yet.',
 		};
 	}
 
@@ -486,7 +486,7 @@ export async function submitServiceRequest(payload, slug = DEFAULT_TENANT_SLUG) 
 
 	return {
 		ok: true,
-		message: 'Your request was saved. The family admin team can now review it in the dashboard.',
+		message: 'Your request was received. A family organizer will follow up soon.',
 	};
 }
 
@@ -494,7 +494,7 @@ export async function submitEventSignup(payload, slug = DEFAULT_TENANT_SLUG) {
 	if (!supabase) {
 		return {
 			ok: false,
-			message: 'Supabase is not configured yet.',
+			message: 'Online signups are not ready yet. Please try again soon.',
 		};
 	}
 
@@ -503,7 +503,7 @@ export async function submitEventSignup(payload, slug = DEFAULT_TENANT_SLUG) {
 	if (tenantResult.error || !tenantResult.id) {
 		return {
 			ok: false,
-			message: tenantResult.error?.message || 'The Sumlin tenant is not available yet.',
+			message: tenantResult.error?.message || 'Live family updates are not available just yet.',
 		};
 	}
 
@@ -528,7 +528,7 @@ export async function submitEventSignup(payload, slug = DEFAULT_TENANT_SLUG) {
 
 	return {
 		ok: true,
-		message: 'Signup received. The family admin team can see it in the dashboard.',
+		message: 'Signup received. We will share updates as the event gets closer.',
 	};
 }
 
@@ -536,7 +536,7 @@ export async function saveBusinessListing(payload, slug = DEFAULT_TENANT_SLUG) {
 	if (!supabase) {
 		return {
 			ok: false,
-			message: 'Supabase is not configured yet.',
+			message: 'Online business submissions are not ready yet. Please try again soon.',
 		};
 	}
 
@@ -545,7 +545,7 @@ export async function saveBusinessListing(payload, slug = DEFAULT_TENANT_SLUG) {
 	if (tenantResult.error || !tenantResult.id) {
 		return {
 			ok: false,
-			message: tenantResult.error?.message || 'The Sumlin tenant is not available yet.',
+			message: tenantResult.error?.message || 'Live family updates are not available just yet.',
 		};
 	}
 
@@ -578,7 +578,7 @@ export async function saveBusinessListing(payload, slug = DEFAULT_TENANT_SLUG) {
 
 	return {
 		ok: true,
-		message: payload.id ? 'Business listing updated.' : 'Business listing added.',
+		message: payload.id ? 'Business listing updated.' : 'Business listing received.',
 	};
 }
 

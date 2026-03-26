@@ -117,7 +117,8 @@ const AdminPage = () => {
 	const [settingsForm, setSettingsForm] = useState(initialSettingsForm);
 	const [inviteForm, setInviteForm] = useState(initialInviteForm);
 
-	const showDashboard = Boolean(session) || !hasSupabaseConfig;
+	const showDashboard = Boolean(session);
+	const showDisconnectedState = !hasSupabaseConfig;
 	const canManage = Boolean(session) && dashboard?.mode === 'live';
 	const canInviteAdmins = ['owner', 'admin'].includes(dashboard?.currentAdminRole || '');
 
@@ -461,13 +462,13 @@ const AdminPage = () => {
 							<form onSubmit={handleSignIn} className="bg-card border border-border/50 rounded-3xl p-8 shadow-xl">
 								<h2 className="text-2xl font-bold mb-3">Admin sign in</h2>
 								<p className="text-muted-foreground mb-6">
-									Use `1bassdebi@gmail.com` for the first owner account. Invited admins can create their account here, then sign in to reach the admin command central.
+									Sign in with your admin email to access the family dashboard. If Debi has invited you, create your account first, then sign in to access the admin panel.
 								</p>
 								<div className="space-y-4">
 									<input
 										type="email"
 										name="email"
-										placeholder="Admin email"
+										placeholder="Your email address"
 										value={credentials.email}
 										onChange={handleCredentialChange}
 										required
@@ -476,7 +477,7 @@ const AdminPage = () => {
 									<input
 										type="password"
 										name="password"
-										placeholder="Password"
+										placeholder="Your password"
 										value={credentials.password}
 										onChange={handleCredentialChange}
 										required
@@ -487,7 +488,7 @@ const AdminPage = () => {
 										disabled={signingIn}
 										className="w-full gradient-gold text-foreground py-3 rounded-xl font-semibold hover:shadow-gold transition-all duration-200 disabled:opacity-70"
 									>
-										{signingIn ? 'Signing in...' : 'Sign in'}
+										{signingIn ? 'Signing in...' : 'Sign in to admin panel'}
 									</button>
 									<button
 										type="button"
@@ -495,21 +496,34 @@ const AdminPage = () => {
 										disabled={signingUp}
 										className="w-full bg-card border border-border/60 py-3 rounded-xl font-semibold hover:bg-muted transition-colors duration-200 disabled:opacity-70"
 									>
-										{signingUp ? 'Creating account...' : 'Create admin account'}
+										{signingUp ? 'Creating account...' : 'Create new account'}
 									</button>
 								</div>
 							</form>
 
 							<div className="bg-muted border border-border/50 rounded-3xl p-8">
 								<div className="flex items-center gap-3 mb-4">
-									<Database className="h-5 w-5 text-primary" />
-									<h2 className="text-2xl font-bold">Admin access</h2>
+									<ShieldCheck className="h-5 w-5 text-primary" />
+									<h2 className="text-2xl font-bold">Getting started</h2>
 								</div>
 								<div className="space-y-4 text-muted-foreground leading-relaxed">
-									<p>Sign in with an approved admin email to reach the family command central.</p>
-									<p>Debi can invite more admins from inside the admin panel after she signs in.</p>
-									<p>If your login works but admin access does not appear, make sure your email has been invited for the Sumlin family account.</p>
+									<p><strong>First time here?</strong> If Debi has invited you as an admin, click "Create new account" to set up your password, then sign in.</p>
+									<p><strong>Already have an account?</strong> Just sign in with your email and password to access the family admin dashboard.</p>
+									<p><strong>Need help?</strong> Contact Debi if you need admin access or have questions about managing family events and businesses.</p>
 								</div>
+							</div>
+						</div>
+					)}
+
+					{showDisconnectedState && (
+						<div className="rounded-3xl border border-amber-500/30 bg-amber-500/10 p-8 mb-10">
+							<div className="flex items-center gap-3 mb-4">
+								<Database className="h-5 w-5 text-amber-600" />
+								<h2 className="text-2xl font-bold">Database setup in progress</h2>
+							</div>
+							<div className="space-y-3 text-muted-foreground leading-relaxed">
+								<p>The admin panel is currently being configured. Once the database connection is complete, you'll be able to sign in and manage family events, businesses, and signups.</p>
+								<p>Check back soon or contact the site administrator for updates.</p>
 							</div>
 						</div>
 					)}
@@ -525,9 +539,10 @@ const AdminPage = () => {
 							{!loading && dashboard && (
 								<>
 									{dashboard.error && (
-										<div className="rounded-3xl border border-amber-500/30 bg-amber-500/10 p-6 mb-8">
-											<h2 className="text-xl font-semibold mb-2">Setup note</h2>
-											<p className="text-muted-foreground">{dashboard.error.message}</p>
+										<div className="rounded-3xl border border-rose-950/30 bg-rose-50 p-6 mb-8">
+											<h2 className="text-xl font-semibold mb-2 text-rose-950">Database setup needed</h2>
+											<p className="text-muted-foreground mb-3">The family database tables are being set up. Sample data is shown below until the connection is complete.</p>
+											<p className="text-sm text-muted-foreground italic">Contact your site administrator to complete the database setup using the schema.sql file.</p>
 										</div>
 									)}
 
@@ -549,10 +564,10 @@ const AdminPage = () => {
 												<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
 													<div className="flex items-center gap-3 mb-4">
 														<Users className="h-5 w-5 text-primary" />
-														<h2 className="text-2xl font-bold">Admin command central</h2>
+														<h2 className="text-2xl font-bold">Current admins</h2>
 													</div>
 													<p className="text-muted-foreground mb-6">
-														Current admins can manage the family records here. Debi can invite other admins by email so they can sign in and claim access.
+														These family members have admin access to manage events, businesses, and family signups. Debi can invite additional admins using the form on the right.
 													</p>
 													<div className="space-y-4">
 														{(dashboard.admins || []).map((admin) => (
@@ -576,10 +591,10 @@ const AdminPage = () => {
 												<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
 													<div className="flex items-center gap-3 mb-4">
 														<Users className="h-5 w-5 text-primary" />
-														<h2 className="text-2xl font-bold">Invite another admin</h2>
+														<h2 className="text-2xl font-bold">Invite new admin</h2>
 													</div>
 													<p className="text-muted-foreground mb-6">
-														Add an email here. That person can then create an account on this page and their admin access will be claimed automatically when they sign in.
+														Enter an email address to invite someone as an admin. They'll create an account and automatically get admin access when they sign in.
 													</p>
 													{canInviteAdmins ? (
 														<form onSubmit={handleInviteSubmit} className="space-y-4">

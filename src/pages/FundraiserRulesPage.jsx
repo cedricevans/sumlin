@@ -20,12 +20,11 @@ const FundraiserRulesPage = () => {
 					<div className="text-center mb-12">
 						<div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary mb-5">
 							<ShieldCheck className="h-4 w-4" />
-							Family fundraiser operations page
+							Family fundraiser guide
 						</div>
 						<h1 className="text-4xl md:text-6xl font-bold mb-4">{fundraiserRules.title}</h1>
 						<p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-							This page gives the family a public-facing disclaimer and operational ruleset for reunion
-							fundraising, peer-payment collection, and manual ticket administration.
+							This page shares the public giveaway guidance, entry information, and reunion support notes for the family fundraiser.
 						</p>
 						<p className="text-sm text-muted-foreground mt-4">Last updated {fundraiserRules.lastUpdated}</p>
 					</div>
@@ -36,9 +35,9 @@ const FundraiserRulesPage = () => {
 							<div>
 								<h2 className="text-xl font-semibold mb-2">Important note</h2>
 								<p className="text-muted-foreground leading-relaxed">
-									Adding disclaimer language helps the site communicate the intended structure, but it does not
-									replace legal review. Keep entries, donations, and any ticket issuance records in the admin
-									panel and confirm the final Ohio-facing structure before taking live payments at scale.
+									This page shares helpful family guidance, but it does not replace legal review. Before accepting
+									live payments at scale, the family should confirm the final program structure with Ohio counsel
+									or another qualified advisor.
 								</p>
 							</div>
 						</div>
@@ -62,25 +61,23 @@ const FundraiserRulesPage = () => {
 
 					<div className="grid md:grid-cols-2 gap-6 mt-10">
 						<div className="bg-muted rounded-2xl p-8 border border-border/50">
-							<h2 className="text-2xl font-bold mb-3">Recommended operational setup</h2>
+							<h2 className="text-2xl font-bold mb-3">Ready to join in?</h2>
 							<p className="text-muted-foreground mb-5 leading-relaxed">
-								Create a pending order first, confirm payment or free entry in the admin dashboard, then issue
-								the ticket numbers from the same system so the drawing pool is auditable.
+								Review the rules, choose the basket you want to support, and follow the entry guidance that best fits your family.
 							</p>
 							<Link
-								to="/admin"
+								to="/store"
 								className="inline-flex items-center gap-2 gradient-burgundy text-white px-6 py-3 rounded-xl font-semibold hover:shadow-burgundy transition-all duration-200"
 							>
-								Open admin dashboard
+								See fundraiser baskets
 								<ExternalLink className="h-4 w-4" />
 							</Link>
 						</div>
 
 						<div className="bg-card rounded-2xl p-8 border border-border/50 shadow-sm">
-							<h2 className="text-2xl font-bold mb-3">Family business extension</h2>
+							<h2 className="text-2xl font-bold mb-3">More ways to stay connected</h2>
 							<p className="text-muted-foreground mb-5 leading-relaxed">
-								The same tenant can manage reunion support, birthday events, hospitality coordination, and
-								Google Calendar-linked planning pages from one place.
+								Visit the family business page for community listings, event planning help, and more reunion updates in one place.
 							</p>
 							<Link
 								to="/family-business"

@@ -23,7 +23,7 @@ const HomePage = () => {
     {
       icon: Gift,
       title: 'Fundraiser baskets',
-      description: 'Support our reunion fundraiser and keep basket entries, donation records, and drawing administration organized.',
+      description: 'Support our reunion fundraiser, explore basket options, and join the family excitement around drawing day.',
       gradient: 'from-amber-950 via-yellow-950 to-orange-950',
       iconColor: 'text-amber-950',
       bgGlow: 'shadow-amber-950/50',
@@ -32,7 +32,7 @@ const HomePage = () => {
     {
       icon: ShoppingBag,
       title: 'Family business',
-      description: 'Use one tenant for birthdays, reunion support, milestone events, and family planning requests.',
+      description: 'Find family-owned businesses, event help, and reunion planning support all in one place.',
       gradient: 'from-stone-950 via-zinc-900 to-slate-950',
       iconColor: 'text-stone-950',
       bgGlow: 'shadow-stone-950/50',
@@ -384,8 +384,7 @@ const HomePage = () => {
                 </h2>
                 
                 <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                  Support our family reunion with basket-centered fundraiser participation while the admin dashboard
-                  tracks each record, each ticket, and each family support request in one place.
+                  Support our family reunion through basket entries, shared giving, and the excitement of celebrating together as drawing day gets closer.
                 </p>
                 
                 <div className="space-y-4 mb-8">

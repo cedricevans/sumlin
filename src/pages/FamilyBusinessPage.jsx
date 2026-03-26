@@ -214,7 +214,7 @@ const FamilyBusinessPage = () => {
 									to="/fundraiser-rules"
 									className="gradient-burgundy text-white px-6 py-3 rounded-xl font-semibold hover:shadow-burgundy transition-all duration-200"
 								>
-									Review fundraiser disclaimer
+									Read fundraiser rules
 								</Link>
 								{hasCalendarLink ? (
 									<a
@@ -259,7 +259,7 @@ const FamilyBusinessPage = () => {
 										<p className="text-muted-foreground">Cash App {tenant?.cash_app_handle || '$SumlinReunionClub'}</p>
 										<p className="text-muted-foreground">Venmo {tenant?.venmo_handle || '@sumlin-family'}</p>
 										<p className="text-muted-foreground">
-											PayPal {tenant?.paypal_donate_url ? 'Configured for the family' : 'Add your PayPal link in admin'}
+											PayPal {tenant?.paypal_donate_url ? 'Available for family support' : 'PayPal link coming soon'}
 										</p>
 									</div>
 								</div>
@@ -269,8 +269,8 @@ const FamilyBusinessPage = () => {
 										<p className="font-medium">Page status</p>
 										<p className="text-muted-foreground">
 											{snapshot.status === 'live'
-												? 'Connected to the family records'
-												: 'Showing starter information until the family records are finished'}
+												? 'Live family updates are showing here'
+												: 'Showing starter information while live updates are being added'}
 										</p>
 									</div>
 								</div>
@@ -278,7 +278,7 @@ const FamilyBusinessPage = () => {
 
 							{snapshot.error && (
 								<div className="mt-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-muted-foreground">
-									<p className="font-semibold text-foreground mb-1">Setup note</p>
+									<p className="font-semibold text-foreground mb-1">Family note</p>
 									<p>{snapshot.error.message}</p>
 								</div>
 							)}
@@ -423,7 +423,7 @@ const FamilyBusinessPage = () => {
 								) : !hasCalendarEmbed ? (
 									<div className="bg-card rounded-2xl p-5 border border-border/50">
 										<p className="text-sm text-muted-foreground">
-											No events have been added yet. Once the family adds them in admin, everyone will be able to sign up here.
+											No events have been added yet. Check back soon for reunion dates, planning calls, and family activities.
 										</p>
 									</div>
 								) : null}
