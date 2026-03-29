@@ -8,10 +8,10 @@ import ContactSection from '@/components/ContactSection';
 import { Calendar, DollarSign, Trophy, Shield, Castle, Sword, Crown, Users } from 'lucide-react';
 
 const boardMembers = [
-  { name: 'Michael C.', position: 'President', image: '/Michael C - President.png', rotate: 45 },
+  { name: 'Michael C.', position: 'President', image: '/Michael C - President.png', rotate: 90 },
   { name: 'Debi', position: 'Owner', image: '/debi.png' },
   { name: 'David', position: 'Officer / Treasurer', image: '/David Officer-Treasurer.png' },
-  { name: 'Ronika Sumlin', position: 'Secretary', image: '/Ronika Sumlin-Secretary.png', rotate: 45 },
+  { name: 'Ronika Sumlin', position: 'Secretary', image: '/Ronika Sumlin-Secretary.png', rotate: 90 },
   { name: 'Peggy W.', position: 'Co-Treasurer', image: '/Peggy W - Co Treasure.png' },
   { name: 'Carrie', position: 'Historian', image: '/Carrie - Historian.png' },
   { name: 'Nia P.', position: 'Historian Assistant', image: '/Nia P - Historian Assistant.png' },
