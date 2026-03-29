@@ -1,12 +1,12 @@
 
 import React, { useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart as ShoppingCartIcon, X, CreditCard, Truck, Loader2, Ticket } from 'lucide-react';
+import { ShoppingCart as ShoppingCartIcon, X, Truck, Loader2, Ticket } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/hooks/useCart';
 import { Button } from '@/components/ui/button';
-import { initializeCheckout } from '@/api/EcommerceApi';
 import { useToast } from '@/hooks/use-toast';
+import { submitFundraiserOrder } from '@/lib/sumlinData';
 
 const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
   const { toast } = useToast();
@@ -15,6 +15,7 @@ const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
   
   const [paymentMethod, setPaymentMethod] = useState('online'); // 'online' or 'cod'
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paypalForm, setPaypalForm] = useState({ name: '', email: '' });
   const [codForm, setCodForm] = useState({
     name: '',
     email: '',
@@ -25,6 +26,11 @@ const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setCodForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePaypalInputChange = (e) => {
+    const { name, value } = e.target;
+    setPaypalForm(prev => ({ ...prev, [name]: value }));
   };
 
   const handleCheckout = useCallback(async (e) => {
@@ -43,47 +49,59 @@ const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
 
     try {
       if (paymentMethod === 'online') {
-        // Check if we are using mock products (fallback mode)
-        const hasMockProducts = cartItems.some(item => item.variant.id.startsWith('var_'));
-        
-        if (hasMockProducts) {
-          // Simulate online checkout success for mock products to prevent Stripe API errors
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          
-          const orderDetails = {
-            id: `ORD-${Math.floor(Math.random() * 1000000)}`,
-            date: new Date().toISOString(),
-            items: [...cartItems],
-            total: getCartTotal(),
-            method: 'Online Payment (Simulated)',
-            status: 'Paid'
-          };
-
-          clearCart();
-          setIsCartOpen(false);
-          navigate('/success', { state: { orderDetails } });
+        if (!paypalForm.name || !paypalForm.email) {
+          toast({
+            title: 'Missing Information',
+            description: 'Please enter your name and email so we can track your raffle entries.',
+            variant: 'destructive',
+          });
+          setIsProcessing(false);
           return;
         }
 
-        // Real Stripe Checkout Flow
-        const items = cartItems.map(item => ({
-          variant_id: item.variant.id,
-          quantity: item.quantity,
-        }));
+        const orderResult = await submitFundraiserOrder({
+          name: paypalForm.name,
+          email: paypalForm.email,
+          items: cartItems,
+        });
 
-        const successUrl = `${window.location.origin}/success`;
-        const cancelUrl = window.location.href;
-
-        const { url } = await initializeCheckout({ items, successUrl, cancelUrl });
+        if (!orderResult.ok) {
+          throw new Error(orderResult.message || 'Unable to reserve your fundraiser entries.');
+        }
 
         clearCart();
-        window.location.href = url;
+        setIsCartOpen(false);
+        setPaypalForm({ name: '', email: '' });
+
+        navigate({
+          pathname: '/donate',
+          search: new URLSearchParams({
+            amount: ((orderResult.totalCents ?? 0) / 100).toFixed(2),
+            tickets: String(orderResult.entryCount ?? 0),
+            name: paypalForm.name,
+            email: paypalForm.email,
+            orderId: orderResult.orderId ?? '',
+            reference: orderResult.referenceCode ?? '',
+          }).toString(),
+        }, {
+          state: {
+            tickets: orderResult.tickets,
+            totalCents: orderResult.totalCents ?? 0,
+            entryCount: orderResult.entryCount ?? 0,
+            orderId: orderResult.orderId ?? null,
+            referenceCode: orderResult.referenceCode ?? null,
+            customer: {
+              name: paypalForm.name,
+              email: paypalForm.email,
+            },
+          },
+        });
       } else {
         // Cash on Delivery Flow
-        if (!codForm.name || !codForm.email || !codForm.phone || !codForm.address) {
+        if (!codForm.name || !codForm.email || !codForm.phone) {
           toast({
             title: 'Missing Information',
-            description: 'Please fill out all fields for Cash on Delivery.',
+            description: 'Please fill out your name, email, and phone number for Cash App / COD.',
             variant: 'destructive',
           });
           setIsProcessing(false);
@@ -111,13 +129,13 @@ const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
       console.error("Checkout error:", error);
       toast({
         title: 'Checkout Error',
-        description: 'There was a problem processing your checkout. Please try again.',
+        description: error.message || 'There was a problem processing your checkout. Please try again.',
         variant: 'destructive',
       });
     } finally {
       setIsProcessing(false);
     }
-  }, [cartItems, clearCart, toast, paymentMethod, codForm, navigate, getCartTotal, setIsCartOpen]);
+  }, [cartItems, clearCart, toast, paymentMethod, paypalForm, codForm, navigate, getCartTotal, setIsCartOpen]);
 
   return (
     <AnimatePresence>
@@ -197,20 +215,20 @@ const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
                         type="button"
                         onClick={() => setPaymentMethod('online')}
                         className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all duration-200 ${
-                          paymentMethod === 'online' 
-                            ? 'border-primary bg-primary/5 text-primary' 
+                          paymentMethod === 'online'
+                            ? 'border-primary bg-primary/5 text-primary'
                             : 'border-border bg-background text-muted-foreground hover:border-primary/50'
                         }`}
                       >
-                        <CreditCard className="w-6 h-6 mb-2" />
-                        <span className="text-sm font-medium">Online Pay</span>
+                        <img src="https://www.paypalobjects.com/webstatic/icon/pp258.png" alt="PayPal" className="w-6 h-6 mb-2 object-contain" />
+                        <span className="text-sm font-medium">PayPal</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => setPaymentMethod('cod')}
                         className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all duration-200 ${
-                          paymentMethod === 'cod' 
-                            ? 'border-primary bg-primary/5 text-primary' 
+                          paymentMethod === 'cod'
+                            ? 'border-primary bg-primary/5 text-primary'
                             : 'border-border bg-background text-muted-foreground hover:border-primary/50'
                         }`}
                       >
@@ -220,6 +238,37 @@ const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
                     </div>
 
                     <AnimatePresence mode="wait">
+                      {paymentMethod === 'online' && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="space-y-3 overflow-hidden"
+                        >
+                          <p className="text-xs text-muted-foreground mb-2">
+                            Enter your info so we can match your PayPal payment to your raffle entries.
+                          </p>
+                          <input
+                            type="text"
+                            name="name"
+                            placeholder="Full Name"
+                            value={paypalForm.name}
+                            onChange={handlePaypalInputChange}
+                            className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground"
+                          />
+                          <input
+                            type="email"
+                            name="email"
+                            placeholder="Email Address"
+                            value={paypalForm.email}
+                            onChange={handlePaypalInputChange}
+                            className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground"
+                          />
+                          <p className="text-xs text-amber-600 font-medium pt-1">
+                            Your total is <strong>{getCartTotal()}</strong>. Please enter this exact amount on PayPal.
+                          </p>
+                        </motion.div>
+                      )}
                       {paymentMethod === 'cod' && (
                         <motion.form
                           initial={{ opacity: 0, height: 0 }}
@@ -238,7 +287,7 @@ const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
                             value={codForm.name}
                             onChange={handleInputChange}
                             required
-                            className="w-full"
+                            className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground"
                           />
                           <input
                             type="email"
@@ -247,7 +296,7 @@ const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
                             value={codForm.email}
                             onChange={handleInputChange}
                             required
-                            className="w-full"
+                            className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground"
                           />
                           <input
                             type="tel"
@@ -256,7 +305,7 @@ const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
                             value={codForm.phone}
                             onChange={handleInputChange}
                             required
-                            className="w-full"
+                            className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground"
                           />
                           <textarea
                             name="address"
@@ -264,7 +313,7 @@ const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
                             value={codForm.address}
                             onChange={handleInputChange}
                             rows={2}
-                            className="w-full resize-none"
+                            className="w-full resize-none border border-border rounded-lg px-3 py-2 text-sm bg-background text-foreground"
                           />
                         </motion.form>
                       )}

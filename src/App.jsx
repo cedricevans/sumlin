@@ -19,6 +19,7 @@ import ReturnsPolicy from '@/pages/ReturnsPolicy.jsx';
 import FundraiserRulesPage from '@/pages/FundraiserRulesPage.jsx';
 import FamilyBusinessPage from '@/pages/FamilyBusinessPage.jsx';
 import AdminPage from '@/pages/AdminPage.jsx';
+import DonationPage from '@/pages/DonationPage.jsx';
 import ShoppingCart from '@/components/ShoppingCart.jsx';
 import ScrollToTop from '@/components/ScrollToTop.jsx';
 import { CartProvider } from '@/hooks/useCart.jsx';
@@ -48,6 +49,7 @@ function App() {
             <Route path="/fundraiser-rules" element={<FundraiserRulesPage />} />
             <Route path="/family-business" element={<FamilyBusinessPage />} />
             <Route path="/admin" element={<AdminPage />} />
+            <Route path="/donate" element={<DonationPage />} />
             <Route path="/shipping-policy" element={<ShippingPolicy />} />
             <Route path="/returns-policy" element={<ReturnsPolicy />} />
             <Route path="*" element={

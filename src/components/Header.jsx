@@ -38,10 +38,11 @@ const Header = ({ setIsCartOpen }) => {
 
   const navLinks = [
     { name: 'Home', path: '/' },
+    { name: 'Family Legacy', path: '/family-legacy' },
     { name: 'Business Corner', path: '/family-business' },
     { name: 'Family Portraits', path: '/family-portraits' },
     { name: 'Testimonials', path: '/testimonials' },
-    { name: 'Family Legacy', path: '/family-legacy' },
+    { name: 'Donate', path: '/donate' },
     ...(hasAdminSession ? [{ name: 'Admin', path: '/admin' }] : [])
   ];
 

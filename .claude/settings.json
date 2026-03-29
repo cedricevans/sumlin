@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://localhost:3001)",
+      "Bash(npm run:*)",
+      "Bash(curl -sI \"https://www.paypal.com/donate/?hosted_button_id=RM5NCYM76BJQA&amount=5.00\")"
+    ]
+  }
+}

@@ -836,6 +836,64 @@ export async function saveAdminInvite(payload, slug = DEFAULT_TENANT_SLUG) {
 	};
 }
 
+export async function submitFundraiserOrder(payload, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return {
+			ok: false,
+			orderId: null,
+			tickets: [],
+			message: 'Supabase is not configured yet.',
+		};
+	}
+
+	const totalCents = payload.items.reduce((sum, item) => {
+		const price = item.variant.sale_price_in_cents ?? item.variant.price_in_cents;
+		return sum + price * item.quantity;
+	}, 0);
+
+	const entryCount = payload.items.reduce((sum, item) => sum + item.quantity, 0);
+
+	const itemsSnapshot = payload.items.map((item) => ({
+		title: item.product.title,
+		quantity: item.quantity,
+		price_cents: item.variant.sale_price_in_cents ?? item.variant.price_in_cents,
+	}));
+
+	const rpcResult = await sumlinDb.rpc('create_public_fundraiser_order', {
+		target_slug: slug,
+		purchaser_name: payload.name,
+		purchaser_email: payload.email,
+		payment_method: 'paypal',
+		items_snapshot: itemsSnapshot,
+		purchaser_phone: payload.phone ?? null,
+		purchaser_address: payload.address ?? null,
+		external_payment_reference: null,
+		order_notes: null,
+	});
+
+	if (rpcResult.error) {
+		return {
+			ok: false,
+			orderId: null,
+			tickets: [],
+			message: normalizeError(rpcResult.error)?.message || rpcResult.error.message || 'Unable to create the fundraiser order.',
+		};
+	}
+
+	const result = rpcResult.data || {};
+	const tickets = Array.isArray(result.ticket_numbers) ? result.ticket_numbers : [];
+
+	return {
+		ok: Boolean(result.ok),
+		orderId: result.order_id ?? null,
+		tickets,
+		totalCents: result.donation_amount_cents || totalCents,
+		entryCount: result.entry_count ?? entryCount,
+		referenceCode: result.reference_code ?? null,
+		message: result.ok ? null : 'Unable to create the fundraiser order.',
+	};
+}
+
 export async function fetchAdminDashboard(slug = DEFAULT_TENANT_SLUG) {
 	if (!supabase) {
 		return {

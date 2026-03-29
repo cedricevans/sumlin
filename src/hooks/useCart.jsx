@@ -66,10 +66,11 @@ export const CartProvider = ({ children }) => {
   }, []);
 
   const getCartTotal = useCallback(() => {
-    return formatCurrency(cartItems.reduce((total, item) => {
+    const totalCents = cartItems.reduce((total, item) => {
       const price = item.variant.sale_price_in_cents ?? item.variant.price_in_cents;
       return total + price * item.quantity;
-    }, 0), cartItems[0].variant.currency_info);
+    }, 0);
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(totalCents / 100);
   }, [cartItems]);
 
   const value = useMemo(() => ({

@@ -15,8 +15,7 @@ export const supabase = hasSupabaseConfig
 	})
 	: null;
 
-// Use the public schema instead of a custom 'sumlin' schema
-export const sumlinDb = supabase;
+export const sumlinDb = supabase?.schema('sumlin') ?? null;
 
 export function getSupabaseConnectionLabel() {
 	if (!hasSupabaseConfig) {
