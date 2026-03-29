@@ -42,7 +42,6 @@ const Header = ({ setIsCartOpen }) => {
     { name: 'Family Portraits', path: '/family-portraits' },
     { name: 'Testimonials', path: '/testimonials' },
     { name: 'Family Legacy', path: '/family-legacy' },
-    { name: 'Reunion Board', path: '/family-legacy#reunion-board' },
     ...(hasAdminSession ? [{ name: 'Admin', path: '/admin' }] : [])
   ];
 
