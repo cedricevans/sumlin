@@ -9,7 +9,7 @@ import { Calendar, DollarSign, Trophy, Shield, Castle, Sword, Crown, Users } fro
 
 const boardMembers = [
   { name: 'Michael C.', position: 'President', image: '/Michael C - President.png' },
-  { name: 'Debi', position: 'Owner', image: '/debi.png' },
+  { name: 'Debi', position: 'Vice President', image: '/debi.png' },
   { name: 'David', position: 'Officer / Treasurer', image: '/David Officer-Treasurer.png' },
   { name: 'Ronika Sumlin', position: 'Secretary', image: '/Ronika Sumlin-Secretary.png' },
   { name: 'Peggy W.', position: 'Co-Treasurer', image: '/Peggy W - Co Treasure.png' },
