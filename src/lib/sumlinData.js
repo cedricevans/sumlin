@@ -1,6 +1,7 @@
 import { getSupabaseConnectionLabel, supabase, sumlinDb } from '@/lib/supabase';
 
 export const DEFAULT_TENANT_SLUG = 'sumlin';
+export const NEWSLETTER_BUCKET = 'sumlin-newsletters';
 
 export const fundraiserRules = {
 	title: 'Sumlin Family Reunion fundraiser disclaimer and entry rules',
@@ -303,6 +304,8 @@ const fallbackDashboard = {
 	adminInvites: [],
 };
 
+const fallbackNewsletterDocuments = [];
+
 function sortByDate(items, key) {
 	return [...items].sort((left, right) => {
 		const leftValue = left?.[key] ? new Date(left[key]).getTime() : 0;
@@ -333,6 +336,38 @@ function normalizeError(error) {
 		type: 'query_failed',
 		message: error.message || 'Supabase query failed.',
 	};
+}
+
+function normalizeNewsletterError(error) {
+	if (!error) {
+		return null;
+	}
+
+	const message = `${error.message || ''} ${error.details || ''}`.toLowerCase();
+
+	if (
+		message.includes('newsletter_documents')
+		|| message.includes('sumlin-newsletters')
+		|| message.includes('bucket')
+	) {
+		return {
+			type: 'newsletter_setup_missing',
+			message: 'Newsletter uploads are not configured yet. Run supabase/add_newsletter_documents.sql and try again.',
+		};
+	}
+
+	return normalizeError(error) || {
+		type: 'query_failed',
+		message: error.message || 'Newsletter request failed.',
+	};
+}
+
+function sanitizeFileName(value) {
+	return value
+		.toLowerCase()
+		.replace(/[^a-z0-9.\-_]+/g, '-')
+		.replace(/-+/g, '-')
+		.replace(/^-|-$/g, '');
 }
 
 export function formatDateTime(value) {
@@ -443,6 +478,45 @@ export async function fetchBusinessSnapshot(slug = DEFAULT_TENANT_SLUG) {
 		events: eventsResult.data?.length ? sortByDate(eventsResult.data, 'starts_at') : fallbackEvents,
 		status: dataError ? 'fallback' : 'live',
 		error: dataError,
+	};
+}
+
+export async function fetchNewsletterDocuments(slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return {
+			documents: fallbackNewsletterDocuments,
+			status: getSupabaseConnectionLabel(),
+			error: null,
+		};
+	}
+
+	const tenantResult = await sumlinDb
+		.from('tenants')
+		.select('id')
+		.eq('slug', slug)
+		.maybeSingle();
+
+	if (tenantResult.error || !tenantResult.data?.id) {
+		return {
+			documents: fallbackNewsletterDocuments,
+			status: 'fallback',
+			error: normalizeNewsletterError(tenantResult.error),
+		};
+	}
+
+	const documentsResult = await sumlinDb
+		.from('newsletter_documents')
+		.select('*')
+		.eq('tenant_id', tenantResult.data.id)
+		.order('issue_date', { ascending: false })
+		.order('created_at', { ascending: false });
+
+	const documentsError = normalizeNewsletterError(documentsResult.error);
+
+	return {
+		documents: documentsResult.data?.length ? documentsResult.data : fallbackNewsletterDocuments,
+		status: documentsError ? 'fallback' : 'live',
+		error: documentsError,
 	};
 }
 
@@ -633,6 +707,80 @@ export async function saveEvent(payload, slug = DEFAULT_TENANT_SLUG) {
 	return {
 		ok: true,
 		message: payload.id ? 'Event updated.' : 'Event added.',
+	};
+}
+
+export async function uploadNewsletterDocument(payload, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return {
+			ok: false,
+			message: 'Supabase is not configured yet.',
+		};
+	}
+
+	if (!payload.file) {
+		return {
+			ok: false,
+			message: 'Choose a newsletter file before uploading.',
+		};
+	}
+
+	const tenantResult = await getTenantIdForSlug(slug);
+
+	if (tenantResult.error || !tenantResult.id) {
+		return {
+			ok: false,
+			message: tenantResult.error?.message || 'The Sumlin tenant is not available yet.',
+		};
+	}
+
+	const safeFileName = sanitizeFileName(payload.file.name || 'newsletter-file');
+	const filePath = `${slug}/${Date.now()}-${safeFileName}`;
+
+	const uploadResult = await supabase.storage
+		.from(NEWSLETTER_BUCKET)
+		.upload(filePath, payload.file, {
+			cacheControl: '3600',
+			upsert: false,
+			contentType: payload.file.type || undefined,
+		});
+
+	if (uploadResult.error) {
+		return {
+			ok: false,
+			message: normalizeNewsletterError(uploadResult.error)?.message || 'Unable to upload the newsletter file.',
+		};
+	}
+
+	const {
+		data: { publicUrl },
+	} = supabase.storage.from(NEWSLETTER_BUCKET).getPublicUrl(filePath);
+
+	const insertResult = await sumlinDb
+		.from('newsletter_documents')
+		.insert({
+			tenant_id: tenantResult.id,
+			title: payload.title,
+			issue_date: payload.issue_date,
+			description: payload.description || null,
+			file_name: payload.file.name,
+			file_path: filePath,
+			file_url: publicUrl,
+			file_size_bytes: payload.file.size || null,
+			mime_type: payload.file.type || null,
+		});
+
+	if (insertResult.error) {
+		await supabase.storage.from(NEWSLETTER_BUCKET).remove([filePath]);
+		return {
+			ok: false,
+			message: normalizeNewsletterError(insertResult.error)?.message || 'Unable to save the newsletter record.',
+		};
+	}
+
+	return {
+		ok: true,
+		message: 'Newsletter uploaded and published.',
 	};
 }
 

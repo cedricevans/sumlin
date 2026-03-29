@@ -17,6 +17,7 @@ import {
 import {
 	clearAdminDataCache,
 	fetchAdminDashboard,
+	fetchNewsletterDocuments,
 	fetchAllOrdersForExport,
 	fetchOrdersWithTickets,
 	formatDateTime,
@@ -29,6 +30,7 @@ import {
 	signInAdmin,
 	signOutAdmin,
 	signUpAdmin,
+	uploadNewsletterDocument,
 	updateOrderPaymentStatus,
 	watchAdminSession,
 } from '@/lib/sumlinData';
@@ -78,6 +80,13 @@ const initialInviteForm = {
 	role: 'admin',
 };
 
+const initialNewsletterForm = {
+	title: '',
+	issue_date: '',
+	description: '',
+	file: null,
+};
+
 function toDateTimeInput(value) {
 	if (!value) {
 		return '';
@@ -85,6 +94,30 @@ function toDateTimeInput(value) {
 	const date = new Date(value);
 	const offset = date.getTimezoneOffset();
 	return new Date(date.getTime() - offset * 60000).toISOString().slice(0, 16);
+}
+
+function formatIssueDate(value) {
+	if (!value) {
+		return 'Date coming soon';
+	}
+
+	return new Intl.DateTimeFormat('en-US', {
+		month: 'long',
+		day: 'numeric',
+		year: 'numeric',
+	}).format(new Date(value));
+}
+
+function formatFileSize(bytes) {
+	if (!bytes) {
+		return 'File ready to download';
+	}
+
+	if (bytes < 1024 * 1024) {
+		return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+	}
+
+	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function buildSettingsForm(tenant) {
@@ -195,6 +228,7 @@ const AdminPage = () => {
 	const [signingUp, setSigningUp] = useState(false);
 	const [savingBusiness, setSavingBusiness] = useState(false);
 	const [savingEvent, setSavingEvent] = useState(false);
+	const [savingNewsletter, setSavingNewsletter] = useState(false);
 	const [savingSettings, setSavingSettings] = useState(false);
 	const [savingInvite, setSavingInvite] = useState(false);
 	const [approvingOrderId, setApprovingOrderId] = useState(null);
@@ -206,8 +240,12 @@ const AdminPage = () => {
 	const [credentials, setCredentials] = useState({ email: '', password: '' });
 	const [businessForm, setBusinessForm] = useState(initialBusinessForm);
 	const [eventForm, setEventForm] = useState(initialEventForm);
+	const [newsletterForm, setNewsletterForm] = useState(initialNewsletterForm);
 	const [settingsForm, setSettingsForm] = useState(initialSettingsForm);
 	const [inviteForm, setInviteForm] = useState(initialInviteForm);
+	const [newsletterDocuments, setNewsletterDocuments] = useState([]);
+	const [newsletterLoading, setNewsletterLoading] = useState(false);
+	const [newsletterUploadKey, setNewsletterUploadKey] = useState(0);
 
 	const showDashboard = Boolean(session);
 	const showDisconnectedState = !hasSupabaseConfig;
@@ -229,6 +267,13 @@ const AdminPage = () => {
 			setOrders(result.orders);
 		}
 		setOrdersLoading(false);
+	};
+
+	const loadNewsletterArchive = async () => {
+		setNewsletterLoading(true);
+		const result = await fetchNewsletterDocuments();
+		setNewsletterDocuments(result.documents || []);
+		setNewsletterLoading(false);
 	};
 
 	useEffect(() => {
@@ -287,6 +332,7 @@ const AdminPage = () => {
 	useEffect(() => {
 		if (showDashboard) {
 			loadOrders();
+			loadNewsletterArchive();
 		}
 	}, [showDashboard]);
 
@@ -306,6 +352,14 @@ const AdminPage = () => {
 	const handleEventChange = (event) => {
 		const { name, value } = event.target;
 		setEventForm((current) => ({ ...current, [name]: value }));
+	};
+
+	const handleNewsletterChange = (event) => {
+		const { name, value, files, type } = event.target;
+		setNewsletterForm((current) => ({
+			...current,
+			[name]: type === 'file' ? (files?.[0] || null) : value,
+		}));
 	};
 
 	const handleSettingsChange = (event) => {
@@ -365,6 +419,7 @@ const AdminPage = () => {
 	const handleSignOut = async () => {
 		await signOutAdmin();
 		setDashboard(null);
+		setNewsletterDocuments([]);
 		toast({
 			title: 'Signed out',
 			description: 'The admin session has been closed.',
@@ -372,7 +427,7 @@ const AdminPage = () => {
 	};
 
 	const handleRefresh = async () => {
-		await Promise.all([loadDashboard(), loadOrders()]);
+		await Promise.all([loadDashboard(), loadOrders(), loadNewsletterArchive()]);
 		toast({
 			title: 'Dashboard refreshed',
 			description: 'Latest family records loaded.',
@@ -423,6 +478,30 @@ const AdminPage = () => {
 		}
 
 		setSavingEvent(false);
+	};
+
+	const handleNewsletterSubmit = async (event) => {
+		event.preventDefault();
+		setSavingNewsletter(true);
+		const result = await uploadNewsletterDocument(newsletterForm);
+
+		if (result.ok) {
+			toast({
+				title: 'Newsletter uploaded',
+				description: result.message,
+			});
+			setNewsletterForm(initialNewsletterForm);
+			setNewsletterUploadKey((current) => current + 1);
+			await loadNewsletterArchive();
+		} else {
+			toast({
+				title: 'Upload failed',
+				description: result.message,
+				variant: 'destructive',
+			});
+		}
+
+		setSavingNewsletter(false);
 	};
 
 	const handleSettingsSubmit = async (event) => {
@@ -603,6 +682,7 @@ const AdminPage = () => {
 		{ id: 'orders', label: 'Orders', icon: Wallet, count: orders.length },
 		{ id: 'tickets', label: 'Tickets', icon: Ticket, count: dashboard?.tickets?.length || 0 },
 		{ id: 'events', label: 'Events', icon: CalendarDays, count: dashboard?.events?.length || 0 },
+		{ id: 'newsletter', label: 'Newsletter', icon: Download, count: newsletterDocuments.length },
 		{ id: 'business', label: 'Business', icon: Store, count: dashboard?.businesses?.length || 0 },
 		{ id: 'access', label: 'Access', icon: Users, count: dashboard?.admins?.length || 0 },
 	];
@@ -613,7 +693,7 @@ const AdminPage = () => {
 				<title>Admin Dashboard | Sumlin Family</title>
 				<meta
 					name="description"
-					content="Manage the Sumlin family business directory, family calendar links, events, signups, and reunion support records."
+					content="Manage the Sumlin family calendar, newsletter uploads, business directory, fundraiser records, and family signups."
 				/>
 			</Helmet>
 
@@ -627,7 +707,7 @@ const AdminPage = () => {
 							</div>
 							<h1 className="text-5xl md:text-6xl font-bold mb-4">Manage businesses, events, tickets, and family signups</h1>
 							<p className="text-lg text-muted-foreground max-w-3xl">
-								The admin area is now organized around quick sections so tickets and order intake stay at the top instead of forcing a long full-page scroll.
+								The admin area is organized around quick sections so tickets, events, newsletter uploads, and family updates stay easy to manage.
 							</p>
 						</div>
 
@@ -1012,6 +1092,130 @@ const AdminPage = () => {
 														</div>
 													))}
 												</div>
+											</div>
+										</div>
+									)}
+
+									{activeTab === 'newsletter' && (
+										<div className="space-y-8">
+											{canManage && (
+												<div className="grid xl:grid-cols-2 gap-8">
+													<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+														<div className="flex items-center gap-3 mb-4">
+															<Download className="h-5 w-5 text-primary" />
+															<h2 className="text-2xl font-bold">Upload newsletter</h2>
+														</div>
+														<p className="text-muted-foreground mb-6">
+															Add a newsletter file, give it a name and issue date, and it will appear on the public newsletter archive page.
+														</p>
+														<form onSubmit={handleNewsletterSubmit} className="space-y-4">
+															<input
+																type="text"
+																name="title"
+																placeholder="Newsletter title"
+																value={newsletterForm.title}
+																onChange={handleNewsletterChange}
+																required
+																className="w-full"
+															/>
+															<input
+																type="date"
+																name="issue_date"
+																value={newsletterForm.issue_date}
+																onChange={handleNewsletterChange}
+																required
+																className="w-full"
+															/>
+															<textarea
+																name="description"
+																placeholder="Short description or headline summary"
+																value={newsletterForm.description}
+																onChange={handleNewsletterChange}
+																rows={4}
+																className="w-full"
+															/>
+															<input
+																key={newsletterUploadKey}
+																type="file"
+																name="file"
+																accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+																onChange={handleNewsletterChange}
+																required
+																className="w-full"
+															/>
+															<p className="text-xs text-muted-foreground">
+																PDF is the cleanest option for public download, but Word docs and image files are also accepted.
+															</p>
+															<button
+																type="submit"
+																disabled={savingNewsletter}
+																className="gradient-burgundy text-white px-6 py-3 rounded-xl font-semibold hover:shadow-burgundy transition-all duration-200 disabled:opacity-70"
+															>
+																{savingNewsletter ? 'Uploading...' : 'Upload newsletter'}
+															</button>
+														</form>
+													</div>
+
+													<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+														<div className="flex items-center gap-3 mb-4">
+															<Mail className="h-5 w-5 text-primary" />
+															<h2 className="text-2xl font-bold">How it shows publicly</h2>
+														</div>
+														<div className="space-y-4 text-muted-foreground">
+															<p>The newest issue becomes the featured download on the public newsletter page.</p>
+															<p>Older uploads stay listed as archives so family members can return and download past issues at any time.</p>
+															<p>If upload fails because storage is not configured yet, run <code>supabase/add_newsletter_documents.sql</code> in Supabase and try again.</p>
+														</div>
+													</div>
+												</div>
+											)}
+
+											<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+												<div className="flex items-center gap-3 mb-6">
+													<Download className="h-5 w-5 text-primary" />
+													<h2 className="text-2xl font-bold">Published newsletter archive</h2>
+												</div>
+
+												{newsletterLoading ? (
+													<p className="py-8 text-center text-sm text-muted-foreground">Loading newsletter files...</p>
+												) : newsletterDocuments.length === 0 ? (
+													<p className="py-8 text-center text-sm text-muted-foreground">
+														No newsletter files uploaded yet.
+													</p>
+												) : (
+													<div className="space-y-3">
+														{newsletterDocuments.map((document, index) => (
+															<div key={document.id} className="rounded-2xl border border-border/50 px-4 py-4">
+																<div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+																	<div className="min-w-0">
+																		<div className="flex flex-wrap items-center gap-2 mb-2">
+																			<p className="font-semibold">{document.title}</p>
+																			{index === 0 && (
+																				<span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+																					Latest
+																				</span>
+																			)}
+																		</div>
+																		<p className="text-sm text-muted-foreground">
+																			{formatIssueDate(document.issue_date)} • {document.file_name} • {formatFileSize(document.file_size_bytes)}
+																		</p>
+																		{document.description && (
+																			<p className="text-sm text-muted-foreground mt-2">{document.description}</p>
+																		)}
+																	</div>
+																	<a
+																		href={document.file_url}
+																		download
+																		className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80"
+																	>
+																		<Download className="h-4 w-4" />
+																		Download
+																	</a>
+																</div>
+															</div>
+														))}
+													</div>
+												)}
 											</div>
 										</div>
 									)}

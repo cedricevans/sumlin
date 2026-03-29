@@ -167,10 +167,10 @@ const Reunion2026Page = () => {
                 Purchase Ticket
               </a>
               <a
-                href="/testimonials"
+                href="/events"
                 className="inline-block bg-muted text-foreground px-8 py-3 rounded-xl font-semibold hover:bg-muted/80 hover:scale-105 transition-all duration-200 active:scale-[0.98]"
               >
-                Read testimonials
+                View family calendar
               </a>
             </div>
           </SmoothScroller>

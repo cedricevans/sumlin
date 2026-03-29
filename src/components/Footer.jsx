@@ -8,6 +8,8 @@ const Footer = () => {
 
   const quickLinks = [
     { name: 'Home', path: '/' },
+    { name: 'Events', path: '/events' },
+    { name: 'Newsletter', path: '/newsletter' },
     { name: 'Fundraiser', path: '/store' },
     { name: 'Business Corner', path: '/family-business' },
     { name: 'Family Legacy', path: '/family-legacy' },

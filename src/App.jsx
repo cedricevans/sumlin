@@ -8,7 +8,8 @@ import FamilyLegacyPage from '@/pages/FamilyLegacyPage.jsx';
 import Reunion2026Page from '@/pages/Reunion2026Page.jsx';
 import StorePage from '@/pages/StorePage.jsx';
 import FamilyPortraitsPage from '@/pages/FamilyPortraitsPage.jsx';
-import TestimonialsPage from '@/pages/TestimonialsPage.jsx';
+import EventsPage from '@/pages/EventsPage.jsx';
+import NewsletterPage from '@/pages/NewsletterPage.jsx';
 import Shop from '@/pages/Shop.jsx';
 import About from '@/pages/About.jsx';
 import Contact from '@/pages/Contact.jsx';
@@ -38,9 +39,10 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/family-legacy" element={<FamilyLegacyPage />} />
             <Route path="/reunion-2026" element={<Reunion2026Page />} />
+            <Route path="/events" element={<EventsPage />} />
             <Route path="/store" element={<StorePage />} />
             <Route path="/family-portraits" element={<FamilyPortraitsPage />} />
-            <Route path="/testimonials" element={<TestimonialsPage />} />
+            <Route path="/newsletter" element={<NewsletterPage />} />
             <Route path="/shop" element={<Shop />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />

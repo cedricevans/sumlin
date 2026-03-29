@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, Ticket, ShoppingCart as ShoppingCartIcon } from 'lucide-react';
+import { ChevronDown, Menu, X, Ticket, ShoppingCart as ShoppingCartIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/hooks/useCart';
 import { getAdminSession, watchAdminSession } from '@/lib/sumlinData';
@@ -38,15 +38,26 @@ const Header = ({ setIsCartOpen }) => {
 
   const navLinks = [
     { name: 'Home', path: '/' },
-    { name: 'Family Legacy', path: '/family-legacy' },
+    {
+      name: 'Family Legacy',
+      path: '/family-legacy',
+      matchPaths: ['/family-legacy', '/family-portraits'],
+      children: [
+        { name: 'Family Portraits', path: '/family-portraits' }
+      ]
+    },
+    { name: 'Events', path: '/events' },
     { name: 'Business Corner', path: '/family-business' },
-    { name: 'Family Portraits', path: '/family-portraits' },
-    { name: 'Testimonials', path: '/testimonials' },
+    { name: 'Newsletter', path: '/newsletter' },
     { name: 'Donate', path: '/donate' },
     ...(hasAdminSession ? [{ name: 'Admin', path: '/admin' }] : [])
   ];
 
-  const isActive = (path) => {
+  const isActive = (path, matchPaths) => {
+    if (Array.isArray(matchPaths) && matchPaths.length > 0) {
+      return matchPaths.includes(location.pathname);
+    }
+
     const [pathPart, hash] = path.split('#');
     if (hash) {
       return location.pathname === pathPart && location.hash === `#${hash}`;
@@ -91,39 +102,81 @@ const Header = ({ setIsCartOpen }) => {
             </button>
           </div>
 
-          <Link to="/" className="flex items-center gap-3 group lg:static lg:translate-x-0 absolute left-1/2 -translate-x-1/2">
+          <Link to="/" className="flex items-center gap-3 group lg:static lg:translate-x-0 absolute left-1/2 -translate-x-1/2 whitespace-nowrap">
             <img 
               src="https://horizons-cdn.hostinger.com/6ddbc4c1-b479-4ef4-be4a-ff36b8b1842e/84d9ab8efcec41799c1c6b1d68bfb5f9.jpg" 
               alt="Sumlin family crest - ornate heraldic shield with crossed swords, lion emblem, castle towers"
               className="h-12 md:h-14 w-auto object-contain rounded-md group-hover:scale-105 transition-transform duration-300"
             />
-            <div className="text-white text-shadow-sm">
-              <span className="block font-bold text-base sm:text-xl tracking-wide leading-tight">Sumlin Family</span>
+            <div className="text-white text-shadow-sm flex-shrink-0">
+              <span className="block font-bold text-sm sm:text-xl tracking-wide leading-tight whitespace-nowrap">Sumlin Family</span>
               <p className="hidden sm:block text-xs text-white/80 uppercase tracking-widest font-semibold">Reunion 2026</p>
             </div>
           </Link>
 
           <div className="hidden lg:flex flex-1 items-center justify-center gap-6 xl:gap-8 px-8">
             {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                onClick={(e) => handleNavClick(e, link.path)}
-                className={`font-semibold tracking-wide transition-all duration-200 relative whitespace-nowrap text-shadow-sm ${
-                  isActive(link.path)
-                    ? 'text-[#d4af37] text-shadow-glow'
-                    : 'text-white/90 hover:text-white hover:text-shadow-md'
-                }`}
-              >
-                {link.name}
-                {isActive(link.path) && (
-                  <motion.div
-                    layoutId="activeNav"
-                    className="absolute -bottom-1.5 left-0 right-0 h-0.5 bg-[#d4af37] shadow-[0_0_8px_rgba(212,175,55,0.8)]"
-                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                  />
-                )}
-              </Link>
+              link.children ? (
+                <div key={link.path} className="relative group">
+                  <Link
+                    to={link.path}
+                    onClick={(e) => handleNavClick(e, link.path)}
+                    className={`font-semibold tracking-wide transition-all duration-200 relative whitespace-nowrap text-shadow-sm inline-flex items-center gap-1 ${
+                      isActive(link.path, link.matchPaths)
+                        ? 'text-[#d4af37] text-shadow-glow'
+                        : 'text-white/90 hover:text-white hover:text-shadow-md'
+                    }`}
+                  >
+                    {link.name}
+                    <ChevronDown className="w-4 h-4" />
+                    {isActive(link.path, link.matchPaths) && (
+                      <motion.div
+                        layoutId="activeNav"
+                        className="absolute -bottom-1.5 left-0 right-0 h-0.5 bg-[#d4af37] shadow-[0_0_8px_rgba(212,175,55,0.8)]"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                  </Link>
+
+                  <div className="absolute left-1/2 top-full z-20 hidden min-w-[220px] -translate-x-1/2 pt-3 group-hover:block">
+                    <div className="rounded-2xl border border-white/10 bg-navbar/95 p-2 shadow-xl backdrop-blur">
+                      {link.children.map((child) => (
+                        <Link
+                          key={child.path}
+                          to={child.path}
+                          className={`block rounded-xl px-4 py-3 text-sm font-semibold transition-colors duration-200 ${
+                            isActive(child.path)
+                              ? 'bg-[#d4af37]/15 text-[#d4af37]'
+                              : 'text-white/90 hover:bg-white/10 hover:text-white'
+                          }`}
+                        >
+                          {child.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={(e) => handleNavClick(e, link.path)}
+                  className={`font-semibold tracking-wide transition-all duration-200 relative whitespace-nowrap text-shadow-sm ${
+                    isActive(link.path)
+                      ? 'text-[#d4af37] text-shadow-glow'
+                      : 'text-white/90 hover:text-white hover:text-shadow-md'
+                  }`}
+                >
+                  {link.name}
+                  {isActive(link.path) && (
+                    <motion.div
+                      layoutId="activeNav"
+                      className="absolute -bottom-1.5 left-0 right-0 h-0.5 bg-[#d4af37] shadow-[0_0_8px_rgba(212,175,55,0.8)]"
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </Link>
+              )
             ))}
           </div>
 
@@ -150,9 +203,9 @@ const Header = ({ setIsCartOpen }) => {
 
             <Link
               to="/store"
-              className="hidden md:flex items-center gap-2 gradient-metallic text-black px-5 xl:px-6 py-2.5 rounded-xl font-bold tracking-wide hover:brightness-110 hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] hover:scale-105 transition-all duration-200 active:scale-[0.98] whitespace-nowrap"
+              className="hidden md:flex items-center gap-1.5 gradient-metallic text-black px-3.5 xl:px-4 py-2 rounded-xl font-bold tracking-wide hover:brightness-110 hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] hover:scale-105 transition-all duration-200 active:scale-[0.98] whitespace-nowrap text-sm"
             >
-              <Ticket className="w-5 h-5" />
+              <Ticket className="w-4 h-4" />
               <span className="hidden xl:inline">Fundraiser</span>
               <span className="xl:hidden">Support</span>
             </Link>
@@ -172,21 +225,36 @@ const Header = ({ setIsCartOpen }) => {
               <div className="py-4 space-y-4 border-t border-white/10 mt-4">
                 <div className="space-y-2">
                   {navLinks.map((link) => (
-                    <Link
-                      key={link.path}
-                      to={link.path}
-                      onClick={(e) => {
-                        handleNavClick(e, link.path);
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className={`block px-4 py-3 rounded-xl font-semibold tracking-wide transition-colors duration-200 text-shadow-sm ${
-                        isActive(link.path)
-                          ? 'bg-[#d4af37]/15 text-[#d4af37] text-shadow-glow'
-                          : 'text-white/90 hover:bg-white/10 hover:text-white'
-                      }`}
-                    >
-                      {link.name}
-                    </Link>
+                    <div key={link.path}>
+                      <Link
+                        to={link.path}
+                        onClick={(e) => {
+                          handleNavClick(e, link.path);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`block px-4 py-3 rounded-xl font-semibold tracking-wide transition-colors duration-200 text-shadow-sm ${
+                          isActive(link.path, link.matchPaths)
+                            ? 'bg-[#d4af37]/15 text-[#d4af37] text-shadow-glow'
+                            : 'text-white/90 hover:bg-white/10 hover:text-white'
+                        }`}
+                      >
+                        {link.name}
+                      </Link>
+                      {link.children?.map((child) => (
+                        <Link
+                          key={child.path}
+                          to={child.path}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className={`mt-1 ml-4 block rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors duration-200 ${
+                            isActive(child.path)
+                              ? 'bg-[#d4af37]/15 text-[#d4af37]'
+                              : 'text-white/80 hover:bg-white/10 hover:text-white'
+                          }`}
+                        >
+                          {child.name}
+                        </Link>
+                      ))}
+                    </div>
                   ))}
                 </div>
                 <Link
