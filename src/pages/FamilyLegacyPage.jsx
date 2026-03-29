@@ -1,10 +1,21 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
+import { motion } from 'framer-motion';
 import ParallaxHero from '@/components/ParallaxHero';
 import SmoothScroller from '@/components/SmoothScroller';
 import ProductsList from '@/components/ProductsList';
 import ContactSection from '@/components/ContactSection';
-import { Calendar, DollarSign, Trophy, Shield, Castle, Sword } from 'lucide-react';
+import { Calendar, DollarSign, Trophy, Shield, Castle, Sword, Crown, Users } from 'lucide-react';
+
+const boardMembers = [
+  { name: 'Michael C.', position: 'President', image: '/Michael C - President.png' },
+  { name: 'Debi', position: 'Owner', image: '/debi.png' },
+  { name: 'David', position: 'Officer / Treasurer', image: '/David Officer-Treasurer.png' },
+  { name: 'Ronika Sumlin', position: 'Secretary', image: '/Ronika Sumlin-Secretary.png' },
+  { name: 'Peggy W.', position: 'Co-Treasurer', image: '/Peggy W - Co Treasure.png' },
+  { name: 'Carrie', position: 'Historian', image: '/Carrie - Historian.png' },
+  { name: 'Nia P.', position: 'Historian Assistant', image: '/Nia P - Historian Assistant.png' },
+];
 
 const FamilyLegacyPage = () => {
   return (
@@ -94,6 +105,58 @@ const FamilyLegacyPage = () => {
                 />
               </div>
             </SmoothScroller>
+          </div>
+        </div>
+      </section>
+
+      {/* Reunion Board Section */}
+      <section className="section-spacing bg-muted/50" id="reunion-board">
+        <div className="container-custom">
+          <SmoothScroller>
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-5 py-2 text-sm font-semibold uppercase tracking-wider text-primary mb-6">
+                <Users className="w-4 h-4" />
+                Meet the Board
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold mb-4">Reunion Board Members</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                The dedicated family members who plan, organize, and bring our reunion together every year.
+              </p>
+            </div>
+          </SmoothScroller>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 max-w-5xl mx-auto">
+            {boardMembers.map((member, index) => (
+              <SmoothScroller key={member.name} delay={index * 0.1}>
+                <motion.div
+                  whileHover={{ y: -8, scale: 1.03 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  className="group"
+                >
+                  <div className="bg-card rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-border/50">
+                    <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-rose-950/20 to-amber-950/20">
+                      <img
+                        src={member.image}
+                        alt={`${member.name} - ${member.position}`}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      {index === 0 && (
+                        <div className="absolute top-3 right-3">
+                          <div className="w-8 h-8 rounded-full gradient-gold flex items-center justify-center shadow-lg">
+                            <Crown className="w-4 h-4 text-foreground" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4 text-center">
+                      <h3 className="font-bold text-lg text-foreground leading-tight">{member.name}</h3>
+                      <p className="text-sm text-primary font-semibold mt-1">{member.position}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              </SmoothScroller>
+            ))}
           </div>
         </div>
       </section>

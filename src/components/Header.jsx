@@ -1,6 +1,6 @@
 
-import React, { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Ticket, ShoppingCart as ShoppingCartIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/hooks/useCart';
@@ -42,10 +42,36 @@ const Header = ({ setIsCartOpen }) => {
     { name: 'Family Portraits', path: '/family-portraits' },
     { name: 'Testimonials', path: '/testimonials' },
     { name: 'Family Legacy', path: '/family-legacy' },
+    { name: 'Reunion Board', path: '/family-legacy#reunion-board' },
     ...(hasAdminSession ? [{ name: 'Admin', path: '/admin' }] : [])
   ];
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    const [pathPart, hash] = path.split('#');
+    if (hash) {
+      return location.pathname === pathPart && location.hash === `#${hash}`;
+    }
+    return location.pathname === path;
+  };
+
+  const navigate = useNavigate();
+
+  const handleNavClick = useCallback((e, path) => {
+    if (path.includes('#')) {
+      e.preventDefault();
+      const [pathPart, hash] = path.split('#');
+      if (location.pathname === pathPart) {
+        const el = document.getElementById(hash);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        navigate(pathPart);
+        setTimeout(() => {
+          const el = document.getElementById(hash);
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }, 500);
+      }
+    }
+  }, [location.pathname, navigate]);
 
   return (
     <header className="sticky top-0 z-50 bg-navbar border-b border-white/10 shadow-md">
@@ -82,6 +108,7 @@ const Header = ({ setIsCartOpen }) => {
               <Link
                 key={link.path}
                 to={link.path}
+                onClick={(e) => handleNavClick(e, link.path)}
                 className={`font-semibold tracking-wide transition-all duration-200 relative whitespace-nowrap text-shadow-sm ${
                   isActive(link.path)
                     ? 'text-[#d4af37] text-shadow-glow'
@@ -148,7 +175,10 @@ const Header = ({ setIsCartOpen }) => {
                     <Link
                       key={link.path}
                       to={link.path}
-                      onClick={() => setIsMobileMenuOpen(false)}
+                      onClick={(e) => {
+                        handleNavClick(e, link.path);
+                        setIsMobileMenuOpen(false);
+                      }}
                       className={`block px-4 py-3 rounded-xl font-semibold tracking-wide transition-colors duration-200 text-shadow-sm ${
                         isActive(link.path)
                           ? 'bg-[#d4af37]/15 text-[#d4af37] text-shadow-glow'
