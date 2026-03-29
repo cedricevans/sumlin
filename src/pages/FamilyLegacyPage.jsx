@@ -8,10 +8,10 @@ import ContactSection from '@/components/ContactSection';
 import { Calendar, DollarSign, Trophy, Shield, Castle, Sword, Crown, Users } from 'lucide-react';
 
 const boardMembers = [
-  { name: 'Michael C.', position: 'President', image: '/Michael C - President.png' },
+  { name: 'Michael C.', position: 'President', image: '/Michael C - President.png', rotate: 45 },
   { name: 'Debi', position: 'Owner', image: '/debi.png' },
   { name: 'David', position: 'Officer / Treasurer', image: '/David Officer-Treasurer.png' },
-  { name: 'Ronika Sumlin', position: 'Secretary', image: '/Ronika Sumlin-Secretary.png' },
+  { name: 'Ronika Sumlin', position: 'Secretary', image: '/Ronika Sumlin-Secretary.png', rotate: 45 },
   { name: 'Peggy W.', position: 'Co-Treasurer', image: '/Peggy W - Co Treasure.png' },
   { name: 'Carrie', position: 'Historian', image: '/Carrie - Historian.png' },
   { name: 'Nia P.', position: 'Historian Assistant', image: '/Nia P - Historian Assistant.png' },
@@ -139,6 +139,7 @@ const FamilyLegacyPage = () => {
                         src={member.image}
                         alt={`${member.name} - ${member.position}`}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        style={member.rotate ? { transform: `rotate(${member.rotate}deg) scale(1.5)` } : undefined}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       {index === 0 && (
