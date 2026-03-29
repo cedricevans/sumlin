@@ -125,7 +125,7 @@ const FamilyLegacyPage = () => {
             </div>
           </SmoothScroller>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 max-w-5xl mx-auto">
             {boardMembers.map((member, index) => (
               <SmoothScroller key={member.name} delay={index * 0.1}>
                 <motion.div
