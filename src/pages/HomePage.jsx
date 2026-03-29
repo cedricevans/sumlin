@@ -233,7 +233,7 @@ const HomePage = () => {
                 Welcome to our family
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                The Sumlin Family Reunion is more than an event—it's a celebration of our shared heritage, faith, and the bonds that unite us across generations.
+                The Sumlin Family Reunion is more than an event it's a celebration of our shared heritage, faith, and the bonds that unite us across generations.
               </p>
             </div>
           </SmoothScroller>

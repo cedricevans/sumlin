@@ -54,7 +54,7 @@ const Reunion2026Page = () => {
             <div className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold mb-6">Join us for an unforgettable weekend</h2>
               <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-                The Sumlin Family Reunion 2026 will be a milestone celebration bringing together family members from across the country. This is more than an event—it's a homecoming, a celebration of our shared heritage, and an opportunity to strengthen the bonds that unite us.
+                The Sumlin Family Reunion 2026 will be a milestone celebration bringing together family members from across the country. This is more than an event it's a homecoming, a celebration of our shared heritage, and an opportunity to strengthen the bonds that unite us.
               </p>
             </div>
           </SmoothScroller>
@@ -104,7 +104,7 @@ const Reunion2026Page = () => {
                   <div>
                     <h3 className="text-xl font-bold mb-2">Raffle drawings</h3>
                     <p className="text-muted-foreground leading-relaxed">
-                      The highlight of the weekend—our raffle drawing where lucky winners will take home amazing gift baskets.
+                      The highlight of the weekend our raffle drawing where lucky winners will take home amazing gift baskets.
                     </p>
                   </div>
                 </div>

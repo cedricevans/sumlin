@@ -118,7 +118,7 @@ const FamilyLegacyPage = () => {
                 <Users className="w-4 h-4" />
                 Meet the Board
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold mb-4">Reunion Board Members</h2>
+              <h2 className="text-4xl md:text-5xl font-bold mb-4">Family Board Members</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 The dedicated family members who plan, organize, and bring our reunion together every year.
               </p>
