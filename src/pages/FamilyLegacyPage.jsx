@@ -8,10 +8,10 @@ import ContactSection from '@/components/ContactSection';
 import { Calendar, DollarSign, Trophy, Shield, Castle, Sword, Crown, Users } from 'lucide-react';
 
 const boardMembers = [
-  { name: 'Michael C.', position: 'President', image: '/Michael C - President.png', rotate: 90 },
+  { name: 'Michael C.', position: 'President', image: '/Michael C - President.png', rotate: 90, mobileRotate: -90 },
   { name: 'Debi', position: 'Owner', image: '/debi.png' },
   { name: 'David', position: 'Officer / Treasurer', image: '/David Officer-Treasurer.png' },
-  { name: 'Ronika Sumlin', position: 'Secretary', image: '/Ronika Sumlin-Secretary.png', rotate: 90 },
+  { name: 'Ronika Sumlin', position: 'Secretary', image: '/Ronika Sumlin-Secretary.png', rotate: 90, mobileRotate: -90 },
   { name: 'Peggy W.', position: 'Co-Treasurer', image: '/Peggy W - Co Treasure.png' },
   { name: 'Carrie', position: 'Historian', image: '/Carrie - Historian.png' },
   { name: 'Nia P.', position: 'Historian Assistant', image: '/Nia P - Historian Assistant.png' },
@@ -125,7 +125,7 @@ const FamilyLegacyPage = () => {
             </div>
           </SmoothScroller>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8 max-w-5xl mx-auto">
             {boardMembers.map((member, index) => (
               <SmoothScroller key={member.name} delay={index * 0.1}>
                 <motion.div
@@ -135,10 +135,18 @@ const FamilyLegacyPage = () => {
                 >
                   <div className="bg-card rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-border/50">
                     <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-rose-950/20 to-amber-950/20">
+                      {/* Mobile: counter-clockwise rotation */}
                       <img
                         src={member.image}
                         alt={`${member.name} - ${member.position}`}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 sm:hidden"
+                        style={member.mobileRotate ? { transform: `rotate(${member.mobileRotate}deg) scale(1.5)` } : undefined}
+                      />
+                      {/* Desktop: original rotation */}
+                      <img
+                        src={member.image}
+                        alt={`${member.name} - ${member.position}`}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 hidden sm:block"
                         style={member.rotate ? { transform: `rotate(${member.rotate}deg) scale(1.5)` } : undefined}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
