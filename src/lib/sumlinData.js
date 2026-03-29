@@ -795,45 +795,116 @@ export function watchAdminSession(callback) {
 
 export async function saveAdminInvite(payload, slug = DEFAULT_TENANT_SLUG) {
 	if (!supabase) {
-		return {
-			ok: false,
-			message: 'Supabase is not configured yet.',
-		};
+		return { ok: false, message: 'Supabase is not configured yet.' };
 	}
 
-	const tenantResult = await getTenantIdForSlug(slug);
+	const rpcResult = await sumlinDb.rpc('save_admin_invite', {
+		p_email: payload.email.trim().toLowerCase(),
+		p_role: payload.role,
+		target_slug: slug,
+	});
 
-	if (tenantResult.error || !tenantResult.id) {
-		return {
-			ok: false,
-			message: tenantResult.error?.message || 'The Sumlin tenant is not available yet.',
-		};
+	if (rpcResult.error) {
+		return { ok: false, message: rpcResult.error.message };
 	}
 
-	const values = {
-		tenant_id: tenantResult.id,
-		email: payload.email.trim().toLowerCase(),
-		role: payload.role,
-		status: 'pending',
-	};
-
-	const result = await sumlinDb
-		.from('tenant_admin_invites')
-		.upsert(values, {
-			onConflict: 'tenant_id,email',
-		});
-
-	if (result.error) {
-		return {
-			ok: false,
-			message: normalizeError(result.error)?.message || 'Unable to save the admin invite.',
-		};
-	}
-
+	const raw = rpcResult.data;
+	const result = Array.isArray(raw) ? (raw[0] ?? {}) : (raw ?? {});
+	clearAdminDataCache();
 	return {
-		ok: true,
-		message: 'Admin invite saved. Once that person creates an account and signs in, access will be claimed automatically.',
+		ok: Boolean(result.ok),
+		message: result.message || 'Admin invite saved.',
 	};
+}
+
+// All admin data functions use SECURITY DEFINER RPCs to bypass RLS recursion.
+// Direct table queries on tenant_admins and related tables fail due to
+// infinite recursion in their RLS policies.
+
+let _adminDataCache = null;
+let _adminDataCacheTime = 0;
+const ADMIN_CACHE_TTL = 30000; // 30 seconds
+
+export async function getAdminData(slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return { ok: false, message: 'Supabase is not configured.' };
+	}
+
+	const now = Date.now();
+	if (_adminDataCache && (now - _adminDataCacheTime) < ADMIN_CACHE_TTL) {
+		return _adminDataCache;
+	}
+
+	const rpcResult = await sumlinDb.rpc('get_admin_data', { target_slug: slug });
+
+	if (rpcResult.error) {
+		return { ok: false, message: rpcResult.error.message };
+	}
+
+	const raw = rpcResult.data;
+	const result = Array.isArray(raw) ? (raw[0] ?? {}) : (raw ?? {});
+
+	if (!result.ok) {
+		return { ok: false, message: result.message || 'Access denied.' };
+	}
+
+	_adminDataCache = { ok: true, ...result };
+	_adminDataCacheTime = now;
+	return _adminDataCache;
+}
+
+export function clearAdminDataCache() {
+	_adminDataCache = null;
+	_adminDataCacheTime = 0;
+}
+
+export async function fetchOrdersWithTickets(slug = DEFAULT_TENANT_SLUG) {
+	const result = await getAdminData(slug);
+	if (!result.ok) {
+		return { ok: false, orders: [], message: result.message };
+	}
+
+	const ticketsByOrder = (result.tickets || []).reduce((acc, ticket) => {
+		if (!acc[ticket.order_id]) acc[ticket.order_id] = [];
+		acc[ticket.order_id].push(ticket);
+		return acc;
+	}, {});
+
+	const orders = (result.orders || []).map((order) => ({
+		...order,
+		tickets: ticketsByOrder[order.id] || [],
+	}));
+
+	return { ok: true, orders };
+}
+
+export async function updateOrderPaymentStatus(orderId, status, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return { ok: false, message: 'Supabase is not configured yet.' };
+	}
+
+	const rpcResult = await sumlinDb.rpc('update_order_status', {
+		p_order_id: orderId,
+		p_status: status,
+		target_slug: slug,
+	});
+
+	if (rpcResult.error) {
+		return { ok: false, message: rpcResult.error.message };
+	}
+
+	const raw = rpcResult.data;
+	const result = Array.isArray(raw) ? (raw[0] ?? {}) : (raw ?? {});
+	clearAdminDataCache();
+	return { ok: Boolean(result.ok), message: result.message || null };
+}
+
+export async function fetchAllOrdersForExport(slug = DEFAULT_TENANT_SLUG) {
+	const result = await getAdminData(slug);
+	if (!result.ok) {
+		return { ok: false, orders: [] };
+	}
+	return { ok: true, orders: result.orders || [] };
 }
 
 export async function submitFundraiserOrder(payload, slug = DEFAULT_TENANT_SLUG) {
@@ -863,12 +934,12 @@ export async function submitFundraiserOrder(payload, slug = DEFAULT_TENANT_SLUG)
 		target_slug: slug,
 		purchaser_name: payload.name,
 		purchaser_email: payload.email,
-		payment_method: 'paypal',
+		payment_method: payload.paymentMethod || 'paypal',
 		items_snapshot: itemsSnapshot,
 		purchaser_phone: payload.phone ?? null,
 		purchaser_address: payload.address ?? null,
 		external_payment_reference: null,
-		order_notes: null,
+		order_notes: payload.notes ?? null,
 	});
 
 	if (rpcResult.error) {
@@ -880,17 +951,34 @@ export async function submitFundraiserOrder(payload, slug = DEFAULT_TENANT_SLUG)
 		};
 	}
 
-	const result = rpcResult.data || {};
-	const tickets = Array.isArray(result.ticket_numbers) ? result.ticket_numbers : [];
+	const raw = rpcResult.data;
+	const result = Array.isArray(raw) ? (raw[0] ?? {}) : (raw ?? {});
+
+	const succeeded = Boolean(result.ok) || Boolean(result.order_id);
+	if (!succeeded) {
+		return {
+			ok: false,
+			orderId: null,
+			tickets: [],
+			ticketNumbers: [],
+			message: result.message || 'Unable to create the fundraiser order.',
+		};
+	}
+
+	// tickets = [{number, raffle_name}, ...] — new format with raffle tracking
+	// ticket_numbers = [1,2,3] — legacy format for donate page
+	const tickets = Array.isArray(result.tickets) ? result.tickets : [];
+	const ticketNumbers = Array.isArray(result.ticket_numbers) ? result.ticket_numbers : [];
 
 	return {
-		ok: Boolean(result.ok),
+		ok: true,
 		orderId: result.order_id ?? null,
 		tickets,
+		ticketNumbers,
 		totalCents: result.donation_amount_cents || totalCents,
 		entryCount: result.entry_count ?? entryCount,
 		referenceCode: result.reference_code ?? null,
-		message: result.ok ? null : 'Unable to create the fundraiser order.',
+		message: null,
 	};
 }
 
@@ -899,150 +987,58 @@ export async function fetchAdminDashboard(slug = DEFAULT_TENANT_SLUG) {
 		return {
 			mode: 'fallback',
 			tenant: fallbackTenant,
-			error: {
-				type: 'missing_config',
-				message: 'Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY to connect the Sumlin dashboard.',
-			},
+			error: { type: 'missing_config', message: 'Supabase is not configured.' },
 			...fallbackDashboard,
 		};
 	}
 
-	const {
-		data: { session },
-	} = await supabase.auth.getSession();
+	const { data: { session } } = await supabase.auth.getSession();
 
-	if (session) {
-		await claimAdminInvite(slug);
-	}
-
-	const currentUserId = session?.user?.id;
-
-	const membershipResult = await sumlinDb
-		.from('tenant_admins')
-		.select('tenant_id, role, tenants!inner(*)')
-		.eq('tenants.slug', slug)
-		.eq('user_id', currentUserId)
-		.limit(1)
-		.maybeSingle();
-
-	if (membershipResult.error) {
+	if (!session) {
 		return {
 			mode: 'fallback',
 			tenant: fallbackTenant,
-			error: normalizeError(membershipResult.error),
+			error: { type: 'no_session', message: 'Sign in to access the admin dashboard.' },
 			...fallbackDashboard,
 		};
 	}
 
-	const membership = membershipResult.data;
+	// Attempt to claim any pending invite for this user
+	await claimAdminInvite(slug);
 
-	if (!membership?.tenant_id) {
+	const data = await getAdminData(slug);
+
+	if (!data.ok) {
 		return {
 			mode: 'fallback',
 			tenant: fallbackTenant,
-			error: {
-				type: 'membership_missing',
-				message: 'This account does not have admin access yet. Ask Debi to add your email in the admin panel, then sign in again to claim access.',
-			},
+			error: { type: 'access_denied', message: data.message },
 			...fallbackDashboard,
 		};
 	}
 
-	const tenant = membership.tenants || fallbackTenant;
-	const tenantId = membership.tenant_id;
+	const recentOrders = data.orders || [];
+	const serviceRequests = data.service_requests || [];
+	const tickets = data.tickets || [];
+	const upcomingEvents = data.events || [];
+	const businesses = data.businesses || [];
+	const eventSignups = data.event_signups || [];
+	const admins = data.admins || [];
+	const adminInvites = data.invites || [];
 
-	const [ordersResult, requestsResult, ticketsResult, eventsResult, businessesResult, signupsResult, adminsResult, invitesResult] = await Promise.all([
-		sumlinDb
-			.from('fundraiser_orders')
-			.select('*')
-			.eq('tenant_id', tenantId)
-			.order('created_at', { ascending: false })
-			.limit(8),
-		sumlinDb
-			.from('service_requests')
-			.select('*')
-			.eq('tenant_id', tenantId)
-			.order('created_at', { ascending: false })
-			.limit(8),
-		sumlinDb
-			.from('fundraiser_tickets')
-			.select('id, order_id, ticket_number, status')
-			.eq('tenant_id', tenantId)
-			.order('ticket_number', { ascending: false })
-			.limit(8),
-		sumlinDb
-			.from('events')
-			.select('*')
-			.eq('tenant_id', tenantId)
-			.order('starts_at', { ascending: true })
-			.limit(8),
-		sumlinDb
-			.from('business_services')
-			.select('*')
-			.eq('tenant_id', tenantId)
-			.order('sort_order', { ascending: true })
-			.limit(25),
-		sumlinDb
-			.from('event_signups')
-			.select('id, attendee_name, email, phone, party_size, status, created_at, events(title, starts_at)')
-			.eq('tenant_id', tenantId)
-			.order('created_at', { ascending: false })
-			.limit(12),
-		sumlinDb
-			.from('tenant_admins')
-			.select('id, user_id, email, role, created_at')
-			.eq('tenant_id', tenantId)
-			.order('created_at', { ascending: true }),
-		sumlinDb
-			.from('tenant_admin_invites')
-			.select('id, email, role, status, created_at')
-			.eq('tenant_id', tenantId)
-			.order('created_at', { ascending: false })
-			.limit(20),
-	]);
-
-	const dashboardError = normalizeError(
-		ordersResult.error
-		|| requestsResult.error
-		|| ticketsResult.error
-		|| eventsResult.error
-		|| businessesResult.error
-		|| signupsResult.error
-		|| adminsResult.error
-		|| invitesResult.error
-	);
-
-	if (dashboardError) {
-		return {
-			mode: 'fallback',
-			tenant,
-			error: dashboardError,
-			...fallbackDashboard,
-		};
-	}
-
-	const recentOrders = ordersResult.data || [];
-	const serviceRequests = requestsResult.data || [];
-	const tickets = ticketsResult.data || [];
-	const upcomingEvents = eventsResult.data || [];
-	const businesses = businessesResult.data || [];
-	const eventSignups = signupsResult.data || [];
-	const admins = adminsResult.data || [];
-	const adminInvites = invitesResult.data || [];
-
-	const pendingPayments = recentOrders.filter((order) => order.payment_status === 'pending').length;
-	const activeTickets = tickets.filter((ticket) => ticket.status === 'active').length;
-	const openRequests = serviceRequests.filter((request) => request.status !== 'closed').length;
+	const pendingPayments = recentOrders.filter((o) => o.payment_status === 'pending').length;
+	const activeTickets = tickets.filter((t) => t.status === 'active').length;
+	const openRequests = serviceRequests.filter((r) => r.status !== 'closed').length;
 
 	return {
 		mode: 'live',
-		tenant,
+		tenant: data.tenant || fallbackTenant,
 		error: null,
 		kpis: [
-			{ label: 'Pending payments', value: String(pendingPayments), detail: 'Orders waiting for manual confirmation.' },
-			{ label: 'Active tickets', value: String(activeTickets), detail: 'Current tickets available for the drawing.' },
-			{ label: 'Open service requests', value: String(openRequests), detail: 'New or contacted family business requests.' },
-			{ label: 'Upcoming events', value: String(upcomingEvents.length), detail: 'Google Calendar-linked events in the near term.' },
+			{ label: 'Pending payments', value: String(pendingPayments), detail: 'Orders waiting for confirmation.' },
+			{ label: 'Active tickets', value: String(activeTickets), detail: 'Tickets issued for the drawing.' },
+			{ label: 'Open service requests', value: String(openRequests), detail: 'Family business requests open.' },
+			{ label: 'Upcoming events', value: String(upcomingEvents.length), detail: 'Events on the calendar.' },
 		],
 		recentOrders,
 		serviceRequests,
@@ -1052,7 +1048,7 @@ export async function fetchAdminDashboard(slug = DEFAULT_TENANT_SLUG) {
 		eventSignups,
 		admins,
 		adminInvites,
-		currentAdminRole: membership.role,
+		currentAdminRole: data.role,
 	};
 }
 

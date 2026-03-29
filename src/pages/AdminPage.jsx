@@ -2,8 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import {
 	CalendarDays,
+	CheckCircle,
 	Database,
+	Download,
 	LogOut,
+	Mail,
 	RefreshCcw,
 	ShieldCheck,
 	Store,
@@ -12,7 +15,10 @@ import {
 	Wallet,
 } from 'lucide-react';
 import {
+	clearAdminDataCache,
 	fetchAdminDashboard,
+	fetchAllOrdersForExport,
+	fetchOrdersWithTickets,
 	formatDateTime,
 	formatMoney,
 	getAdminSession,
@@ -23,6 +29,7 @@ import {
 	signInAdmin,
 	signOutAdmin,
 	signUpAdmin,
+	updateOrderPaymentStatus,
 	watchAdminSession,
 } from '@/lib/sumlinData';
 import { hasSupabaseConfig } from '@/lib/supabase';
@@ -97,6 +104,89 @@ function buildSettingsForm(tenant) {
 	};
 }
 
+function OrderAccordion({ order, onApprove, onEmail, approvingOrderId }) {
+	const [open, setOpen] = useState(false);
+
+	const ticketsByRaffle = (order.tickets || []).reduce((acc, ticket) => {
+		const raffleName = ticket.raffle_name || 'General';
+		if (!acc[raffleName]) {
+			acc[raffleName] = [];
+		}
+		acc[raffleName].push(ticket.ticket_number);
+		return acc;
+	}, {});
+
+	return (
+		<div className={`rounded-2xl border ${order.payment_status === 'paid' ? 'border-green-200 bg-green-50/30' : 'border-border/50 bg-background'}`}>
+			<button
+				type="button"
+				onClick={() => setOpen((current) => !current)}
+				className="w-full px-5 py-4 text-left"
+			>
+				<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+					<div className="min-w-0">
+						<div className="flex items-center gap-2 mb-1">
+							<span className="text-primary">{open ? '▼' : '▶'}</span>
+							<p className="font-bold truncate">{order.purchaser_name}</p>
+							<span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${order.payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+								{order.payment_status}
+							</span>
+						</div>
+						<p className="text-sm text-muted-foreground truncate">{order.reference_code} • {order.email}</p>
+					</div>
+					<div className="flex items-center gap-4 text-sm sm:text-right">
+						<div>
+							<p className="font-semibold text-primary">{formatMoney(order.donation_amount_cents)}</p>
+							<p className="text-muted-foreground">{order.entry_count} entries</p>
+						</div>
+						<p className="text-muted-foreground">{order.payment_method}</p>
+					</div>
+				</div>
+			</button>
+
+			{open && (
+				<div className="border-t border-border/50 px-5 py-4">
+					{order.tickets.length > 0 && (
+						<div className="rounded-xl bg-muted/50 border border-border/50 px-4 py-3 mb-4">
+							<p className="text-xs uppercase tracking-widest text-primary font-semibold mb-3">Tickets by Raffle</p>
+							<div className="space-y-1.5">
+								{Object.entries(ticketsByRaffle).map(([raffleName, numbers]) => (
+									<div key={raffleName} className="flex flex-col gap-1 text-sm sm:flex-row sm:gap-3">
+										<span className="font-semibold text-foreground sm:min-w-[180px]">{raffleName}</span>
+										<span className="text-muted-foreground">{numbers.map((number) => `#${number}`).join(' · ')}</span>
+									</div>
+								))}
+							</div>
+						</div>
+					)}
+
+					<div className="flex flex-wrap gap-2">
+						{order.payment_status === 'pending' && (
+							<button
+								type="button"
+								onClick={() => onApprove(order.id)}
+								disabled={approvingOrderId === order.id}
+								className="inline-flex items-center gap-1.5 gradient-gold text-foreground px-4 py-2 rounded-xl text-sm font-semibold hover:shadow-gold transition-all duration-200 disabled:opacity-70"
+							>
+								<CheckCircle className="h-4 w-4" />
+								{approvingOrderId === order.id ? 'Approving...' : 'Approve Payment'}
+							</button>
+						)}
+						<button
+							type="button"
+							onClick={() => onEmail(order)}
+							className="inline-flex items-center gap-1.5 bg-card border border-border/60 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-muted transition-colors duration-200"
+						>
+							<Mail className="h-4 w-4" />
+							Send Confirmation
+						</button>
+					</div>
+				</div>
+			)}
+		</div>
+	);
+}
+
 const AdminPage = () => {
 	const { toast } = useToast();
 	const [session, setSession] = useState(null);
@@ -108,10 +198,13 @@ const AdminPage = () => {
 	const [savingEvent, setSavingEvent] = useState(false);
 	const [savingSettings, setSavingSettings] = useState(false);
 	const [savingInvite, setSavingInvite] = useState(false);
-	const [credentials, setCredentials] = useState({
-		email: '',
-		password: '',
-	});
+	const [approvingOrderId, setApprovingOrderId] = useState(null);
+	const [exportingCSV, setExportingCSV] = useState(false);
+	const [orders, setOrders] = useState([]);
+	const [ordersLoading, setOrdersLoading] = useState(false);
+	const [ordersFilter, setOrdersFilter] = useState('all');
+	const [activeTab, setActiveTab] = useState('orders');
+	const [credentials, setCredentials] = useState({ email: '', password: '' });
 	const [businessForm, setBusinessForm] = useState(initialBusinessForm);
 	const [eventForm, setEventForm] = useState(initialEventForm);
 	const [settingsForm, setSettingsForm] = useState(initialSettingsForm);
@@ -123,10 +216,20 @@ const AdminPage = () => {
 	const canInviteAdmins = ['owner', 'admin'].includes(dashboard?.currentAdminRole || '');
 
 	const loadDashboard = async () => {
+		clearAdminDataCache();
 		setLoading(true);
 		const nextDashboard = await fetchAdminDashboard();
 		setDashboard(nextDashboard);
 		setLoading(false);
+	};
+
+	const loadOrders = async () => {
+		setOrdersLoading(true);
+		const result = await fetchOrdersWithTickets();
+		if (result.ok) {
+			setOrders(result.orders);
+		}
+		setOrdersLoading(false);
 	};
 
 	useEffect(() => {
@@ -182,12 +285,15 @@ const AdminPage = () => {
 		}
 	}, [dashboard?.tenant]);
 
+	useEffect(() => {
+		if (showDashboard) {
+			loadOrders();
+		}
+	}, [showDashboard]);
+
 	const handleCredentialChange = (event) => {
 		const { name, value } = event.target;
-		setCredentials((current) => ({
-			...current,
-			[name]: value,
-		}));
+		setCredentials((current) => ({ ...current, [name]: value }));
 	};
 
 	const handleBusinessChange = (event) => {
@@ -200,32 +306,22 @@ const AdminPage = () => {
 
 	const handleEventChange = (event) => {
 		const { name, value } = event.target;
-		setEventForm((current) => ({
-			...current,
-			[name]: value,
-		}));
+		setEventForm((current) => ({ ...current, [name]: value }));
 	};
 
 	const handleSettingsChange = (event) => {
 		const { name, value } = event.target;
-		setSettingsForm((current) => ({
-			...current,
-			[name]: value,
-		}));
+		setSettingsForm((current) => ({ ...current, [name]: value }));
 	};
 
 	const handleInviteChange = (event) => {
 		const { name, value } = event.target;
-		setInviteForm((current) => ({
-			...current,
-			[name]: value,
-		}));
+		setInviteForm((current) => ({ ...current, [name]: value }));
 	};
 
 	const handleSignIn = async (event) => {
 		event.preventDefault();
 		setSigningIn(true);
-
 		const result = await signInAdmin(credentials);
 
 		if (!result.ok) {
@@ -238,8 +334,8 @@ const AdminPage = () => {
 			toast({
 				title: 'Signed in',
 				description: result.claimStatus === 'claimed'
-					? 'Your admin invite was claimed and the command central is loading.'
-					: 'Loading the family admin panel.',
+					? 'Your admin invite was claimed and the dashboard is loading.'
+					: 'Loading the admin panel.',
 			});
 		}
 
@@ -249,7 +345,6 @@ const AdminPage = () => {
 	const handleSignUp = async (event) => {
 		event.preventDefault();
 		setSigningUp(true);
-
 		const result = await signUpAdmin(credentials);
 
 		if (!result.ok) {
@@ -278,7 +373,7 @@ const AdminPage = () => {
 	};
 
 	const handleRefresh = async () => {
-		await loadDashboard();
+		await Promise.all([loadDashboard(), loadOrders()]);
 		toast({
 			title: 'Dashboard refreshed',
 			description: 'Latest family records loaded.',
@@ -288,7 +383,6 @@ const AdminPage = () => {
 	const handleBusinessSubmit = async (event) => {
 		event.preventDefault();
 		setSavingBusiness(true);
-
 		const result = await saveBusinessListing(businessForm);
 
 		if (result.ok) {
@@ -312,7 +406,6 @@ const AdminPage = () => {
 	const handleEventSubmit = async (event) => {
 		event.preventDefault();
 		setSavingEvent(true);
-
 		const result = await saveEvent(eventForm);
 
 		if (result.ok) {
@@ -336,7 +429,6 @@ const AdminPage = () => {
 	const handleSettingsSubmit = async (event) => {
 		event.preventDefault();
 		setSavingSettings(true);
-
 		const result = await saveTenantProfile(settingsForm);
 
 		if (result.ok) {
@@ -359,7 +451,6 @@ const AdminPage = () => {
 	const handleInviteSubmit = async (event) => {
 		event.preventDefault();
 		setSavingInvite(true);
-
 		const result = await saveAdminInvite(inviteForm);
 
 		if (result.ok) {
@@ -380,6 +471,101 @@ const AdminPage = () => {
 		setSavingInvite(false);
 	};
 
+	const handleApproveOrder = async (orderId) => {
+		setApprovingOrderId(orderId);
+		const result = await updateOrderPaymentStatus(orderId, 'paid');
+
+		if (result.ok) {
+			toast({
+				title: 'Order approved',
+				description: 'Payment status marked as paid.',
+			});
+			await Promise.all([loadDashboard(), loadOrders()]);
+		} else {
+			toast({
+				title: 'Approval failed',
+				description: result.message,
+				variant: 'destructive',
+			});
+		}
+
+		setApprovingOrderId(null);
+	};
+
+	const handleEmailConfirmation = (order) => {
+		const byRaffle = (order.tickets || []).reduce((acc, ticket) => {
+			const name = ticket.raffle_name || 'General';
+			if (!acc[name]) {
+				acc[name] = [];
+			}
+			acc[name].push(`#${ticket.ticket_number}`);
+			return acc;
+		}, {});
+
+		const ticketLines = Object.entries(byRaffle)
+			.map(([raffle, nums]) => `  ${raffle}: ${nums.join(', ')}`)
+			.join('\n');
+
+		const subject = `Your Sumlin Family Reunion Fundraiser Tickets — Ref ${order.reference_code}`;
+		const body = [
+			`Hi ${order.purchaser_name},`,
+			'',
+			'Thank you for supporting the Sumlin Family Reunion 2026. Your payment has been confirmed and your raffle entries are now active.',
+			'',
+			`Reference Code: ${order.reference_code}`,
+			`Amount Paid: ${formatMoney(order.donation_amount_cents)}`,
+			`Entries: ${order.entry_count}`,
+			`Your Ticket Numbers by Raffle:\n${ticketLines || 'Pending assignment'}`,
+			`Payment Method: ${order.payment_method}`,
+			'',
+			'Please keep this email as your record. The drawing details will be announced at the reunion.',
+			'',
+			'With love,',
+			'The Sumlin Family Reunion Committee',
+		].join('\n');
+
+		window.location.href = `mailto:${order.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+	};
+
+	const handleExportCSV = async () => {
+		setExportingCSV(true);
+		const { ok, orders: allOrders } = await fetchAllOrdersForExport();
+
+		if (!ok || allOrders.length === 0) {
+			toast({
+				title: 'Nothing to export',
+				description: 'No orders found.',
+				variant: 'destructive',
+			});
+			setExportingCSV(false);
+			return;
+		}
+
+		const headers = ['Reference', 'Name', 'Email', 'Phone', 'Method', 'Status', 'Amount', 'Entries', 'Date', 'Notes'];
+		const rows = allOrders.map((order) => [
+			order.reference_code || '',
+			order.purchaser_name || '',
+			order.email || '',
+			order.phone || '',
+			order.payment_method || '',
+			order.payment_status || '',
+			((order.donation_amount_cents || 0) / 100).toFixed(2),
+			order.entry_count || 0,
+			order.created_at ? new Date(order.created_at).toLocaleDateString() : '',
+			(order.notes || '').replace(/,/g, ' '),
+		]);
+
+		const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
+		const blob = new Blob([csv], { type: 'text/csv' });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement('a');
+		link.href = url;
+		link.download = `sumlin-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+		link.click();
+		URL.revokeObjectURL(url);
+		setExportingCSV(false);
+	};
+
 	const handleBusinessEdit = (item) => {
 		setBusinessForm({
 			id: item.id,
@@ -390,6 +576,7 @@ const AdminPage = () => {
 			sort_order: String(item.sort_order ?? 0),
 			is_featured: Boolean(item.is_featured),
 		});
+		setActiveTab('business');
 	};
 
 	const handleEventEdit = (item) => {
@@ -406,7 +593,20 @@ const AdminPage = () => {
 			google_calendar_event_url: item.google_calendar_event_url || '',
 			intake_deadline: toDateTimeInput(item.intake_deadline),
 		});
+		setActiveTab('events');
 	};
+
+	const filteredOrders = orders.filter((order) => (
+		ordersFilter === 'all' || order.payment_status === ordersFilter
+	));
+
+	const adminTabs = [
+		{ id: 'orders', label: 'Orders', icon: Wallet, count: orders.length },
+		{ id: 'tickets', label: 'Tickets', icon: Ticket, count: dashboard?.tickets?.length || 0 },
+		{ id: 'events', label: 'Events', icon: CalendarDays, count: dashboard?.events?.length || 0 },
+		{ id: 'business', label: 'Business', icon: Store, count: dashboard?.businesses?.length || 0 },
+		{ id: 'access', label: 'Access', icon: Users, count: dashboard?.admins?.length || 0 },
+	];
 
 	return (
 		<>
@@ -426,10 +626,9 @@ const AdminPage = () => {
 								<ShieldCheck className="h-4 w-4" />
 								Family admin panel
 							</div>
-							<h1 className="text-5xl md:text-6xl font-bold mb-4">Manage businesses, events, and family signups</h1>
+							<h1 className="text-5xl md:text-6xl font-bold mb-4">Manage businesses, events, tickets, and family signups</h1>
 							<p className="text-lg text-muted-foreground max-w-3xl">
-								Use one place to update the Business Corner, keep the event calendar current, and review the
-								family members who sign up for gatherings, calls, and reunion activities.
+								The admin area is now organized around quick sections so tickets and order intake stay at the top instead of forcing a long full-page scroll.
 							</p>
 						</div>
 
@@ -462,27 +661,11 @@ const AdminPage = () => {
 							<form onSubmit={handleSignIn} className="bg-card border border-border/50 rounded-3xl p-8 shadow-xl">
 								<h2 className="text-2xl font-bold mb-3">Admin sign in</h2>
 								<p className="text-muted-foreground mb-6">
-									Sign in with your admin email to access the family dashboard. If Debi has invited you, create your account first, then sign in to access the admin panel.
+									Sign in with your admin email to access the family dashboard. If you were invited, create your account first and then sign in to claim access.
 								</p>
 								<div className="space-y-4">
-									<input
-										type="email"
-										name="email"
-										placeholder="Your email address"
-										value={credentials.email}
-										onChange={handleCredentialChange}
-										required
-										className="w-full"
-									/>
-									<input
-										type="password"
-										name="password"
-										placeholder="Your password"
-										value={credentials.password}
-										onChange={handleCredentialChange}
-										required
-										className="w-full"
-									/>
+									<input type="email" name="email" placeholder="Your email address" value={credentials.email} onChange={handleCredentialChange} required className="w-full" />
+									<input type="password" name="password" placeholder="Your password" value={credentials.password} onChange={handleCredentialChange} required className="w-full" />
 									<button
 										type="submit"
 										disabled={signingIn}
@@ -507,9 +690,9 @@ const AdminPage = () => {
 									<h2 className="text-2xl font-bold">Getting started</h2>
 								</div>
 								<div className="space-y-4 text-muted-foreground leading-relaxed">
-									<p><strong>First time here?</strong> If Debi has invited you as an admin, click "Create new account" to set up your password, then sign in.</p>
-									<p><strong>Already have an account?</strong> Just sign in with your email and password to access the family admin dashboard.</p>
-									<p><strong>Need help?</strong> Contact Debi if you need admin access or have questions about managing family events and businesses.</p>
+									<p><strong>First time here?</strong> If an existing admin invited your email, create your account first, then sign in to claim access.</p>
+									<p><strong>Already have an account?</strong> Sign in with your email and password. Access depends on your admin role.</p>
+									<p><strong>Need access?</strong> Ask any existing admin to invite your email from the access section.</p>
 								</div>
 							</div>
 						</div>
@@ -540,44 +723,403 @@ const AdminPage = () => {
 								<>
 									{dashboard.error && (
 										<div className="rounded-3xl border border-rose-950/30 bg-rose-50 p-6 mb-8">
-											<h2 className="text-xl font-semibold mb-2 text-rose-950">Database setup needed</h2>
-											<p className="text-muted-foreground mb-3">The family database tables are being set up. Sample data is shown below until the connection is complete.</p>
-											<p className="text-sm text-muted-foreground italic">Contact your site administrator to complete the database setup using the schema.sql file.</p>
+											<h2 className="text-xl font-semibold mb-2 text-rose-950">
+												{dashboard.error.type === 'membership_missing' ? 'Access denied' : 'Database setup needed'}
+											</h2>
+											<p className="text-muted-foreground">{dashboard.error.message}</p>
 										</div>
 									)}
 
 									<div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5 mb-10">
 										{dashboard.kpis.map((kpi) => (
 											<div key={kpi.label} className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
-												<p className="text-sm uppercase tracking-[0.2em] text-primary font-semibold mb-3">
-													{kpi.label}
-												</p>
+												<p className="text-sm uppercase tracking-[0.2em] text-primary font-semibold mb-3">{kpi.label}</p>
 												<p className="text-4xl font-bold mb-3">{kpi.value}</p>
 												<p className="text-sm text-muted-foreground leading-relaxed">{kpi.detail}</p>
 											</div>
 										))}
 									</div>
 
-									{canManage && (
-										<div className="space-y-8 mb-10">
+									<div className="sticky top-20 z-10 mb-8 rounded-3xl border border-border/50 bg-background/95 p-3 shadow-sm backdrop-blur">
+										<div className="flex flex-wrap gap-2">
+											{adminTabs.map((tab) => {
+												const Icon = tab.icon;
+												return (
+													<button
+														key={tab.id}
+														type="button"
+														onClick={() => setActiveTab(tab.id)}
+														className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
+															activeTab === tab.id
+																? 'gradient-burgundy text-white shadow-md'
+																: 'bg-card text-muted-foreground hover:bg-muted'
+														}`}
+													>
+														<Icon className="h-4 w-4" />
+														<span>{tab.label}</span>
+														<span className={`rounded-full px-2 py-0.5 text-xs ${activeTab === tab.id ? 'bg-white/15' : 'bg-muted-foreground/10 text-foreground'}`}>
+															{tab.count}
+														</span>
+													</button>
+												);
+											})}
+										</div>
+									</div>
+
+									{activeTab === 'tickets' && (
+										<div className="grid xl:grid-cols-[1.35fr_0.65fr] gap-8">
+											<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+												<div className="flex items-center justify-between gap-4 mb-6">
+													<div className="flex items-center gap-3">
+														<Ticket className="h-5 w-5 text-primary" />
+														<div>
+															<h2 className="text-2xl font-bold">Latest tickets</h2>
+															<p className="text-sm text-muted-foreground mt-0.5">Compact list view to keep ticket intake at the top with less scrolling.</p>
+														</div>
+													</div>
+													<div className="text-right">
+														<p className="text-2xl font-bold">{dashboard.tickets.length}</p>
+														<p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Visible tickets</p>
+													</div>
+												</div>
+												<div className="overflow-hidden rounded-2xl border border-border/50">
+													<div className="grid grid-cols-[96px_minmax(0,1fr)_120px] gap-4 bg-muted/50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+														<p>Ticket</p>
+														<p>Raffle</p>
+														<p>Status</p>
+													</div>
+													<div className="divide-y divide-border/50">
+														{dashboard.tickets.map((ticket) => (
+															<div key={ticket.id} className="grid grid-cols-[96px_minmax(0,1fr)_120px] gap-4 px-4 py-3 text-sm">
+																<p className="font-semibold text-foreground">#{ticket.ticket_number}</p>
+																<div className="min-w-0">
+																	<p className="font-medium text-foreground truncate">{ticket.raffle_name || 'General raffle'}</p>
+																	<p className="text-xs text-muted-foreground truncate">Order {ticket.order_id}</p>
+																</div>
+																<p className="text-sm text-muted-foreground">{ticket.status}</p>
+															</div>
+														))}
+														{dashboard.tickets.length === 0 && (
+															<p className="px-4 py-8 text-center text-sm text-muted-foreground">No tickets found yet.</p>
+														)}
+													</div>
+												</div>
+											</div>
+
+											<div className="space-y-8">
+												<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+													<div className="flex items-center gap-3 mb-6">
+														<Wallet className="h-5 w-5 text-primary" />
+														<h2 className="text-2xl font-bold">Recent purchases</h2>
+													</div>
+													<div className="space-y-3">
+														{orders.slice(0, 6).map((order) => (
+															<div key={order.id} className="rounded-2xl border border-border/50 px-4 py-3">
+																<div className="flex items-center justify-between gap-3">
+																	<div className="min-w-0">
+																		<p className="font-semibold truncate">{order.purchaser_name}</p>
+																		<p className="text-xs text-muted-foreground truncate">{order.reference_code}</p>
+																	</div>
+																	<p className="font-semibold text-primary shrink-0">{formatMoney(order.donation_amount_cents)}</p>
+																</div>
+																<p className="text-xs text-muted-foreground mt-2">{order.entry_count} entries • {order.payment_status}</p>
+															</div>
+														))}
+													</div>
+												</div>
+
+												<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+													<div className="flex items-center gap-3 mb-6">
+														<Users className="h-5 w-5 text-primary" />
+														<h2 className="text-2xl font-bold">Event signups</h2>
+													</div>
+													<div className="space-y-3">
+														{dashboard.eventSignups.slice(0, 6).map((signup) => (
+															<div key={signup.id} className="rounded-2xl border border-border/50 px-4 py-3">
+																<p className="font-semibold">{signup.attendee_name}</p>
+																<p className="text-sm text-muted-foreground">{signup.events?.title || 'Event not found'}</p>
+																<p className="text-xs text-muted-foreground mt-1">{signup.party_size} people • {signup.status}</p>
+															</div>
+														))}
+													</div>
+												</div>
+											</div>
+										</div>
+									)}
+
+									{activeTab === 'orders' && (
+										<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+											<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+												<div className="flex items-center gap-3">
+													<Wallet className="h-5 w-5 text-primary" />
+													<div>
+														<h2 className="text-2xl font-bold">Payment Command Center</h2>
+														<p className="text-sm text-muted-foreground mt-0.5">Compact order review with approvals and email confirmations in one place.</p>
+													</div>
+												</div>
+												<button
+													type="button"
+													onClick={handleExportCSV}
+													disabled={exportingCSV}
+													className="inline-flex items-center gap-2 bg-card border border-border/60 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-muted transition-colors duration-200 disabled:opacity-70"
+												>
+													<Download className="h-4 w-4" />
+													{exportingCSV ? 'Exporting...' : 'Export CSV'}
+												</button>
+											</div>
+
+											<div className="grid grid-cols-3 gap-4 mb-6">
+												{[
+													{ label: 'Total Orders', value: orders.length },
+													{ label: 'Pending', value: orders.filter((order) => order.payment_status === 'pending').length },
+													{ label: 'Confirmed', value: orders.filter((order) => order.payment_status === 'paid').length },
+												].map((stat) => (
+													<div key={stat.label} className="rounded-2xl bg-muted/50 border border-border/50 p-4 text-center">
+														<p className="text-2xl font-bold">{stat.value}</p>
+														<p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">{stat.label}</p>
+													</div>
+												))}
+											</div>
+
+											<div className="flex flex-wrap gap-2 mb-6">
+												{['all', 'pending', 'paid'].map((filter) => (
+													<button
+														key={filter}
+														type="button"
+														onClick={() => setOrdersFilter(filter)}
+														className={`px-4 py-2 rounded-xl text-sm font-semibold capitalize transition-colors duration-200 ${
+															ordersFilter === filter
+																? 'gradient-burgundy text-white'
+																: 'bg-muted text-muted-foreground hover:bg-muted/80'
+														}`}
+													>
+														{filter === 'all' ? `All (${orders.length})` : filter === 'pending' ? `Pending (${orders.filter((order) => order.payment_status === 'pending').length})` : `Paid (${orders.filter((order) => order.payment_status === 'paid').length})`}
+													</button>
+												))}
+											</div>
+
+											{ordersLoading ? (
+												<p className="py-8 text-center text-sm text-muted-foreground">Loading orders...</p>
+											) : (
+												<div className="space-y-3">
+													{filteredOrders.map((order) => (
+														<OrderAccordion
+															key={order.id}
+															order={order}
+															onApprove={handleApproveOrder}
+															onEmail={handleEmailConfirmation}
+															approvingOrderId={approvingOrderId}
+														/>
+													))}
+													{filteredOrders.length === 0 && (
+														<p className="py-8 text-center text-sm text-muted-foreground">No matching orders found.</p>
+													)}
+												</div>
+											)}
+										</div>
+									)}
+
+									{activeTab === 'events' && (
+										<div className="space-y-8">
+											{canManage && (
+												<div className="grid xl:grid-cols-2 gap-8">
+													<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+														<div className="flex items-center justify-between gap-4 mb-4">
+															<div className="flex items-center gap-3">
+																<CalendarDays className="h-5 w-5 text-primary" />
+																<h2 className="text-2xl font-bold">Update events</h2>
+															</div>
+															<button type="button" onClick={() => setEventForm(initialEventForm)} className="text-sm font-semibold text-primary">
+																New event
+															</button>
+														</div>
+														<form onSubmit={handleEventSubmit} className="space-y-4">
+															<input type="text" name="title" placeholder="Event title" value={eventForm.title} onChange={handleEventChange} required className="w-full" />
+															<div className="grid sm:grid-cols-2 gap-4">
+																<input type="text" name="event_type" placeholder="Event type" value={eventForm.event_type} onChange={handleEventChange} required className="w-full" />
+																<select name="status" value={eventForm.status} onChange={handleEventChange} className="w-full">
+																	<option value="planned">Planned</option>
+																	<option value="open">Open</option>
+																	<option value="closed">Closed</option>
+																	<option value="complete">Complete</option>
+																	<option value="cancelled">Cancelled</option>
+																</select>
+															</div>
+															<textarea name="description" placeholder="Event details" value={eventForm.description} onChange={handleEventChange} rows={4} className="w-full" />
+															<input type="text" name="location" placeholder="Location" value={eventForm.location} onChange={handleEventChange} className="w-full" />
+															<div className="grid sm:grid-cols-2 gap-4">
+																<input type="datetime-local" name="starts_at" value={eventForm.starts_at} onChange={handleEventChange} className="w-full" />
+																<input type="datetime-local" name="ends_at" value={eventForm.ends_at} onChange={handleEventChange} className="w-full" />
+															</div>
+															<div className="grid sm:grid-cols-2 gap-4">
+																<input type="datetime-local" name="intake_deadline" value={eventForm.intake_deadline} onChange={handleEventChange} className="w-full" />
+																<input type="number" min="1" name="capacity" placeholder="Capacity" value={eventForm.capacity} onChange={handleEventChange} className="w-full" />
+															</div>
+															<input type="url" name="google_calendar_event_url" placeholder="Google Calendar event link" value={eventForm.google_calendar_event_url} onChange={handleEventChange} className="w-full" />
+															<button
+																type="submit"
+																disabled={savingEvent}
+																className="gradient-gold text-foreground px-6 py-3 rounded-xl font-semibold hover:shadow-gold transition-all duration-200 disabled:opacity-70"
+															>
+																{savingEvent ? 'Saving...' : eventForm.id ? 'Update event' : 'Add event'}
+															</button>
+														</form>
+													</div>
+
+													<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+														<div className="flex items-center gap-3 mb-6">
+															<CalendarDays className="h-5 w-5 text-primary" />
+															<h2 className="text-2xl font-bold">Current events</h2>
+														</div>
+														<div className="divide-y divide-border/50">
+															{dashboard.events.map((item) => (
+																<div key={item.id} className="py-4 first:pt-0 last:pb-0">
+																	<div className="flex items-start justify-between gap-4">
+																		<div>
+																			<p className="font-semibold">{item.title}</p>
+																			<p className="text-sm text-muted-foreground">{formatDateTime(item.starts_at)}</p>
+																			<p className="text-sm text-muted-foreground">{item.location || 'Location TBD'}</p>
+																		</div>
+																		<button type="button" onClick={() => handleEventEdit(item)} className="text-sm font-semibold text-primary">
+																			Edit
+																		</button>
+																	</div>
+																</div>
+															))}
+														</div>
+													</div>
+												</div>
+											)}
+
+											<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+												<div className="flex items-center gap-3 mb-6">
+													<Users className="h-5 w-5 text-primary" />
+													<h2 className="text-2xl font-bold">Family event signups</h2>
+												</div>
+												<div className="space-y-3">
+													{dashboard.eventSignups.map((signup) => (
+														<div key={signup.id} className="rounded-2xl border border-border/50 px-4 py-3">
+															<div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+																<div>
+																	<p className="font-semibold">{signup.attendee_name}</p>
+																	<p className="text-sm text-muted-foreground">{signup.email}</p>
+																	<p className="text-sm text-muted-foreground">{signup.events?.title || 'Event not found'}</p>
+																</div>
+																<span className="inline-flex rounded-full bg-secondary/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
+																	{signup.status}
+																</span>
+															</div>
+															<p className="text-xs text-muted-foreground mt-2">Party size: {signup.party_size} • {formatDateTime(signup.events?.starts_at || signup.created_at)}</p>
+														</div>
+													))}
+												</div>
+											</div>
+										</div>
+									)}
+
+									{activeTab === 'business' && (
+										<div className="space-y-8">
+											{canManage && (
+												<div className="grid xl:grid-cols-2 gap-8">
+													<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+														<div className="flex items-center justify-between gap-4 mb-4">
+															<div className="flex items-center gap-3">
+																<Store className="h-5 w-5 text-primary" />
+																<h2 className="text-2xl font-bold">Update business listings</h2>
+															</div>
+															<button type="button" onClick={() => setBusinessForm(initialBusinessForm)} className="text-sm font-semibold text-primary">
+																New listing
+															</button>
+														</div>
+														<form onSubmit={handleBusinessSubmit} className="space-y-4">
+															<input type="text" name="title" placeholder="Business name" value={businessForm.title} onChange={handleBusinessChange} required className="w-full" />
+															<div className="grid sm:grid-cols-2 gap-4">
+																<input type="text" name="category" placeholder="Category" value={businessForm.category} onChange={handleBusinessChange} required className="w-full" />
+																<input type="text" name="price_label" placeholder="City, state or service area" value={businessForm.price_label} onChange={handleBusinessChange} className="w-full" />
+															</div>
+															<textarea name="description" placeholder="What does this business do?" value={businessForm.description} onChange={handleBusinessChange} rows={5} required className="w-full" />
+															<div className="grid sm:grid-cols-[160px_1fr] gap-4 items-center">
+																<input type="number" name="sort_order" placeholder="Sort order" value={businessForm.sort_order} onChange={handleBusinessChange} className="w-full" />
+																<label className="inline-flex items-center gap-3 text-sm font-medium">
+																	<input type="checkbox" name="is_featured" checked={businessForm.is_featured} onChange={handleBusinessChange} />
+																	Feature this listing near the top
+																</label>
+															</div>
+															<button
+																type="submit"
+																disabled={savingBusiness}
+																className="gradient-burgundy text-white px-6 py-3 rounded-xl font-semibold hover:shadow-burgundy transition-all duration-200 disabled:opacity-70"
+															>
+																{savingBusiness ? 'Saving...' : businessForm.id ? 'Update listing' : 'Add listing'}
+															</button>
+														</form>
+													</div>
+
+													<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+														<div className="flex items-center gap-3 mb-6">
+															<Store className="h-5 w-5 text-primary" />
+															<h2 className="text-2xl font-bold">Current business directory</h2>
+														</div>
+														<div className="divide-y divide-border/50">
+															{dashboard.businesses.map((item) => (
+																<div key={item.id} className="py-4 first:pt-0 last:pb-0">
+																	<div className="flex items-start justify-between gap-4">
+																		<div>
+																			<p className="font-semibold">{item.title}</p>
+																			<p className="text-sm text-muted-foreground">{item.category}</p>
+																			<p className="text-sm text-muted-foreground">{item.price_label || 'No location added'}</p>
+																		</div>
+																		<button type="button" onClick={() => handleBusinessEdit(item)} className="text-sm font-semibold text-primary">
+																			Edit
+																		</button>
+																	</div>
+																</div>
+															))}
+														</div>
+													</div>
+												</div>
+											)}
+
+											<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+												<div className="flex items-center gap-3 mb-6">
+													<Store className="h-5 w-5 text-primary" />
+													<h2 className="text-2xl font-bold">Directory submissions</h2>
+												</div>
+												<div className="space-y-3">
+													{dashboard.serviceRequests.map((request) => (
+														<div key={request.id} className="rounded-2xl border border-border/50 px-4 py-3">
+															<div className="flex items-start justify-between gap-3 mb-2">
+																<p className="font-semibold">{request.requester_name}</p>
+																<span className="inline-flex rounded-full bg-secondary/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
+																	{request.status}
+																</span>
+															</div>
+															<p className="text-sm text-muted-foreground">{request.email}</p>
+															<p className="text-sm text-muted-foreground mt-1">{request.message}</p>
+															<p className="text-xs text-muted-foreground mt-2">{request.budget_label || 'No budget or location added'}</p>
+														</div>
+													))}
+												</div>
+											</div>
+										</div>
+									)}
+
+									{activeTab === 'access' && (
+										<div className="space-y-8">
 											<div className="grid xl:grid-cols-2 gap-8">
 												<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
 													<div className="flex items-center gap-3 mb-4">
 														<Users className="h-5 w-5 text-primary" />
 														<h2 className="text-2xl font-bold">Current admins</h2>
 													</div>
-													<p className="text-muted-foreground mb-6">
-														These family members have admin access to manage events, businesses, and family signups. Debi can invite additional admins using the form on the right.
-													</p>
-													<div className="space-y-4">
+													<p className="text-muted-foreground mb-6">These family members have admin access to the dashboard.</p>
+													<div className="space-y-3">
 														{(dashboard.admins || []).map((admin) => (
 															<div key={admin.id} className="rounded-2xl border border-border/50 p-4">
 																<div className="flex items-start justify-between gap-3">
 																	<div>
 																		<p className="font-semibold">{admin.email || admin.user_id}</p>
-																		<p className="text-sm text-muted-foreground">
-																			Added {formatDateTime(admin.created_at)}
-																		</p>
+																		<p className="text-sm text-muted-foreground">Added {formatDateTime(admin.created_at)}</p>
 																	</div>
 																	<span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
 																		{admin.role}
@@ -593,26 +1135,11 @@ const AdminPage = () => {
 														<Users className="h-5 w-5 text-primary" />
 														<h2 className="text-2xl font-bold">Invite new admin</h2>
 													</div>
-													<p className="text-muted-foreground mb-6">
-														Enter an email address to invite someone as an admin. They'll create an account and automatically get admin access when they sign in.
-													</p>
+													<p className="text-muted-foreground mb-6">Save an email here so the person can create an account and claim access.</p>
 													{canInviteAdmins ? (
 														<form onSubmit={handleInviteSubmit} className="space-y-4">
-															<input
-																type="email"
-																name="email"
-																placeholder="Admin email"
-																value={inviteForm.email}
-																onChange={handleInviteChange}
-																required
-																className="w-full"
-															/>
-															<select
-																name="role"
-																value={inviteForm.role}
-																onChange={handleInviteChange}
-																className="w-full"
-															>
+															<input type="email" name="email" placeholder="Admin email" value={inviteForm.email} onChange={handleInviteChange} required className="w-full" />
+															<select name="role" value={inviteForm.role} onChange={handleInviteChange} className="w-full">
 																<option value="admin">Admin</option>
 																<option value="events">Events</option>
 																<option value="finance">Finance</option>
@@ -627,9 +1154,7 @@ const AdminPage = () => {
 															</button>
 														</form>
 													) : (
-														<p className="text-sm text-muted-foreground">
-															Only owners and full admins can invite other admins.
-														</p>
+														<p className="text-sm text-muted-foreground">Only owners and full admins can invite other admins.</p>
 													)}
 
 													<div className="mt-6 space-y-3">
@@ -638,9 +1163,7 @@ const AdminPage = () => {
 																<div className="flex items-start justify-between gap-3">
 																	<div>
 																		<p className="font-semibold">{invite.email}</p>
-																		<p className="text-sm text-muted-foreground">
-																			Saved {formatDateTime(invite.created_at)}
-																		</p>
+																		<p className="text-sm text-muted-foreground">Saved {formatDateTime(invite.created_at)}</p>
 																	</div>
 																	<div className="text-right">
 																		<p className="text-xs font-semibold uppercase tracking-wide text-primary">{invite.role}</p>
@@ -653,475 +1176,39 @@ const AdminPage = () => {
 												</div>
 											</div>
 
-											<form onSubmit={handleSettingsSubmit} className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
-												<div className="flex items-center gap-3 mb-4">
-													<Database className="h-5 w-5 text-primary" />
-													<h2 className="text-2xl font-bold">Family settings</h2>
-												</div>
-												<p className="text-muted-foreground mb-6">
-													Update the main family contact details, payment links, and Google Calendar links that show on the site.
-												</p>
-												<div className="grid lg:grid-cols-2 gap-4">
-													<input
-														type="text"
-														name="display_name"
-														placeholder="Family name shown on site"
-														value={settingsForm.display_name}
-														onChange={handleSettingsChange}
-														className="w-full"
-													/>
-													<input
-														type="text"
-														name="primary_cta_label"
-														placeholder="Main button label"
-														value={settingsForm.primary_cta_label}
-														onChange={handleSettingsChange}
-														className="w-full"
-													/>
-													<input
-														type="email"
-														name="support_email"
-														placeholder="Family contact email"
-														value={settingsForm.support_email}
-														onChange={handleSettingsChange}
-														className="w-full"
-													/>
-													<input
-														type="tel"
-														name="support_phone"
-														placeholder="Family contact phone"
-														value={settingsForm.support_phone}
-														onChange={handleSettingsChange}
-														className="w-full"
-													/>
-													<input
-														type="text"
-														name="cash_app_handle"
-														placeholder="Cash App handle"
-														value={settingsForm.cash_app_handle}
-														onChange={handleSettingsChange}
-														className="w-full"
-													/>
-													<input
-														type="text"
-														name="venmo_handle"
-														placeholder="Venmo handle"
-														value={settingsForm.venmo_handle}
-														onChange={handleSettingsChange}
-														className="w-full"
-													/>
-													<input
-														type="url"
-														name="paypal_donate_url"
-														placeholder="PayPal donation link"
-														value={settingsForm.paypal_donate_url}
-														onChange={handleSettingsChange}
-														className="w-full lg:col-span-2"
-													/>
-													<input
-														type="url"
-														name="google_calendar_public_url"
-														placeholder="Google Calendar public link"
-														value={settingsForm.google_calendar_public_url}
-														onChange={handleSettingsChange}
-														className="w-full lg:col-span-2"
-													/>
-													<input
-														type="url"
-														name="google_calendar_embed_url"
-														placeholder="Google Calendar embed link"
-														value={settingsForm.google_calendar_embed_url}
-														onChange={handleSettingsChange}
-														className="w-full lg:col-span-2"
-													/>
-													<input
-														type="text"
-														name="business_tagline"
-														placeholder="Business Corner headline"
-														value={settingsForm.business_tagline}
-														onChange={handleSettingsChange}
-														className="w-full lg:col-span-2"
-													/>
-													<textarea
-														name="business_summary"
-														placeholder="Business Corner summary"
-														value={settingsForm.business_summary}
-														onChange={handleSettingsChange}
-														rows={4}
-														className="w-full lg:col-span-2"
-													/>
-												</div>
-												<div className="mt-5">
-													<button
-														type="submit"
-														disabled={savingSettings}
-														className="gradient-burgundy text-white px-6 py-3 rounded-xl font-semibold hover:shadow-burgundy transition-all duration-200 disabled:opacity-70"
-													>
-														{savingSettings ? 'Saving...' : 'Save family settings'}
-													</button>
-												</div>
-											</form>
-
-											<div className="grid xl:grid-cols-2 gap-8">
-												<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
-													<div className="flex items-center justify-between gap-4 mb-4">
-														<div className="flex items-center gap-3">
-															<Store className="h-5 w-5 text-primary" />
-															<h2 className="text-2xl font-bold">Update business listings</h2>
-														</div>
-														<button
-															type="button"
-															onClick={() => setBusinessForm(initialBusinessForm)}
-															className="text-sm font-semibold text-primary"
-														>
-															New listing
-														</button>
+											{canManage && (
+												<form onSubmit={handleSettingsSubmit} className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+													<div className="flex items-center gap-3 mb-4">
+														<Database className="h-5 w-5 text-primary" />
+														<h2 className="text-2xl font-bold">Family settings</h2>
 													</div>
-													<form onSubmit={handleBusinessSubmit} className="space-y-4">
-														<input
-															type="text"
-															name="title"
-															placeholder="Business name"
-															value={businessForm.title}
-															onChange={handleBusinessChange}
-															required
-															className="w-full"
-														/>
-														<div className="grid sm:grid-cols-2 gap-4">
-															<input
-																type="text"
-																name="category"
-																placeholder="Category"
-																value={businessForm.category}
-																onChange={handleBusinessChange}
-																required
-																className="w-full"
-															/>
-															<input
-																type="text"
-																name="price_label"
-																placeholder="City, state or service area"
-																value={businessForm.price_label}
-																onChange={handleBusinessChange}
-																className="w-full"
-															/>
-														</div>
-														<textarea
-															name="description"
-															placeholder="What does this business do?"
-															value={businessForm.description}
-															onChange={handleBusinessChange}
-															rows={5}
-															required
-															className="w-full"
-														/>
-														<div className="grid sm:grid-cols-[160px_1fr] gap-4 items-center">
-															<input
-																type="number"
-																name="sort_order"
-																placeholder="Sort order"
-																value={businessForm.sort_order}
-																onChange={handleBusinessChange}
-																className="w-full"
-															/>
-															<label className="inline-flex items-center gap-3 text-sm font-medium">
-																<input
-																	type="checkbox"
-																	name="is_featured"
-																	checked={businessForm.is_featured}
-																	onChange={handleBusinessChange}
-																/>
-																Feature this listing near the top
-															</label>
-														</div>
+													<p className="text-muted-foreground mb-6">Update the main family contact details, payment links, and calendar links shown on the site.</p>
+													<div className="grid lg:grid-cols-2 gap-4">
+														<input type="text" name="display_name" placeholder="Family name shown on site" value={settingsForm.display_name} onChange={handleSettingsChange} className="w-full" />
+														<input type="text" name="primary_cta_label" placeholder="Main button label" value={settingsForm.primary_cta_label} onChange={handleSettingsChange} className="w-full" />
+														<input type="email" name="support_email" placeholder="Family contact email" value={settingsForm.support_email} onChange={handleSettingsChange} className="w-full" />
+														<input type="tel" name="support_phone" placeholder="Family contact phone" value={settingsForm.support_phone} onChange={handleSettingsChange} className="w-full" />
+														<input type="text" name="cash_app_handle" placeholder="Cash App handle" value={settingsForm.cash_app_handle} onChange={handleSettingsChange} className="w-full" />
+														<input type="text" name="venmo_handle" placeholder="Venmo handle" value={settingsForm.venmo_handle} onChange={handleSettingsChange} className="w-full" />
+														<input type="url" name="paypal_donate_url" placeholder="PayPal donation link" value={settingsForm.paypal_donate_url} onChange={handleSettingsChange} className="w-full lg:col-span-2" />
+														<input type="url" name="google_calendar_public_url" placeholder="Google Calendar public link" value={settingsForm.google_calendar_public_url} onChange={handleSettingsChange} className="w-full lg:col-span-2" />
+														<input type="url" name="google_calendar_embed_url" placeholder="Google Calendar embed link" value={settingsForm.google_calendar_embed_url} onChange={handleSettingsChange} className="w-full lg:col-span-2" />
+														<input type="text" name="business_tagline" placeholder="Business Corner headline" value={settingsForm.business_tagline} onChange={handleSettingsChange} className="w-full lg:col-span-2" />
+														<textarea name="business_summary" placeholder="Business Corner summary" value={settingsForm.business_summary} onChange={handleSettingsChange} rows={4} className="w-full lg:col-span-2" />
+													</div>
+													<div className="mt-5">
 														<button
 															type="submit"
-															disabled={savingBusiness}
+															disabled={savingSettings}
 															className="gradient-burgundy text-white px-6 py-3 rounded-xl font-semibold hover:shadow-burgundy transition-all duration-200 disabled:opacity-70"
 														>
-															{savingBusiness ? 'Saving...' : businessForm.id ? 'Update listing' : 'Add listing'}
-														</button>
-													</form>
-												</div>
-
-												<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
-													<div className="flex items-center gap-3 mb-6">
-														<Store className="h-5 w-5 text-primary" />
-														<h2 className="text-2xl font-bold">Current business directory</h2>
-													</div>
-													<div className="divide-y divide-border/50">
-														{dashboard.businesses.map((item) => (
-															<div key={item.id} className="py-4 first:pt-0 last:pb-0">
-																<div className="flex items-start justify-between gap-4">
-																	<div>
-																		<p className="font-semibold">{item.title}</p>
-																		<p className="text-sm text-muted-foreground">{item.category}</p>
-																		<p className="text-sm text-muted-foreground">{item.price_label || 'No location added'}</p>
-																	</div>
-																	<button
-																		type="button"
-																		onClick={() => handleBusinessEdit(item)}
-																		className="text-sm font-semibold text-primary"
-																	>
-																		Edit
-																	</button>
-																</div>
-															</div>
-														))}
-													</div>
-												</div>
-											</div>
-
-											<div className="grid xl:grid-cols-2 gap-8">
-												<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
-													<div className="flex items-center justify-between gap-4 mb-4">
-														<div className="flex items-center gap-3">
-															<CalendarDays className="h-5 w-5 text-primary" />
-															<h2 className="text-2xl font-bold">Update events</h2>
-														</div>
-														<button
-															type="button"
-															onClick={() => setEventForm(initialEventForm)}
-															className="text-sm font-semibold text-primary"
-														>
-															New event
+															{savingSettings ? 'Saving...' : 'Save family settings'}
 														</button>
 													</div>
-													<form onSubmit={handleEventSubmit} className="space-y-4">
-														<input
-															type="text"
-															name="title"
-															placeholder="Event title"
-															value={eventForm.title}
-															onChange={handleEventChange}
-															required
-															className="w-full"
-														/>
-														<div className="grid sm:grid-cols-2 gap-4">
-															<input
-																type="text"
-																name="event_type"
-																placeholder="Event type"
-																value={eventForm.event_type}
-																onChange={handleEventChange}
-																required
-																className="w-full"
-															/>
-															<select
-																name="status"
-																value={eventForm.status}
-																onChange={handleEventChange}
-																className="w-full"
-															>
-																<option value="planned">Planned</option>
-																<option value="open">Open</option>
-																<option value="closed">Closed</option>
-																<option value="complete">Complete</option>
-																<option value="cancelled">Cancelled</option>
-															</select>
-														</div>
-														<textarea
-															name="description"
-															placeholder="Event details"
-															value={eventForm.description}
-															onChange={handleEventChange}
-															rows={4}
-															className="w-full"
-														/>
-														<input
-															type="text"
-															name="location"
-															placeholder="Location"
-															value={eventForm.location}
-															onChange={handleEventChange}
-															className="w-full"
-														/>
-														<div className="grid sm:grid-cols-2 gap-4">
-															<input
-																type="datetime-local"
-																name="starts_at"
-																value={eventForm.starts_at}
-																onChange={handleEventChange}
-																className="w-full"
-															/>
-															<input
-																type="datetime-local"
-																name="ends_at"
-																value={eventForm.ends_at}
-																onChange={handleEventChange}
-																className="w-full"
-															/>
-														</div>
-														<div className="grid sm:grid-cols-2 gap-4">
-															<input
-																type="datetime-local"
-																name="intake_deadline"
-																value={eventForm.intake_deadline}
-																onChange={handleEventChange}
-																className="w-full"
-															/>
-															<input
-																type="number"
-																min="1"
-																name="capacity"
-																placeholder="Capacity"
-																value={eventForm.capacity}
-																onChange={handleEventChange}
-																className="w-full"
-															/>
-														</div>
-														<input
-															type="url"
-															name="google_calendar_event_url"
-															placeholder="Google Calendar event link"
-															value={eventForm.google_calendar_event_url}
-															onChange={handleEventChange}
-															className="w-full"
-														/>
-														<button
-															type="submit"
-															disabled={savingEvent}
-															className="gradient-gold text-foreground px-6 py-3 rounded-xl font-semibold hover:shadow-gold transition-all duration-200 disabled:opacity-70"
-														>
-															{savingEvent ? 'Saving...' : eventForm.id ? 'Update event' : 'Add event'}
-														</button>
-													</form>
-												</div>
-
-												<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
-													<div className="flex items-center gap-3 mb-6">
-														<CalendarDays className="h-5 w-5 text-primary" />
-														<h2 className="text-2xl font-bold">Current events</h2>
-													</div>
-													<div className="divide-y divide-border/50">
-														{dashboard.events.map((item) => (
-															<div key={item.id} className="py-4 first:pt-0 last:pb-0">
-																<div className="flex items-start justify-between gap-4">
-																	<div>
-																		<p className="font-semibold">{item.title}</p>
-																		<p className="text-sm text-muted-foreground">{formatDateTime(item.starts_at)}</p>
-																		<p className="text-sm text-muted-foreground">{item.location || 'Location TBD'}</p>
-																	</div>
-																	<button
-																		type="button"
-																		onClick={() => handleEventEdit(item)}
-																		className="text-sm font-semibold text-primary"
-																	>
-																		Edit
-																	</button>
-																</div>
-															</div>
-														))}
-													</div>
-												</div>
-											</div>
+												</form>
+											)}
 										</div>
 									)}
-
-									<div className="grid xl:grid-cols-[1.1fr_0.9fr] gap-8">
-										<div className="space-y-8">
-											<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
-												<div className="flex items-center gap-3 mb-6">
-													<Users className="h-5 w-5 text-primary" />
-													<h2 className="text-2xl font-bold">Family event signups</h2>
-												</div>
-												<div className="space-y-4">
-													{dashboard.eventSignups.map((signup) => (
-														<div key={signup.id} className="rounded-2xl border border-border/50 p-5">
-															<div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
-																<div>
-																	<p className="font-semibold">{signup.attendee_name}</p>
-																	<p className="text-sm text-muted-foreground">{signup.email}</p>
-																	<p className="text-sm text-muted-foreground">
-																		{signup.events?.title || 'Event not found'}
-																	</p>
-																</div>
-																<span className="inline-flex rounded-full bg-secondary/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
-																	{signup.status}
-																</span>
-															</div>
-															<div className="grid sm:grid-cols-2 gap-3 text-sm text-muted-foreground">
-																<p>Party size: {signup.party_size}</p>
-																<p>{formatDateTime(signup.events?.starts_at || signup.created_at)}</p>
-															</div>
-														</div>
-													))}
-												</div>
-											</div>
-
-											<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
-												<div className="flex items-center gap-3 mb-6">
-													<Wallet className="h-5 w-5 text-primary" />
-													<h2 className="text-2xl font-bold">Recent payments and entry records</h2>
-												</div>
-												<div className="space-y-4">
-													{dashboard.recentOrders.map((order) => (
-														<div key={order.id || order.reference_code} className="rounded-2xl border border-border/50 p-5">
-															<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
-																<div>
-																	<p className="font-semibold">{order.reference_code || order.id}</p>
-																	<p className="text-sm text-muted-foreground">{order.purchaser_name}</p>
-																</div>
-																<span className="inline-flex rounded-full bg-primary/10 px-3 py-1 font-semibold text-primary">
-																	{order.payment_status}
-																</span>
-															</div>
-															<div className="grid sm:grid-cols-3 gap-3 text-sm text-muted-foreground">
-																<p>Method: {order.payment_method}</p>
-																<p>Entries: {order.entry_count}</p>
-																<p>Amount: {formatMoney(order.donation_amount_cents)}</p>
-															</div>
-														</div>
-													))}
-												</div>
-											</div>
-										</div>
-
-										<div className="space-y-8">
-											<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
-												<div className="flex items-center gap-3 mb-6">
-													<Ticket className="h-5 w-5 text-primary" />
-													<h2 className="text-2xl font-bold">Latest tickets</h2>
-												</div>
-												<div className="grid sm:grid-cols-2 gap-4">
-													{dashboard.tickets.map((ticket) => (
-														<div key={ticket.id} className="rounded-2xl border border-border/50 p-5">
-															<p className="text-sm uppercase tracking-[0.2em] text-primary font-semibold mb-2">
-																Ticket
-															</p>
-															<p className="text-2xl font-bold mb-2">#{ticket.ticket_number}</p>
-															<p className="text-sm text-muted-foreground mb-1">Order {ticket.order_id}</p>
-															<p className="text-sm font-medium">{ticket.status}</p>
-														</div>
-													))}
-												</div>
-											</div>
-
-											<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
-												<div className="flex items-center gap-3 mb-6">
-													<Store className="h-5 w-5 text-primary" />
-													<h2 className="text-2xl font-bold">Directory submissions</h2>
-												</div>
-												<div className="space-y-4">
-													{dashboard.serviceRequests.map((request) => (
-														<div key={request.id} className="rounded-2xl border border-border/50 p-5">
-															<div className="flex items-start justify-between gap-3 mb-2">
-																<p className="font-semibold">{request.requester_name}</p>
-																<span className="inline-flex rounded-full bg-secondary/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
-																	{request.status}
-																</span>
-															</div>
-															<p className="text-sm text-muted-foreground mb-2">{request.email}</p>
-															<p className="text-sm text-muted-foreground mb-2">{request.message}</p>
-															<p className="text-sm text-muted-foreground">
-																{request.budget_label || 'No location added'}
-															</p>
-														</div>
-													))}
-												</div>
-											</div>
-										</div>
-									</div>
 								</>
 							)}
 						</>

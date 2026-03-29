@@ -85,7 +85,8 @@ const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
           }).toString(),
         }, {
           state: {
-            tickets: orderResult.tickets,
+            tickets: orderResult.tickets,         // [{number, raffle_name}]
+            ticketNumbers: orderResult.ticketNumbers, // [1,2,3]
             totalCents: orderResult.totalCents ?? 0,
             entryCount: orderResult.entryCount ?? 0,
             orderId: orderResult.orderId ?? null,
@@ -97,7 +98,7 @@ const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
           },
         });
       } else {
-        // Cash on Delivery Flow
+        // Cash App / COD Flow
         if (!codForm.name || !codForm.email || !codForm.phone) {
           toast({
             title: 'Missing Information',
@@ -108,22 +109,38 @@ const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
           return;
         }
 
-        // Simulate COD order processing
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const orderDetails = {
-          id: `ORD-${Math.floor(Math.random() * 1000000)}`,
-          date: new Date().toISOString(),
-          items: [...cartItems],
-          total: getCartTotal(),
-          method: 'Cash on Delivery',
-          customer: { ...codForm }
-        };
+        const codResult = await submitFundraiserOrder({
+          name: codForm.name,
+          email: codForm.email,
+          phone: codForm.phone,
+          address: codForm.address || null,
+          items: cartItems,
+          paymentMethod: 'cashapp',
+        });
+
+        if (!codResult.ok) {
+          throw new Error(codResult.message || 'Unable to save your order. Please try again.');
+        }
 
         clearCart();
         setIsCartOpen(false);
         setCodForm({ name: '', email: '', phone: '', address: '' });
-        navigate('/success', { state: { orderDetails } });
+
+        navigate('/success', {
+          state: {
+            orderDetails: {
+              id: codResult.referenceCode || codResult.orderId,
+              date: new Date().toISOString(),
+              method: 'Cash App',
+              customer: { name: codForm.name, email: codForm.email, phone: codForm.phone, address: codForm.address },
+              total: getCartTotal(),
+              tickets: codResult.tickets,           // [{number, raffle_name}]
+              ticketNumbers: codResult.ticketNumbers, // [1,2,3]
+              entryCount: codResult.entryCount,
+              referenceCode: codResult.referenceCode,
+            },
+          },
+        });
       }
     } catch (error) {
       console.error("Checkout error:", error);
