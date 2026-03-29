@@ -153,7 +153,7 @@ const Header = ({ setIsCartOpen }) => {
               className="hidden md:flex items-center gap-2 gradient-metallic text-black px-5 xl:px-6 py-2.5 rounded-xl font-bold tracking-wide hover:brightness-110 hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] hover:scale-105 transition-all duration-200 active:scale-[0.98] whitespace-nowrap"
             >
               <Ticket className="w-5 h-5" />
-              <span className="hidden xl:inline">Support Reunion</span>
+              <span className="hidden xl:inline">Fundraiser</span>
               <span className="xl:hidden">Support</span>
             </Link>
             <div className="lg:hidden w-10" />
@@ -195,7 +195,7 @@ const Header = ({ setIsCartOpen }) => {
                   className="flex items-center justify-center gap-2 gradient-metallic text-black px-6 py-3 rounded-xl font-bold tracking-wide mt-4 hover:brightness-110 transition-all shadow-md"
                 >
                   <Ticket className="w-5 h-5" />
-                  Support Reunion
+                  Fundraiser
                 </Link>
                 <button
                   type="button"
