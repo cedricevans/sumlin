@@ -79,7 +79,24 @@ const DonationPage = () => {
   const email = searchParams.get('email') || location.state?.customer?.email || '';
   const orderId = searchParams.get('orderId') || location.state?.orderId || '';
   const referenceCode = searchParams.get('reference') || location.state?.referenceCode || '';
-  const ticketNumbers = Array.isArray(location.state?.tickets) ? location.state.tickets : [];
+  const tickets = Array.isArray(location.state?.tickets) ? location.state.tickets : [];
+  const legacyTicketNumbers = Array.isArray(location.state?.ticketNumbers) ? location.state.ticketNumbers : [];
+  const ticketsByRaffle = tickets.reduce((acc, ticket) => {
+    const raffleName = ticket?.raffle_name || 'General';
+    const ticketNumber = ticket?.number ?? ticket?.ticket_number;
+
+    if (ticketNumber === undefined || ticketNumber === null) {
+      return acc;
+    }
+
+    if (!acc[raffleName]) {
+      acc[raffleName] = [];
+    }
+
+    acc[raffleName].push(ticketNumber);
+    return acc;
+  }, {});
+  const hasGroupedTickets = Object.keys(ticketsByRaffle).length > 0;
 
   const hasCheckoutContext = amountFromQuery > 0 || ticketsFromQuery > 0 || Boolean(referenceCode);
   const paypalUrl = buildPayPalUrl({
@@ -157,14 +174,25 @@ const DonationPage = () => {
                   </div>
                 </div>
 
-                {ticketNumbers.length > 0 && (
+                {(hasGroupedTickets || legacyTicketNumbers.length > 0) && (
                   <div className="mt-6 rounded-2xl border border-border/50 p-5">
                     <p className="text-sm uppercase tracking-[0.2em] text-primary font-semibold mb-3">
                       Reserved Ticket Numbers
                     </p>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      {ticketNumbers.join(', ')}
-                    </p>
+                    {hasGroupedTickets ? (
+                      <div className="space-y-2">
+                        {Object.entries(ticketsByRaffle).map(([raffleName, numbers]) => (
+                          <div key={raffleName} className="flex flex-col gap-1 text-sm sm:flex-row sm:gap-3">
+                            <span className="font-semibold text-foreground sm:min-w-[160px]">{raffleName}:</span>
+                            <span className="text-muted-foreground">{numbers.map((number) => `#${number}`).join(' · ')}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {legacyTicketNumbers.map((number) => `#${number}`).join(' · ')}
+                      </p>
+                    )}
                   </div>
                 )}
 
