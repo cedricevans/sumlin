@@ -1,6 +1,6 @@
 
 import React, { useCallback, useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ShoppingCart, Loader2, Ticket } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { useToast } from '@/hooks/use-toast';
@@ -152,7 +152,67 @@ const ProductCard = ({ product, index }) => {
   );
 };
 
-const ProductsList = () => {
+const CartSummaryPrompt = ({ setIsCartOpen }) => {
+  const { cartItems, getCartTotal } = useCart();
+
+  if (cartItems.length === 0) {
+    return null;
+  }
+
+  const totalEntries = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const basketCount = cartItems.length;
+  const basketNames = cartItems
+    .slice(0, 2)
+    .map((item) => item.product?.title)
+    .filter(Boolean)
+    .join(' · ');
+  const extraBasketCount = basketCount > 2 ? basketCount - 2 : 0;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 24 }}
+        transition={{ duration: 0.25 }}
+        className="mx-auto mt-8 w-full max-w-3xl"
+      >
+        <div className="rounded-[1.75rem] border border-primary/20 bg-card/95 p-4 shadow-[0_18px_50px_-22px_rgba(87,13,33,0.45)] backdrop-blur md:p-5">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+              <ShoppingCart className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">Selected raffle items</p>
+              <p className="mt-1 text-lg font-bold text-foreground">
+                {basketCount} {basketCount === 1 ? 'basket' : 'baskets'} · {totalEntries} {totalEntries === 1 ? 'entry' : 'entries'}
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                {basketNames}
+                {extraBasketCount > 0 ? ` + ${extraBasketCount} more` : ''}
+              </p>
+            </div>
+            <div className="shrink-0 text-right">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Current total</p>
+              <p className="mt-1 text-xl font-bold text-foreground">{getCartTotal()}</p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsCartOpen(true)}
+            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl gradient-burgundy px-4 py-3 text-sm font-semibold text-white transition-all duration-200 hover:shadow-burgundy"
+          >
+            <ShoppingCart className="h-4 w-4" />
+            View selected items
+          </button>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+const ProductsList = ({ setIsCartOpen }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -212,11 +272,14 @@ const ProductsList = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {products.map((product, index) => (
-        <ProductCard key={product.id} product={product} index={index} />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+        {products.map((product, index) => (
+          <ProductCard key={product.id} product={product} index={index} />
+        ))}
+      </div>
+      <CartSummaryPrompt setIsCartOpen={setIsCartOpen} />
+    </>
   );
 };
 

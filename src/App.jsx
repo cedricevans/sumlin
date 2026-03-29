@@ -40,7 +40,7 @@ function App() {
             <Route path="/family-legacy" element={<FamilyLegacyPage />} />
             <Route path="/reunion-2026" element={<Reunion2026Page />} />
             <Route path="/events" element={<EventsPage />} />
-            <Route path="/store" element={<StorePage />} />
+            <Route path="/store" element={<StorePage setIsCartOpen={setIsCartOpen} />} />
             <Route path="/family-portraits" element={<FamilyPortraitsPage />} />
             <Route path="/newsletter" element={<NewsletterPage />} />
             <Route path="/shop" element={<Shop />} />

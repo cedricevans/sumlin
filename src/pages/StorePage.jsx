@@ -20,7 +20,7 @@ const fundraiserHighlights = [
   },
 ];
 
-const StorePage = () => {
+const StorePage = ({ setIsCartOpen }) => {
   return (
     <>
       <Helmet>
@@ -178,7 +178,7 @@ const StorePage = () => {
                   If your household is supporting the fundraiser through ticket sales, start here. The basket buttons and store links below remain the same.
                 </p>
               </div>
-              <ProductsList />
+              <ProductsList setIsCartOpen={setIsCartOpen} />
             </div>
           </div>
 
