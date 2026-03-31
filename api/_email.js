@@ -309,6 +309,10 @@ export async function sendResendEmail({ to, subject, html, text, replyTo = [] })
 		throw new Error('Missing RESEND_API_KEY env var');
 	}
 
+	if (!resendApiKey.startsWith('re_')) {
+		throw new Error('Invalid RESEND_API_KEY format. Resend API keys normally start with "re_".');
+	}
+
 	if (!fromEmail) {
 		throw new Error('Missing RESEND_EMAIL env var');
 	}
@@ -338,6 +342,10 @@ export async function sendResendEmail({ to, subject, html, text, replyTo = [] })
 
 	if (!response.ok) {
 		const body = await response.text();
+		if (response.status === 401) {
+			throw new Error('Resend rejected the API key. Update RESEND_API_KEY in your deployment environment and redeploy.');
+		}
+
 		throw new Error(`Resend error: ${body}`);
 	}
 

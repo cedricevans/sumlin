@@ -15,12 +15,36 @@ const initialBusinessForm = {
 	requester_name: '',
 	email: '',
 	phone: '',
-	category: 'professional-services',
-	event_type: '',
-	event_date: '',
-	budget_label: '',
+	category: 'Professional Services',
+	business_name: '',
+	contact_link: '',
+	service_area: '',
 	message: '',
 };
+
+const businessCategoryOptions = [
+	'Professional Services',
+	'Food and Catering',
+	'Beauty and Wellness',
+	'Events and Rentals',
+	'Photography and Media',
+	'Travel and Hospitality',
+	'Retail and Products',
+];
+
+function buildBusinessSubmissionMessage(form) {
+	const contactLink = form.contact_link.trim();
+	const description = form.message.trim();
+
+	return [
+		`Business category: ${form.category.trim()}`,
+		'',
+		`Contact link: ${contactLink || 'Not provided'}`,
+		'',
+		'Description:',
+		description,
+	].join('\n');
+}
 
 const initialSignupForm = {
 	event_id: '',
@@ -128,12 +152,21 @@ const FamilyBusinessPage = () => {
 		event.preventDefault();
 		setSavingBusiness(true);
 
-		const result = await submitServiceRequest(businessForm);
+		const result = await submitServiceRequest({
+			category: 'Business Directory Submission',
+			requester_name: businessForm.requester_name,
+			email: businessForm.email,
+			phone: businessForm.phone,
+			event_type: businessForm.business_name,
+			event_date: null,
+			budget_label: businessForm.service_area,
+			message: buildBusinessSubmissionMessage(businessForm),
+		});
 
 		if (result.ok) {
 			toast({
-				title: 'Business submitted',
-				description: result.message,
+				title: 'Business submission received',
+				description: 'Your business was sent to the family admin team for review and directory posting.',
 			});
 			setBusinessForm(initialBusinessForm);
 		} else {
@@ -367,7 +400,9 @@ const FamilyBusinessPage = () => {
 										{filteredServices.length === 0 && (
 											<div className="p-6 md:p-7">
 												<p className="text-muted-foreground">
-													No businesses match that search yet. Try another category or a shorter search.
+													{snapshot.services.length === 0
+														? 'No family businesses are live in the directory yet. Check back soon or use the form to submit one for review.'
+														: 'No businesses match that search yet. Try another category or a shorter search.'}
 												</p>
 											</div>
 										)}
@@ -529,7 +564,7 @@ const FamilyBusinessPage = () => {
 									<h2 className="text-3xl font-bold">Add your business</h2>
 								</div>
 								<p className="text-muted-foreground leading-relaxed mb-6">
-									Use this form to submit a family-owned business, side hustle, creative service, or professional practice for the directory.
+									Use this form to send a family-owned business, side hustle, creative service, or professional practice to the admin team for the directory.
 								</p>
 								<form className="space-y-4" onSubmit={handleBusinessSubmit}>
 									<input
@@ -567,37 +602,36 @@ const FamilyBusinessPage = () => {
 											onChange={handleBusinessChange}
 											className="w-full"
 										>
-											<option value="professional-services">Professional services</option>
-											<option value="food">Food and catering</option>
-											<option value="beauty">Beauty and wellness</option>
-											<option value="events">Events and rentals</option>
-											<option value="photography">Photography and media</option>
-											<option value="travel">Travel and hospitality</option>
-											<option value="retail">Retail and products</option>
+											{businessCategoryOptions.map((option) => (
+												<option key={option} value={option}>
+													{option}
+												</option>
+											))}
 										</select>
 										<input
 											type="text"
-											name="event_type"
+											name="business_name"
 											placeholder="Business name"
-											value={businessForm.event_type}
+											value={businessForm.business_name}
 											onChange={handleBusinessChange}
 											className="w-full"
+											required
 										/>
 									</div>
 									<div className="grid sm:grid-cols-2 gap-4">
 										<input
 											type="text"
-											name="event_date"
+											name="contact_link"
 											placeholder="Website or social link"
-											value={businessForm.event_date}
+											value={businessForm.contact_link}
 											onChange={handleBusinessChange}
 											className="w-full"
 										/>
 										<input
 											type="text"
-											name="budget_label"
+											name="service_area"
 											placeholder="City, state or service area"
-											value={businessForm.budget_label}
+											value={businessForm.service_area}
 											onChange={handleBusinessChange}
 											className="w-full"
 										/>
@@ -616,7 +650,7 @@ const FamilyBusinessPage = () => {
 										disabled={savingBusiness}
 										className="w-full gradient-burgundy text-white py-3 rounded-xl font-semibold hover:shadow-burgundy transition-all duration-200 disabled:opacity-70"
 									>
-										{savingBusiness ? 'Sending...' : 'Submit business'}
+										{savingBusiness ? 'Sending...' : 'Send to business directory'}
 									</button>
 								</form>
 							</div>

@@ -138,9 +138,29 @@ const Footer = () => {
         </div>
 
         <div className="pt-8 border-t border-background/20">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-background/60">
-            <p>© {currentYear} Sumlin Family Reunion. All rights reserved.</p>
-            <div className="flex gap-6">
+          <div className="grid gap-4 text-sm text-background/60 md:grid-cols-3 md:items-center">
+            <p className="text-center md:text-left">
+              © {currentYear} Sumlin Family Reunion. All rights reserved.
+            </p>
+            <p className="text-center">
+              Developed &amp; maintained by {' '}
+              <a
+                href="https://www.indigographix.com"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-primary transition-colors duration-200"
+              >
+                Indigo Group
+              </a>
+              {' '}·{' '}
+              <a
+                href="tel:4048890186"
+                className="hover:text-primary transition-colors duration-200"
+              >
+                404.889.0186
+              </a>
+            </p>
+            <div className="flex justify-center gap-6 md:justify-end">
               <Link to="/fundraiser-rules" className="hover:text-primary transition-colors duration-200">
                 Fundraiser Rules
               </Link>
