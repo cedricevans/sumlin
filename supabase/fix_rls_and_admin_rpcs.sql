@@ -324,6 +324,48 @@ GRANT EXECUTE ON FUNCTION sumlin.delete_newsletter_document(uuid, text) TO authe
 
 
 -- ============================================================
+-- Step 4e: Delete a single ticket (admin-only)
+-- ============================================================
+CREATE OR REPLACE FUNCTION sumlin.delete_ticket(
+  p_ticket_id uuid,
+  target_slug text DEFAULT 'sumlin'
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $func$
+DECLARE
+  v_tenant_id uuid;
+  v_user_role text;
+BEGIN
+  SELECT id INTO v_tenant_id FROM sumlin.tenants WHERE slug = target_slug;
+  IF v_tenant_id IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'message', 'Tenant not found');
+  END IF;
+
+  SELECT role INTO v_user_role
+  FROM sumlin.tenant_admins
+  WHERE tenant_id = v_tenant_id AND user_id = auth.uid()
+  LIMIT 1;
+
+  IF v_user_role IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'message', 'Access denied');
+  END IF;
+
+  -- Delete the ticket only if it belongs to the tenant
+  DELETE FROM sumlin.fundraiser_tickets
+  WHERE id = p_ticket_id
+    AND tenant_id = v_tenant_id;
+
+  RETURN jsonb_build_object('ok', true);
+END;
+$func$;
+
+GRANT EXECUTE ON FUNCTION sumlin.delete_ticket(uuid, text) TO authenticated;
+
+
+-- ============================================================
 -- Step 5: Save admin invite RPC
 -- ============================================================
 CREATE OR REPLACE FUNCTION sumlin.save_admin_invite(

@@ -1115,6 +1115,23 @@ export async function deleteNewsletterDocument(documentId, slug = DEFAULT_TENANT
 	return { ok: Boolean(result.ok), message: result.message || null };
 }
 
+export async function deleteTicket(ticketId, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return { ok: false, message: 'Supabase is not configured.' };
+	}
+
+	const rpcResult = await sumlinDb.rpc('delete_ticket', { p_ticket_id: ticketId, target_slug: slug });
+
+	if (rpcResult.error) {
+		return { ok: false, message: rpcResult.error.message };
+	}
+
+	const raw = rpcResult.data;
+	const result = Array.isArray(raw) ? (raw[0] ?? {}) : (raw ?? {});
+	clearAdminDataCache();
+	return { ok: Boolean(result.ok), message: result.message || null };
+}
+
 export async function fetchAllOrdersForExport(slug = DEFAULT_TENANT_SLUG) {
 	const result = await getAdminData(slug);
 	if (!result.ok) {

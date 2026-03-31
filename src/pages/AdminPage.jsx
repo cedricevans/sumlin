@@ -229,7 +229,7 @@ function OrderAccordion({ order, onApprove, onEmail, onDelete, approvingOrderId 
 
 						<button
 							type="button"
-							onClick={() => setConfirmDelete({ type: 'order', id: order.id, label: order.reference_code || order.purchaser_name })}
+							onClick={() => onDelete && onDelete(order.id)}
 							className="inline-flex items-center gap-1.5 bg-rose-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-rose-700 transition-colors duration-200"
 						>
 							<svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M8 6v14a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
@@ -606,6 +606,10 @@ const AdminPage = () => {
 		setConfirmDelete({ type: 'newsletter', id: documentId, label: null });
 	};
 
+	const handleDeleteTicket = (ticketId, label) => {
+		setConfirmDelete({ type: 'ticket', id: ticketId, label: label || 'ticket' });
+	};
+
 	const handleEmailConfirmation = (order) => {
 		const byRaffle = (order.tickets || []).reduce((acc, ticket) => {
 			const name = ticket.raffle_name || 'General';
@@ -679,6 +683,15 @@ const AdminPage = () => {
 					toast({ title: 'Delete failed', description: res.message, variant: 'destructive' });
 				}
 				setSavingNewsletter(false);
+					} else if (type === 'ticket') {
+						// single ticket delete
+						const res = await deleteTicket(id);
+						if (res.ok) {
+							toast({ title: 'Ticket deleted', description: 'Ticket removed.' });
+							await loadDashboard();
+						} else {
+							toast({ title: 'Delete failed', description: res.message, variant: 'destructive' });
+						}
 			}
 		} catch (err) {
 			toast({ title: 'Delete failed', description: err.message || String(err), variant: 'destructive' });
@@ -965,13 +978,18 @@ const AdminPage = () => {
 													</div>
 													<div className="divide-y divide-border/50">
 														{dashboard.tickets.map((ticket) => (
-															<div key={ticket.id} className="grid grid-cols-[96px_minmax(0,1fr)_120px] gap-4 px-4 py-3 text-sm">
+															<div key={ticket.id} className="grid grid-cols-[96px_minmax(0,1fr)_120px] gap-4 px-4 py-3 text-sm items-center">
 																<p className="font-semibold text-foreground">#{ticket.ticket_number}</p>
 																<div className="min-w-0">
 																	<p className="font-medium text-foreground truncate">{ticket.raffle_name || 'General raffle'}</p>
 																	<p className="text-xs text-muted-foreground truncate">Order {ticket.order_id}</p>
 																</div>
-																<p className="text-sm text-muted-foreground">{ticket.status}</p>
+																<div className="flex items-center justify-end gap-3">
+																	<p className="text-sm text-muted-foreground">{ticket.status}</p>
+																	<button type="button" onClick={() => handleDeleteTicket(ticket.id, `#${ticket.ticket_number}`)} className="text-sm font-semibold text-rose-600 hover:text-rose-700">
+																		Delete
+																	</button>
+																</div>
 															</div>
 														))}
 														{dashboard.tickets.length === 0 && (
