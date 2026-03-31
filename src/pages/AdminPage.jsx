@@ -32,8 +32,20 @@ import {
 	signUpAdmin,
 	uploadNewsletterDocument,
 	updateOrderPaymentStatus,
+	deleteOrderAndTickets,
+	deleteEventAndSignups,
+	deleteNewsletterDocument,
 	watchAdminSession,
 } from '@/lib/sumlinData';
+import {
+	AlertDialog,
+	AlertDialogContent,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogDescription,
+	AlertDialogAction,
+	AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 import { hasSupabaseConfig } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -136,7 +148,7 @@ function buildSettingsForm(tenant) {
 	};
 }
 
-function OrderAccordion({ order, onApprove, onEmail, approvingOrderId }) {
+function OrderAccordion({ order, onApprove, onEmail, onDelete, approvingOrderId }) {
 	const [open, setOpen] = useState(false);
 
 	const ticketsByRaffle = (order.tickets || []).reduce((acc, ticket) => {
@@ -171,6 +183,8 @@ function OrderAccordion({ order, onApprove, onEmail, approvingOrderId }) {
 							<p className="font-semibold text-primary">{formatMoney(order.donation_amount_cents)}</p>
 							<p className="text-muted-foreground">{order.entry_count} entries</p>
 						</div>
+
+
 						<p className="text-muted-foreground">{order.payment_method}</p>
 					</div>
 				</div>
@@ -211,6 +225,15 @@ function OrderAccordion({ order, onApprove, onEmail, approvingOrderId }) {
 						>
 							<Mail className="h-4 w-4" />
 							Send Confirmation
+						</button>
+
+						<button
+							type="button"
+							onClick={() => setConfirmDelete({ type: 'order', id: order.id, label: order.reference_code || order.purchaser_name })}
+							className="inline-flex items-center gap-1.5 bg-rose-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-rose-700 transition-colors duration-200"
+						>
+							<svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M8 6v14a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+							Delete
 						</button>
 					</div>
 				</div>
@@ -570,6 +593,19 @@ const AdminPage = () => {
 		setApprovingOrderId(null);
 	};
 
+	const handleDeleteOrder = async (orderId) => {
+		// open confirm dialog instead
+		setConfirmDelete({ type: 'order', id: orderId, label: null });
+	};
+
+	const handleDeleteEvent = async (eventId) => {
+		setConfirmDelete({ type: 'event', id: eventId, label: null });
+	};
+
+	const handleDeleteNewsletter = async (documentId) => {
+		setConfirmDelete({ type: 'newsletter', id: documentId, label: null });
+	};
+
 	const handleEmailConfirmation = (order) => {
 		const byRaffle = (order.tickets || []).reduce((acc, ticket) => {
 			const name = ticket.raffle_name || 'General';
@@ -603,6 +639,50 @@ const AdminPage = () => {
 		].join('\n');
 
 		window.location.href = `mailto:${order.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+	};
+
+	// Confirmation dialog state for destructive actions
+	const [confirmDelete, setConfirmDelete] = useState(null);
+
+	const performConfirmedDelete = async () => {
+		if (!confirmDelete) return;
+		const { type, id } = confirmDelete;
+		setConfirmDelete(null);
+		try {
+			if (type === 'order') {
+				setApprovingOrderId(id);
+				const res = await deleteOrderAndTickets(id);
+				if (res.ok) {
+					toast({ title: 'Order deleted', description: 'Order and associated tickets removed.' });
+					await Promise.all([loadDashboard(), loadOrders()]);
+				} else {
+					toast({ title: 'Delete failed', description: res.message, variant: 'destructive' });
+				}
+				setApprovingOrderId(null);
+			} else if (type === 'event') {
+				setSavingEvent(true);
+				const res = await deleteEventAndSignups(id);
+				if (res.ok) {
+					toast({ title: 'Event deleted', description: 'Event and associated signups removed.' });
+					await loadDashboard();
+				} else {
+					toast({ title: 'Delete failed', description: res.message, variant: 'destructive' });
+				}
+				setSavingEvent(false);
+			} else if (type === 'newsletter') {
+				setSavingNewsletter(true);
+				const res = await deleteNewsletterDocument(id);
+				if (res.ok) {
+					toast({ title: 'Newsletter deleted', description: 'Document removed from archive.' });
+					await loadNewsletterArchive();
+				} else {
+					toast({ title: 'Delete failed', description: res.message, variant: 'destructive' });
+				}
+				setSavingNewsletter(false);
+			}
+		} catch (err) {
+			toast({ title: 'Delete failed', description: err.message || String(err), variant: 'destructive' });
+		}
 	};
 
 	const handleExportCSV = async () => {
@@ -696,6 +776,22 @@ const AdminPage = () => {
 					content="Manage the Sumlin family calendar, newsletter uploads, business directory, fundraiser records, and family signups."
 				/>
 			</Helmet>
+
+			{/* Global confirm dialog for destructive actions (orders, events, newsletter) */}
+			<AlertDialog open={Boolean(confirmDelete)} onOpenChange={(open) => { if (!open) setConfirmDelete(null); }}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Confirm delete</AlertDialogTitle>
+						<AlertDialogDescription>
+							This action is permanent and cannot be undone. Are you sure you want to continue?
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<div className="mt-4 flex gap-2 justify-end">
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogAction onClick={performConfirmedDelete} className="bg-rose-600">Delete permanently</AlertDialogAction>
+					</div>
+				</AlertDialogContent>
+			</AlertDialog>
 
 			<section className="section-spacing bg-background pt-24 md:pt-32">
 				<div className="container-custom">
@@ -987,6 +1083,7 @@ const AdminPage = () => {
 															order={order}
 															onApprove={handleApproveOrder}
 															onEmail={handleEmailConfirmation}
+															onDelete={handleDeleteOrder}
 															approvingOrderId={approvingOrderId}
 														/>
 													))}
@@ -1059,9 +1156,14 @@ const AdminPage = () => {
 																			<p className="text-sm text-muted-foreground">{formatDateTime(item.starts_at)}</p>
 																			<p className="text-sm text-muted-foreground">{item.location || 'Location TBD'}</p>
 																		</div>
-																		<button type="button" onClick={() => handleEventEdit(item)} className="text-sm font-semibold text-primary">
+																		<div className="flex gap-2">
+																			<button type="button" onClick={() => handleEventEdit(item)} className="text-sm font-semibold text-primary">
 																			Edit
-																		</button>
+																			</button>
+																			<button type="button" onClick={() => handleDeleteEvent(item.id)} className="text-sm font-semibold text-rose-600">
+																			Delete
+																			</button>
+																		</div>
 																	</div>
 																</div>
 															))}
@@ -1203,14 +1305,19 @@ const AdminPage = () => {
 																			<p className="text-sm text-muted-foreground mt-2">{document.description}</p>
 																		)}
 																	</div>
-																	<a
-																		href={document.file_url}
-																		download
-																		className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80"
-																	>
-																		<Download className="h-4 w-4" />
-																		Download
-																	</a>
+																	<div className="flex items-center gap-3">
+																		<a
+																			href={document.file_url}
+																			download
+																			className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80"
+																		>
+																			<Download className="h-4 w-4" />
+																			Download
+																		</a>
+																		<button type="button" onClick={() => handleDeleteNewsletter(document.id)} className="inline-flex items-center gap-2 text-sm font-semibold text-rose-600 hover:text-rose-700">
+																			Delete
+																		</button>
+																	</div>
 																</div>
 															</div>
 														))}

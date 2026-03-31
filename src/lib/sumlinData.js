@@ -1064,6 +1064,57 @@ export async function updateOrderPaymentStatus(orderId, status, slug = DEFAULT_T
 	return { ok: Boolean(result.ok), message: result.message || null };
 }
 
+export async function deleteOrderAndTickets(orderId, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return { ok: false, message: 'Supabase is not configured yet.' };
+	}
+
+	const rpcResult = await sumlinDb.rpc('delete_order_and_tickets', { p_order_id: orderId, target_slug: slug });
+
+	if (rpcResult.error) {
+		return { ok: false, message: rpcResult.error.message };
+	}
+
+	const raw = rpcResult.data;
+	const result = Array.isArray(raw) ? (raw[0] ?? {}) : (raw ?? {});
+	clearAdminDataCache();
+	return { ok: Boolean(result.ok), message: result.message || null };
+}
+
+export async function deleteEventAndSignups(eventId, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return { ok: false, message: 'Supabase is not configured yet.' };
+	}
+
+	const rpcResult = await sumlinDb.rpc('delete_event_and_signups', { p_event_id: eventId, target_slug: slug });
+
+	if (rpcResult.error) {
+		return { ok: false, message: rpcResult.error.message };
+	}
+
+	const raw = rpcResult.data;
+	const result = Array.isArray(raw) ? (raw[0] ?? {}) : (raw ?? {});
+	clearAdminDataCache();
+	return { ok: Boolean(result.ok), message: result.message || null };
+}
+
+export async function deleteNewsletterDocument(documentId, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return { ok: false, message: 'Supabase is not configured yet.' };
+	}
+
+	const rpcResult = await sumlinDb.rpc('delete_newsletter_document', { p_document_id: documentId, target_slug: slug });
+
+	if (rpcResult.error) {
+		return { ok: false, message: rpcResult.error.message };
+	}
+
+	const raw = rpcResult.data;
+	const result = Array.isArray(raw) ? (raw[0] ?? {}) : (raw ?? {});
+	clearAdminDataCache();
+	return { ok: Boolean(result.ok), message: result.message || null };
+}
+
 export async function fetchAllOrdersForExport(slug = DEFAULT_TENANT_SLUG) {
 	const result = await getAdminData(slug);
 	if (!result.ok) {
