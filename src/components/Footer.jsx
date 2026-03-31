@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Phone, Mail, Facebook, Instagram, Twitter } from 'lucide-react';
+import { Globe, Phone, Mail, Facebook, Instagram } from 'lucide-react';
+import { FAMILY_CONTACT_INFO, FAMILY_REUNION_DETAILS } from '@/lib/sumlinData';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -42,28 +43,9 @@ const Footer = () => {
             <p className="text-background/80 text-sm leading-relaxed mb-6">
               Rooted in Faith, United in Legacy. Join us in celebrating our family heritage and building lasting connections.
             </p>
-            <div className="flex gap-3">
-              <a 
-                href="#" 
-                className="w-10 h-10 rounded-xl bg-background/10 hover:bg-primary hover:text-foreground flex items-center justify-center transition-all duration-200 hover:scale-110"
-                aria-label="Facebook"
-              >
-                <Facebook className="w-5 h-5" />
-              </a>
-              <a 
-                href="#" 
-                className="w-10 h-10 rounded-xl bg-background/10 hover:bg-primary hover:text-foreground flex items-center justify-center transition-all duration-200 hover:scale-110"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a 
-                href="#" 
-                className="w-10 h-10 rounded-xl bg-background/10 hover:bg-primary hover:text-foreground flex items-center justify-center transition-all duration-200 hover:scale-110"
-                aria-label="Twitter"
-              >
-                <Twitter className="w-5 h-5" />
-              </a>
+            <div className="space-y-2 text-sm text-background/75">
+              <p>{FAMILY_REUNION_DETAILS.locationLabel}</p>
+              <p>{FAMILY_REUNION_DETAILS.registrationLabel}</p>
             </div>
           </div>
 
@@ -86,7 +68,7 @@ const Footer = () => {
           <div>
             <span className="font-semibold text-lg mb-4 block">Family officers</span>
             <ul className="space-y-2">
-              {familyOfficers.slice(0, 3).map((officer, index) => (
+              {familyOfficers.map((officer, index) => (
                 <li key={index} className="text-sm">
                   <span className="text-background/80 block">{officer.name}</span>
                   <a 
@@ -106,20 +88,42 @@ const Footer = () => {
             <ul className="space-y-3 text-sm">
               <li>
                 <a 
-                  href="mailto:info@sumlinfamily.com"
+                  href={FAMILY_CONTACT_INFO.websiteUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-background/80 hover:text-primary transition-colors duration-200 flex items-center gap-2"
+                >
+                  <Globe className="w-4 h-4" />
+                  {FAMILY_CONTACT_INFO.websiteUrl}
+                </a>
+              </li>
+              <li>
+                <a 
+                  href={`mailto:${FAMILY_CONTACT_INFO.email}`}
                   className="text-background/80 hover:text-primary transition-colors duration-200 flex items-center gap-2"
                 >
                   <Mail className="w-4 h-4" />
-                  info@sumlinfamily.com
+                  {FAMILY_CONTACT_INFO.email}
                 </a>
+              </li>
+              <li>
+                <a 
+                  href={FAMILY_CONTACT_INFO.instagramUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-background/80 hover:text-primary transition-colors duration-200 flex items-center gap-2"
+                >
+                  <Instagram className="w-4 h-4" />
+                  {FAMILY_CONTACT_INFO.instagramHandle}
+                </a>
+              </li>
+              <li className="text-background/80 flex items-start gap-2">
+                <Facebook className="w-4 h-4 mt-0.5" />
+                <span>{FAMILY_CONTACT_INFO.facebookLabel}</span>
               </li>
               <li className="text-background/80">
                 <span className="block mb-1">Payment via Cash App:</span>
                 <span className="font-semibold text-primary">$SumlinReunionClub</span>
-              </li>
-              <li className="text-background/80">
-                <span className="block mb-1">Venmo:</span>
-                <span className="font-semibold text-primary">@sumlin-family</span>
               </li>
               <li>
                 <Link 

@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import { Phone, Mail, Facebook, Instagram, Twitter } from 'lucide-react';
+import { Globe, Phone, Mail, Facebook, Instagram } from 'lucide-react';
 import SmoothScroller from '@/components/SmoothScroller';
+import { FAMILY_CONTACT_INFO } from '@/lib/sumlinData';
 
 const ContactSection = () => {
   const [formData, setFormData] = useState({
@@ -70,28 +71,41 @@ const ContactSection = () => {
               </div>
 
               <div className="mt-8 pt-8 border-t border-border">
-                <h4 className="font-semibold mb-4">Connect with us</h4>
-                <div className="flex gap-4">
-                  <a 
-                    href="#" 
-                    className="w-12 h-12 rounded-xl bg-muted hover:bg-primary hover:text-white flex items-center justify-center transition-all duration-200 hover:scale-110"
-                    aria-label="Facebook"
+                <h4 className="font-semibold mb-4">Established family contact info</h4>
+                <div className="space-y-3 text-sm text-muted-foreground">
+                  <a
+                    href={FAMILY_CONTACT_INFO.websiteUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 hover:text-primary transition-colors duration-200"
                   >
-                    <Facebook className="w-5 h-5" />
+                    <Globe className="w-4 h-4" />
+                    {FAMILY_CONTACT_INFO.websiteUrl}
                   </a>
-                  <a 
-                    href="#" 
-                    className="w-12 h-12 rounded-xl bg-muted hover:bg-primary hover:text-white flex items-center justify-center transition-all duration-200 hover:scale-110"
-                    aria-label="Instagram"
+                  <a
+                    href={`mailto:${FAMILY_CONTACT_INFO.email}`}
+                    className="flex items-center gap-2 hover:text-primary transition-colors duration-200"
                   >
-                    <Instagram className="w-5 h-5" />
+                    <Mail className="w-4 h-4" />
+                    {FAMILY_CONTACT_INFO.email}
                   </a>
-                  <a 
-                    href="#" 
-                    className="w-12 h-12 rounded-xl bg-muted hover:bg-primary hover:text-white flex items-center justify-center transition-all duration-200 hover:scale-110"
-                    aria-label="Twitter"
+                  <a
+                    href={FAMILY_CONTACT_INFO.instagramUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 hover:text-primary transition-colors duration-200"
                   >
-                    <Twitter className="w-5 h-5" />
+                    <Instagram className="w-4 h-4" />
+                    {FAMILY_CONTACT_INFO.instagramHandle}
+                  </a>
+                  <a
+                    href={FAMILY_CONTACT_INFO.facebookSearchUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 hover:text-primary transition-colors duration-200"
+                  >
+                    <Facebook className="w-4 h-4" />
+                    {FAMILY_CONTACT_INFO.facebookLabel}
                   </a>
                 </div>
               </div>

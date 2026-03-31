@@ -1,8 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { CalendarDays, CreditCard, HeartHandshake, Mail, MapPin, Phone, Send, Store, Users } from 'lucide-react';
+import { CalendarDays, CreditCard, Globe, HeartHandshake, Instagram, Mail, MapPin, Send, Store, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { fetchBusinessSnapshot, formatDateTime, submitEventSignup, submitServiceRequest } from '@/lib/sumlinData';
+import {
+	FAMILY_CONTACT_INFO,
+	fetchBusinessSnapshot,
+	formatDateTime,
+	submitEventSignup,
+	submitServiceRequest,
+} from '@/lib/sumlinData';
 import { useToast } from '@/hooks/use-toast';
 
 const initialBusinessForm = {
@@ -242,14 +248,14 @@ const FamilyBusinessPage = () => {
 									<Mail className="h-4 w-4 text-primary mt-1" />
 									<div>
 										<p className="font-medium">Email</p>
-										<p className="text-muted-foreground">{tenant?.support_email || 'info@sumlinfamily.com'}</p>
+										<p className="text-muted-foreground">{tenant?.support_email || FAMILY_CONTACT_INFO.email}</p>
 									</div>
 								</div>
 								<div className="flex items-start gap-3">
-									<Phone className="h-4 w-4 text-primary mt-1" />
+									<Globe className="h-4 w-4 text-primary mt-1" />
 									<div>
-										<p className="font-medium">Phone</p>
-										<p className="text-muted-foreground">{tenant?.support_phone || '937-555-2026'}</p>
+										<p className="font-medium">Website</p>
+										<p className="text-muted-foreground">{FAMILY_CONTACT_INFO.websiteUrl}</p>
 									</div>
 								</div>
 								<div className="flex items-start gap-3">
@@ -257,10 +263,17 @@ const FamilyBusinessPage = () => {
 									<div>
 										<p className="font-medium">Payment handles</p>
 										<p className="text-muted-foreground">Cash App {tenant?.cash_app_handle || '$SumlinReunionClub'}</p>
-										<p className="text-muted-foreground">Venmo {tenant?.venmo_handle || '@sumlin-family'}</p>
 										<p className="text-muted-foreground">
 											PayPal {tenant?.paypal_donate_url ? 'Available for family support' : 'PayPal link coming soon'}
 										</p>
+									</div>
+								</div>
+								<div className="flex items-start gap-3">
+									<Instagram className="h-4 w-4 text-primary mt-1" />
+									<div>
+										<p className="font-medium">Social pages</p>
+										<p className="text-muted-foreground">Instagram {FAMILY_CONTACT_INFO.instagramHandle}</p>
+										<p className="text-muted-foreground">Facebook {FAMILY_CONTACT_INFO.facebookLabel}</p>
 									</div>
 								</div>
 								<div className="flex items-start gap-3">

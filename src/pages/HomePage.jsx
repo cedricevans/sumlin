@@ -7,6 +7,7 @@ import ParallaxHero from '@/components/ParallaxHero';
 import SmoothScroller from '@/components/SmoothScroller';
 import CountdownTimer from '@/components/CountdownTimer';
 import LegacySection from '@/components/LegacySection';
+import { FAMILY_REUNION_DETAILS } from '@/lib/sumlinData';
 import { Calendar, Users, Heart, Gift, TreePine, Camera, ShoppingBag, Star, Sparkles, Award } from 'lucide-react';
 
 const HomePage = () => {
@@ -202,6 +203,17 @@ const HomePage = () => {
               </h2>
               <div className="countdown-compact w-full max-w-4xl mx-auto">
                 <CountdownTimer />
+              </div>
+              <div className="mt-5 space-y-2 text-white/90">
+                <p className="text-base md:text-lg font-semibold">
+                  2026 Reunion Dates: {FAMILY_REUNION_DETAILS.dateRangeLabel}
+                </p>
+                <p className="text-sm md:text-base uppercase tracking-[0.2em] text-amber-200">
+                  {FAMILY_REUNION_DETAILS.locationLabel}
+                </p>
+                <p className="text-sm md:text-base text-white/80">
+                  {FAMILY_REUNION_DETAILS.registrationLabel}
+                </p>
               </div>
             </div>
           </SmoothScroller>

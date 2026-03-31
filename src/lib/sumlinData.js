@@ -2,17 +2,34 @@ import { getSupabaseConnectionLabel, supabase, sumlinDb } from '@/lib/supabase';
 
 export const DEFAULT_TENANT_SLUG = 'sumlin';
 export const NEWSLETTER_BUCKET = 'sumlin-newsletters';
+export const FAMILY_CONTACT_INFO = {
+	websiteUrl: 'https://www.sumlinfamily.com/',
+	websiteLabel: 'www.sumlinfamily.com',
+	email: 'sumlinfamilylegacy@gmail.com',
+	instagramHandle: '@SumlinFamilyStrong',
+	instagramUrl: 'https://www.instagram.com/SumlinFamilyStrong/',
+	facebookLabel: 'Sumlin Family of Rivertown, Georgia',
+	facebookSearchUrl:
+		'https://www.facebook.com/search/top?q=Sumlin%20Family%20of%20Rivertown%2C%20Georgia',
+};
+export const FAMILY_REUNION_DETAILS = {
+	countdownDate: '2026-09-05T00:00:00',
+	countdownLabel: 'September 5, 2026',
+	dateRangeLabel: '9/5/26 and 9/6/26',
+	locationLabel: 'Dayton, OH',
+	registrationLabel: 'Registration Information Coming Soon',
+};
 
 export const fundraiserRules = {
 	title: 'Sumlin Family Reunion fundraiser disclaimer and entry rules',
-	lastUpdated: 'March 26, 2026',
+	lastUpdated: 'March 30, 2026',
 	sections: [
 		{
-			title: 'Donation and entry notice',
+			title: 'Fundraiser participation notice',
 			items: [
-				'No purchase or donation is necessary to submit an entry request.',
-				'A donation does not increase or improve the odds of being selected.',
-				'All qualified entries must be handled on substantially equal terms.',
+				'Fundraiser participation should follow the posted basket, donation, and payment instructions on this site.',
+				'Please review the current family fundraiser guidance before you purchase tickets or make a support donation.',
+				'Questions about fundraiser participation can be directed to the family using the contact details listed on this site.',
 			],
 		},
 		{
@@ -25,8 +42,8 @@ export const fundraiserRules = {
 		{
 			title: 'Payment channels',
 			items: [
-				'Cash App, Venmo, PayPal, and similar services may be used to send family support.',
-				'Follow the posted entry instructions so every request is handled fairly and consistently.',
+				'Use the payment methods currently listed on the site when sending family support.',
+				'Follow the posted purchase and donation instructions so every payment is handled clearly and consistently.',
 				'If you use PayPal, return to this site afterward for the latest fundraiser details and updates.',
 			],
 		},
@@ -45,13 +62,13 @@ const fallbackTenant = {
 	name: 'Sumlin',
 	display_name: 'Sumlin Family',
 	reunion_year: 2026,
-	support_email: 'info@sumlinfamily.com',
-	support_phone: '937-555-2026',
+	support_email: FAMILY_CONTACT_INFO.email,
+	support_phone: '937.902.0020',
 	business_tagline: 'A directory of family-owned businesses, services, and community connections.',
 	business_summary:
 		'Explore and support family-owned businesses across the Sumlin family network, from food and events to photography, travel, and professional services.',
 	cash_app_handle: '$SumlinReunionClub',
-	venmo_handle: '@sumlin-family',
+	venmo_handle: '',
 	paypal_donate_url: '',
 	google_calendar_public_url: '',
 	google_calendar_embed_url: '',
@@ -245,7 +262,7 @@ const fallbackEvents = [];
 
 const fallbackDashboard = {
 	kpis: [
-		{ label: 'Pending payments', value: '6', detail: 'Needs manual confirmation in Cash App, Venmo, or PayPal.' },
+		{ label: 'Pending payments', value: '6', detail: 'Needs manual confirmation in Cash App or PayPal.' },
 		{ label: 'Active tickets', value: '124', detail: 'Issued after payment or free-entry confirmation.' },
 		{ label: 'Open service requests', value: '4', detail: 'Family business inquiries waiting for follow-up.' },
 		{ label: 'Upcoming events', value: '3', detail: 'Shared through Google Calendar instead of local scheduling.' },

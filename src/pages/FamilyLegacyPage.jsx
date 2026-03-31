@@ -14,7 +14,8 @@ const boardMembers = [
   { name: 'Ronika Sumlin', position: 'Secretary', image: '/Ronika Sumlin-Secretary.png' },
   { name: 'Peggy W.', position: 'Co-Treasurer', image: '/Peggy W - Co Treasure.png' },
   { name: 'Carrie', position: 'Historian', image: '/Carrie - Historian.png' },
-  { name: 'Nia P.', position: 'Historian Assistant', image: '/Nia P - Historian Assistant.png' },
+  { name: 'Denise', position: 'Administrator', image: '/Winters_Denise.jpeg' },
+  { name: 'Nia P.', position: 'Historian Assistant', image: '/Nia P - Historian Assistant-new.jpeg' },
 ];
 
 const FamilyLegacyPage = () => {

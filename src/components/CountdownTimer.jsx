@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
+import { FAMILY_REUNION_DETAILS } from '@/lib/sumlinData';
 
 const CountdownTimer = () => {
   const calculateTimeLeft = () => {
-    const targetDate = new Date('2026-05-09T00:00:00');
+    const targetDate = new Date(FAMILY_REUNION_DETAILS.countdownDate);
     const difference = +targetDate - +new Date();
     let timeLeft = {};
 
@@ -35,7 +36,7 @@ const CountdownTimer = () => {
   };
 
   return (
-    <div className="countdown-container" aria-label="Countdown to May 9th, 2026">
+    <div className="countdown-container" aria-label={`Countdown to ${FAMILY_REUNION_DETAILS.countdownLabel}`}>
       <div className="countdown-unit">
         <span className="countdown-value">{formatNumber(timeLeft.days)}</span>
         <span className="countdown-label">Days</span>

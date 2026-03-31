@@ -5,15 +5,21 @@ import { motion } from 'framer-motion';
 import {
 	CalendarDays,
 	CreditCard,
+	Facebook,
+	Globe,
 	HeartHandshake,
+	Instagram,
 	Mail,
 	MapPin,
-	Phone,
 	Send,
 	Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { fetchBusinessSnapshot, formatDateTime, submitServiceRequest } from '@/lib/sumlinData';
+import {
+	FAMILY_CONTACT_INFO,
+	fetchBusinessSnapshot,
+	submitServiceRequest,
+} from '@/lib/sumlinData';
 import { useToast } from '@/hooks/use-toast';
 
 const familyOfficers = [
@@ -96,11 +102,8 @@ const Contact = () => {
 	}, []);
 
 	const tenant = snapshot.tenant;
-	const supportEmail = tenant?.support_email || 'info@sumlinfamily.com';
-	const supportPhone = tenant?.support_phone || '937-555-2026';
+	const supportEmail = tenant?.support_email || FAMILY_CONTACT_INFO.email;
 	const cashAppHandle = tenant?.cash_app_handle || '$SumlinReunionClub';
-	const venmoHandle = tenant?.venmo_handle || '@sumlin-family';
-	const upcomingEvents = snapshot.events.slice(0, 2);
 
 	const contactChannels = [
 		{
@@ -112,28 +115,28 @@ const Contact = () => {
 			isInternal: false,
 		},
 		{
-			icon: Phone,
-			title: 'Main phone',
-			content: supportPhone,
-			subtitle: 'Use this for direct reunion support.',
-			href: `tel:${supportPhone.replace(/[^\d]/g, '')}`,
+			icon: Globe,
+			title: 'Website',
+			content: FAMILY_CONTACT_INFO.websiteUrl,
+			subtitle: 'Start here for reunion updates, fundraiser details, and family news.',
+			href: FAMILY_CONTACT_INFO.websiteUrl,
 			isInternal: false,
 		},
 		{
-			icon: CreditCard,
-			title: 'Cash App',
-			content: cashAppHandle,
-			subtitle: 'Helpful for fundraiser support and payment confirmation.',
-			href: '/donate',
-			isInternal: true,
+			icon: Instagram,
+			title: 'Instagram',
+			content: FAMILY_CONTACT_INFO.instagramHandle,
+			subtitle: 'Follow for family highlights and reunion updates.',
+			href: FAMILY_CONTACT_INFO.instagramUrl,
+			isInternal: false,
 		},
 		{
-			icon: HeartHandshake,
-			title: 'Venmo',
-			content: venmoHandle,
-			subtitle: 'Another fast way to support the reunion.',
-			href: '/donate',
-			isInternal: true,
+			icon: Facebook,
+			title: 'Facebook',
+			content: FAMILY_CONTACT_INFO.facebookLabel,
+			subtitle: 'Search this page name on Facebook to stay connected with the family.',
+			href: FAMILY_CONTACT_INFO.facebookSearchUrl,
+			isInternal: false,
 		},
 	];
 
@@ -221,9 +224,9 @@ const Contact = () => {
 									</div>
 									<div className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
 										<p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#d4af37]">
-											Support Phone
+											Official Website
 										</p>
-										<p className="mt-2 text-lg font-semibold text-white">{supportPhone}</p>
+										<p className="mt-2 text-lg font-semibold text-white">{FAMILY_CONTACT_INFO.websiteUrl}</p>
 									</div>
 								</div>
 							</motion.div>
@@ -270,24 +273,21 @@ const Contact = () => {
 										</div>
 
 										<div className="rounded-2xl bg-muted/60 p-5">
-											<p className="text-sm font-semibold text-primary">Upcoming touchpoints</p>
-											{upcomingEvents.length > 0 ? (
-												<div className="mt-3 space-y-3">
-													{upcomingEvents.map((eventItem) => (
-														<div key={eventItem.id} className="rounded-xl border border-border/50 bg-background/80 p-4">
-															<p className="font-semibold text-foreground">{eventItem.title}</p>
-															<p className="mt-1 text-sm text-muted-foreground">
-																{formatDateTime(eventItem.starts_at)}
-																{eventItem.location ? ` · ${eventItem.location}` : ''}
-															</p>
-														</div>
-													))}
+											<p className="text-sm font-semibold text-primary">Established family channels</p>
+											<div className="mt-3 space-y-3 text-sm text-muted-foreground">
+												<div className="rounded-xl border border-border/50 bg-background/80 p-4">
+													<p className="font-semibold text-foreground">Instagram</p>
+													<p className="mt-1">{FAMILY_CONTACT_INFO.instagramHandle}</p>
 												</div>
-											) : (
-												<p className="mt-2 text-muted-foreground">
-													Planning calls and family events will appear here as they are added.
-												</p>
-											)}
+												<div className="rounded-xl border border-border/50 bg-background/80 p-4">
+													<p className="font-semibold text-foreground">Facebook</p>
+													<p className="mt-1">{FAMILY_CONTACT_INFO.facebookLabel}</p>
+												</div>
+												<div className="rounded-xl border border-border/50 bg-background/80 p-4">
+													<p className="font-semibold text-foreground">Cash App</p>
+													<p className="mt-1">{cashAppHandle}</p>
+												</div>
+											</div>
 										</div>
 									</div>
 								</div>

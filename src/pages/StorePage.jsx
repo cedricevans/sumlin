@@ -44,9 +44,6 @@ const StorePage = ({ setIsCartOpen }) => {
                 <p className="text-xl text-muted-foreground leading-relaxed">
                   Each household is encouraged to sell 25 tickets or donate $25 in support of the Sumlin Family Reunion.
                 </p>
-                <p className="text-base text-muted-foreground leading-relaxed">
-                  This page is organized to make that message clear first, then give family members a simple path to donate, review the rules, or shop the fundraiser baskets.
-                </p>
               </div>
             </div>
           </SmoothScroller>
@@ -96,7 +93,7 @@ const StorePage = ({ setIsCartOpen }) => {
                     <div className="space-y-3 text-sm md:text-base text-yellow-50/85 leading-relaxed">
                       <p>View baskets if your household is ready to support the fundraiser through ticket sales.</p>
                       <p>Use the donation button if you want to give $25 in memory of or in honor of someone special.</p>
-                      <p>Read the official rules if you need the alternate no-cost entry option.</p>
+                      <p>Read the official rules for current fundraiser guidance, payment details, and family participation notes.</p>
                     </div>
                   </div>
 
@@ -131,7 +128,7 @@ const StorePage = ({ setIsCartOpen }) => {
                 <p className="text-sm uppercase tracking-[0.22em] text-primary font-semibold mb-3">Before you enter</p>
                 <h3 className="text-2xl font-bold mb-3">Official rules still apply</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  No purchase or donation is necessary to submit an entry request, and a donation does not increase the odds of being selected.
+                  Please review the current fundraiser guidance before you purchase tickets or make a support donation.
                 </p>
               </div>
 
@@ -141,9 +138,6 @@ const StorePage = ({ setIsCartOpen }) => {
                     <p className="text-sm uppercase tracking-[0.22em] text-primary font-semibold">Important notice</p>
                     <p className="text-base md:text-lg leading-relaxed">
                       Please review the official rules before you enter so the family fundraiser stays clear and fair for everyone.
-                    </p>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      Use the rules page if you want details on alternate entry instructions, eligibility, and payment guidance.
                     </p>
                   </div>
                   <Link

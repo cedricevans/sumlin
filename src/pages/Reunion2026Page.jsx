@@ -3,27 +3,28 @@ import React from 'react';
 import { Helmet } from 'react-helmet';
 import ParallaxHero from '@/components/ParallaxHero';
 import SmoothScroller from '@/components/SmoothScroller';
+import { FAMILY_REUNION_DETAILS } from '@/lib/sumlinData';
 import { Calendar, MapPin, Clock, Users } from 'lucide-react';
 
 const Reunion2026Page = () => {
   const eventDetails = [
     {
       icon: Calendar,
-      title: 'Date',
-      detail: 'Summer 2026',
-      description: 'Mark your calendars for an unforgettable celebration'
+      title: 'Dates',
+      detail: FAMILY_REUNION_DETAILS.dateRangeLabel,
+      description: 'Mark your calendars for reunion weekend'
     },
     {
       icon: MapPin,
       title: 'Location',
-      detail: 'To be announced',
-      description: 'A beautiful venue perfect for our family gathering'
+      detail: FAMILY_REUNION_DETAILS.locationLabel,
+      description: 'Dayton will host the 2026 family gathering'
     },
     {
       icon: Clock,
-      title: 'Duration',
-      detail: 'Full weekend',
-      description: 'Three days of activities, meals, and memories'
+      title: 'Registration',
+      detail: 'Coming Soon',
+      description: 'Registration details will be shared on the site as soon as they are ready'
     },
     {
       icon: Users,
@@ -55,6 +56,9 @@ const Reunion2026Page = () => {
               <h2 className="text-4xl md:text-5xl font-bold mb-6">Join us for an unforgettable weekend</h2>
               <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
                 The Sumlin Family Reunion 2026 will be a milestone celebration bringing together family members from across the country. This is more than an event it's a homecoming, a celebration of our shared heritage, and an opportunity to strengthen the bonds that unite us.
+              </p>
+              <p className="text-base text-primary font-semibold mt-4">
+                {FAMILY_REUNION_DETAILS.registrationLabel}
               </p>
             </div>
           </SmoothScroller>

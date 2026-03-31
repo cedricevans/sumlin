@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CalendarDays, Clock3, ExternalLink, MapPin, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { fetchBusinessSnapshot, formatDateTime } from '@/lib/sumlinData';
+import { FAMILY_CONTACT_INFO, fetchBusinessSnapshot, formatDateTime } from '@/lib/sumlinData';
 
 const starterEvents = [
 	{
@@ -57,7 +57,7 @@ const EventsPage = () => {
 	}, []);
 
 	const tenant = snapshot.tenant;
-	const supportEmail = tenant?.support_email || 'info@sumlinfamily.com';
+	const supportEmail = tenant?.support_email || FAMILY_CONTACT_INFO.email;
 	const calendarPublicUrl = tenant?.google_calendar_public_url || '';
 	const calendarEmbedUrl = tenant?.google_calendar_embed_url || '';
 	const visibleEvents = useMemo(
