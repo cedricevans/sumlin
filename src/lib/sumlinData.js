@@ -853,6 +853,19 @@ export async function getAdminSession() {
 	return session;
 }
 
+async function getAdminAuthHeaders() {
+	const session = await getAdminSession();
+
+	if (!session?.access_token) {
+		throw new Error('No active admin session found.');
+	}
+
+	return {
+		Authorization: `Bearer ${session.access_token}`,
+		'Content-Type': 'application/json',
+	};
+}
+
 export async function claimAdminInvite(slug = DEFAULT_TENANT_SLUG) {
 	if (!supabase) {
 		return { ok: false, message: 'Supabase is not configured yet.' };
@@ -1130,6 +1143,47 @@ export async function deleteTicket(ticketId, slug = DEFAULT_TENANT_SLUG) {
 	const result = Array.isArray(raw) ? (raw[0] ?? {}) : (raw ?? {});
 	clearAdminDataCache();
 	return { ok: Boolean(result.ok), message: result.message || null };
+}
+
+export async function resendOrderConfirmation(orderId, options = {}) {
+	if (!orderId) return { ok: false, message: 'Missing orderId' };
+
+	try {
+		const headers = await getAdminAuthHeaders();
+		const resp = await fetch('/api/resend-confirmation', {
+			method: 'POST',
+			headers,
+			body: JSON.stringify({
+				orderId,
+				variant: options.variant || 'payment-confirmed',
+				slug: options.slug || DEFAULT_TENANT_SLUG,
+			}),
+		});
+
+		const json = await resp.json();
+		return json;
+	} catch (err) {
+		return { ok: false, message: err.message || String(err) };
+	}
+}
+
+export async function sendFamilyCommunication(payload) {
+	try {
+		const headers = await getAdminAuthHeaders();
+		const resp = await fetch('/api/send-family-email', {
+			method: 'POST',
+			headers,
+			body: JSON.stringify({
+				...payload,
+				slug: payload?.slug || DEFAULT_TENANT_SLUG,
+			}),
+		});
+
+		const json = await resp.json();
+		return json;
+	} catch (err) {
+		return { ok: false, message: err.message || String(err) };
+	}
 }
 
 export async function fetchAllOrdersForExport(slug = DEFAULT_TENANT_SLUG) {

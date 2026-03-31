@@ -1,0 +1,362 @@
+<h1 id="sumlin-family-website-features">Sumlin Family Website Features</h1>
+<p>This document is a current feature inventory for the Sumlin Family Reunion website.</p>
+<h2 id="website-purpose">Website Purpose</h2>
+<p>The website is a family reunion hub that combines:</p>
+<ul>
+<li>Reunion information and family storytelling</li>
+<li>Fundraiser and donation flows</li>
+<li>Event publishing and signups</li>
+<li>Family business directory management</li>
+<li>Newsletter archive publishing</li>
+<li>Contact and service request intake</li>
+<li>Admin operations for orders, tickets, and communications</li>
+</ul>
+<h2 id="public-website-features">Public Website Features</h2>
+<h3 id="main-navigation">Main navigation</h3>
+<p>The public site includes navigation for:</p>
+<ul>
+<li>Home</li>
+<li>Family Legacy</li>
+<li>Family Portraits</li>
+<li>Events</li>
+<li>Business Corner</li>
+<li>Newsletter</li>
+<li>Donate</li>
+<li>Admin</li>
+</ul>
+<p>The header also includes:</p>
+<ul>
+<li>A mobile menu</li>
+<li>A live cart count</li>
+<li>A fundraiser shortcut button</li>
+</ul>
+<h3 id="homepage">Homepage</h3>
+<p>The homepage presents the main reunion message and acts as the front door for:</p>
+<ul>
+<li>Reunion branding and family identity</li>
+<li>Calls to action for fundraiser support</li>
+<li>Navigation into events, legacy content, and public pages</li>
+</ul>
+<h3 id="family-legacy">Family Legacy</h3>
+<p>The legacy section highlights:</p>
+<ul>
+<li>Family heritage</li>
+<li>Crest and legacy storytelling</li>
+<li>Reunion mission and identity</li>
+</ul>
+<h3 id="reunion-2026-page">Reunion 2026 page</h3>
+<p>This page provides the reunion landing experience for the 2026 event, including:</p>
+<ul>
+<li>Reunion positioning and event framing</li>
+<li>Family-focused messaging</li>
+<li>Public reunion overview</li>
+</ul>
+<h3 id="events-and-family-calendar">Events and family calendar</h3>
+<p>The events area supports:</p>
+<ul>
+<li>Upcoming reunion events</li>
+<li>Planning calls and family updates</li>
+<li>Public event schedule viewing</li>
+</ul>
+<h3 id="family-portraits">Family portraits</h3>
+<p>The portraits page promotes:</p>
+<ul>
+<li>Family portrait sessions</li>
+<li>Multi-generational photography</li>
+<li>Keepsake and memory-focused photo opportunities</li>
+</ul>
+<h3 id="business-corner">Business Corner</h3>
+<p>The family business area supports:</p>
+<ul>
+<li>Public browsing of family-owned businesses</li>
+<li>Business directory submissions</li>
+<li>Event signup access</li>
+<li>Contact and service inquiry support tied to family businesses</li>
+</ul>
+<h3 id="newsletter-archive">Newsletter archive</h3>
+<p>The newsletter area supports:</p>
+<ul>
+<li>Featured latest newsletter download</li>
+<li>Archived newsletter browsing</li>
+<li>Family announcements and update history</li>
+</ul>
+<h3 id="contact-page">Contact page</h3>
+<p>The contact page includes:</p>
+<ul>
+<li>Contact details for the family</li>
+<li>Officer contact references</li>
+<li>Support paths for reunion questions, fundraiser help, business inquiries, and portrait requests</li>
+<li>A contact form that saves service requests to Supabase</li>
+</ul>
+<h3 id="donate-page">Donate page</h3>
+<p>The donation flow supports:</p>
+<ul>
+<li>General family support donations</li>
+<li>PayPal payment redirection</li>
+<li>Donation context passed from fundraiser checkout</li>
+<li>Display of reserved tickets, purchaser info, amount due, and reference code</li>
+</ul>
+<h3 id="fundraiser-store">Fundraiser store</h3>
+<p>The fundraiser storefront supports:</p>
+<ul>
+<li>Public fundraising messaging</li>
+<li>Basket and ticket support flow</li>
+<li>Official rules access</li>
+<li>Cart-based ticket selection</li>
+</ul>
+<h3 id="product-detail-pages">Product detail pages</h3>
+<p>Product detail pages support:</p>
+<ul>
+<li>Viewing individual fundraiser items</li>
+<li>Adding items to the cart</li>
+</ul>
+<h3 id="success-page">Success page</h3>
+<p>The success page supports:</p>
+<ul>
+<li>Order confirmation display</li>
+<li>Reference code display</li>
+<li>Date, payment method, and entry count display</li>
+<li>Ticket numbers grouped by raffle</li>
+<li>Cash App payment instructions for manual confirmation flows</li>
+<li>Printable confirmation view</li>
+</ul>
+<h3 id="policy-and-informational-routes">Policy and informational routes</h3>
+<p>The site includes:</p>
+<ul>
+<li>Fundraiser rules/disclaimer page</li>
+<li>Shipping policy route</li>
+<li>Returns policy route</li>
+<li>Custom 404 page</li>
+</ul>
+<h2 id="fundraiser-and-checkout-features">Fundraiser and Checkout Features</h2>
+<h3 id="shopping-cart">Shopping cart</h3>
+<p>The cart supports:</p>
+<ul>
+<li>Add/remove/update cart items</li>
+<li>Live cart quantity count in the header</li>
+<li>Slide-out cart UI</li>
+</ul>
+<h3 id="order-reservation-flow">Order reservation flow</h3>
+<p>The fundraiser order flow supports:</p>
+<ul>
+<li>Order creation in Supabase</li>
+<li>Entry count calculation</li>
+<li>Donation amount calculation</li>
+<li>Ticket assignment and reservation</li>
+<li>Reference code creation</li>
+</ul>
+<h3 id="payment-methods">Payment methods</h3>
+<p>The current flow supports:</p>
+<ul>
+<li>PayPal-directed payment flow</li>
+<li>Cash App / manual payment flow</li>
+</ul>
+<h3 id="ticket-handling">Ticket handling</h3>
+<p>The system supports:</p>
+<ul>
+<li>Ticket generation</li>
+<li>Ticket grouping by raffle</li>
+<li>Ticket display on donate and success pages</li>
+<li>Ticket visibility in the admin dashboard</li>
+</ul>
+<h3 id="payment-approval">Payment approval</h3>
+<p>Admin users can:</p>
+<ul>
+<li>Mark pending orders as paid</li>
+<li>Trigger automatic thank-you email delivery when payment is approved</li>
+<li>Resend order-related emails manually</li>
+</ul>
+<h2 id="admin-dashboard-features">Admin Dashboard Features</h2>
+<p>The admin dashboard is the operational control center for the site.</p>
+<h3 id="authentication-and-access">Authentication and access</h3>
+<p>The admin system supports:</p>
+<ul>
+<li>Admin sign up</li>
+<li>Admin sign in</li>
+<li>Admin sign out</li>
+<li>Invite claiming for approved admins</li>
+<li>Role-based access through Supabase</li>
+</ul>
+<h3 id="dashboard-data">Dashboard data</h3>
+<p>The admin area loads:</p>
+<ul>
+<li>Tenant profile data</li>
+<li>Orders</li>
+<li>Tickets</li>
+<li>Admin list</li>
+<li>Invites</li>
+<li>Events</li>
+<li>Event signups</li>
+<li>Business listings</li>
+<li>Service requests</li>
+</ul>
+<h3 id="orders-payment-command-center">Orders / Payment Command Center</h3>
+<p>The orders section supports:</p>
+<ul>
+<li>Review of fundraiser orders</li>
+<li>Order filtering by payment status</li>
+<li>Ticket review by raffle</li>
+<li>Payment approval</li>
+<li>Thank-you / order email sending</li>
+<li>Order deletion</li>
+<li>CSV export</li>
+</ul>
+<h3 id="communications">Communications</h3>
+<p>The admin communications section supports:</p>
+<ul>
+<li>Sending family emails through Resend</li>
+<li>Custom recipient lists</li>
+<li>Subject line editing</li>
+<li>Preview text editing</li>
+<li>Email heading editing</li>
+<li>Multi-paragraph message content</li>
+<li>Optional CTA button label and URL</li>
+<li>Reply-to email configuration</li>
+<li>Custom signature</li>
+</ul>
+<h3 id="tickets">Tickets</h3>
+<p>The tickets area supports:</p>
+<ul>
+<li>Viewing assigned tickets</li>
+<li>Reviewing raffle names</li>
+<li>Reviewing order linkage</li>
+<li>Deleting individual tickets</li>
+</ul>
+<h3 id="events-management">Events management</h3>
+<p>Admins can:</p>
+<ul>
+<li>Create events</li>
+<li>Edit events</li>
+<li>Publish event details</li>
+<li>Set dates, locations, deadlines, and calendar links</li>
+<li>Delete events and related signups</li>
+</ul>
+<h3 id="newsletter-management">Newsletter management</h3>
+<p>Admins can:</p>
+<ul>
+<li>Upload newsletter files</li>
+<li>Set newsletter title and issue date</li>
+<li>Publish newsletter descriptions</li>
+<li>View the published archive</li>
+<li>Delete newsletter documents</li>
+</ul>
+<h3 id="business-management">Business management</h3>
+<p>Admins can:</p>
+<ul>
+<li>Add business listings</li>
+<li>Edit business listings</li>
+<li>Manage category, description, pricing label, sort order, and featured status</li>
+</ul>
+<h3 id="access-management">Access management</h3>
+<p>Admins can:</p>
+<ul>
+<li>Invite other admins</li>
+<li>Assign admin roles</li>
+<li>Review active admins</li>
+<li>Review pending invites</li>
+</ul>
+<h3 id="family-settings">Family settings</h3>
+<p>Admins can update:</p>
+<ul>
+<li>Display name</li>
+<li>Support email</li>
+<li>Support phone</li>
+<li>Business Corner headline and summary</li>
+<li>Cash App handle</li>
+<li>Venmo handle</li>
+<li>PayPal donation URL</li>
+<li>Public calendar URL</li>
+<li>Embedded calendar URL</li>
+<li>Primary CTA label</li>
+</ul>
+<h2 id="data-and-backend-features">Data and Backend Features</h2>
+<h3 id="supabase-integration">Supabase integration</h3>
+<p>The site uses Supabase for:</p>
+<ul>
+<li>Authentication</li>
+<li>Database access</li>
+<li>Tenant-based admin access</li>
+<li>Fundraiser orders</li>
+<li>Fundraiser tickets</li>
+<li>Events</li>
+<li>Event signups</li>
+<li>Service requests</li>
+<li>Business listings</li>
+<li>Newsletter records</li>
+</ul>
+<h3 id="admin-rpc-workflows">Admin RPC workflows</h3>
+<p>The codebase includes admin RPC-backed workflows for:</p>
+<ul>
+<li>Dashboard loading</li>
+<li>Payment status updates</li>
+<li>Ticket deletion</li>
+<li>Event deletion</li>
+<li>Order deletion</li>
+<li>Admin invite handling</li>
+</ul>
+<h3 id="newsletter-file-publishing">Newsletter file publishing</h3>
+<p>Newsletter publishing uses:</p>
+<ul>
+<li>Supabase storage for uploaded files</li>
+<li>Database records for archive display</li>
+</ul>
+<h2 id="email-features">Email Features</h2>
+<p>The site is now connected to Resend for email delivery.</p>
+<h3 id="order-emails">Order emails</h3>
+<p>The order email system supports:</p>
+<ul>
+<li>HTML confirmation emails</li>
+<li>Plain-text fallback emails</li>
+<li>Reserved-order emails for pending payments</li>
+<li>Thank-you emails after payment confirmation</li>
+<li>Ticket number grouping by raffle</li>
+<li>Support reply-to handling</li>
+</ul>
+<h3 id="family-communications">Family communications</h3>
+<p>Admins can send styled HTML family emails for:</p>
+<ul>
+<li>Family announcements</li>
+<li>Donation requests</li>
+<li>Reunion reminders</li>
+<li>Thank-you messages</li>
+<li>General communications</li>
+</ul>
+<h3 id="email-security-model">Email security model</h3>
+<p>Email sending is implemented through server-side API routes so:</p>
+<ul>
+<li><code>RESEND_API_KEY</code> stays off the client</li>
+<li>Admin session verification happens before email sends</li>
+<li>Order data is loaded securely before confirmation emails are sent</li>
+</ul>
+<h2 id="ux-and-frontend-features">UX and Frontend Features</h2>
+<p>The site includes:</p>
+<ul>
+<li>Responsive navigation</li>
+<li>Mobile menu support</li>
+<li>Animated UI with Framer Motion</li>
+<li>Sticky header</li>
+<li>Slide-out shopping cart</li>
+<li>Scroll restoration</li>
+<li>Print-friendly order confirmation flow</li>
+</ul>
+<h2 id="existing-legacy-or-secondary-routes">Existing Legacy or Secondary Routes</h2>
+<p>A few routes still exist in the codebase outside the main Sumlin family flow:</p>
+<ul>
+<li><code>/shop</code></li>
+<li><code>/about</code></li>
+<li><code>/testimonials</code></li>
+<li>Older storefront-style content references</li>
+</ul>
+<p>These appear to be legacy or secondary routes compared with the current reunion-focused experience.</p>
+<h2 id="current-feature-summary">Current Feature Summary</h2>
+<p>At this point the website functions as:</p>
+<ul>
+<li>A public reunion website</li>
+<li>A fundraiser and ticket intake system</li>
+<li>A donation support system</li>
+<li>A family business directory</li>
+<li>A newsletter publishing archive</li>
+<li>An event calendar and signup tool</li>
+<li>A Supabase-backed admin panel</li>
+<li>A Resend-powered email communication system</li>
+</ul>

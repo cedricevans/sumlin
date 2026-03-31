@@ -27,14 +27,17 @@ import {
 	saveBusinessListing,
 	saveEvent,
 	saveTenantProfile,
+	sendFamilyCommunication,
 	signInAdmin,
 	signOutAdmin,
 	signUpAdmin,
 	uploadNewsletterDocument,
-	updateOrderPaymentStatus,
 	deleteOrderAndTickets,
 	deleteEventAndSignups,
 	deleteNewsletterDocument,
+	deleteTicket,
+	resendOrderConfirmation,
+	updateOrderPaymentStatus,
 	watchAdminSession,
 } from '@/lib/sumlinData';
 import {
@@ -99,6 +102,19 @@ const initialNewsletterForm = {
 	file: null,
 };
 
+const initialCommunicationForm = {
+	recipients: '',
+	subject: '',
+	previewText: '',
+	heading: '',
+	message: '',
+	ctaLabel: '',
+	ctaUrl: '',
+	audienceLabel: 'Family Update',
+	replyTo: '',
+	signature: 'The Sumlin Family Reunion Committee',
+};
+
 function toDateTimeInput(value) {
 	if (!value) {
 		return '';
@@ -148,7 +164,7 @@ function buildSettingsForm(tenant) {
 	};
 }
 
-function OrderAccordion({ order, onApprove, onEmail, onDelete, approvingOrderId }) {
+function OrderAccordion({ order, onApprove, onEmail, onDelete, approvingOrderId, emailingOrderId }) {
 	const [open, setOpen] = useState(false);
 
 	const ticketsByRaffle = (order.tickets || []).reduce((acc, ticket) => {
@@ -221,10 +237,15 @@ function OrderAccordion({ order, onApprove, onEmail, onDelete, approvingOrderId 
 						<button
 							type="button"
 							onClick={() => onEmail(order)}
+							disabled={emailingOrderId === order.id}
 							className="inline-flex items-center gap-1.5 bg-card border border-border/60 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-muted transition-colors duration-200"
 						>
 							<Mail className="h-4 w-4" />
-							Send Confirmation
+							{emailingOrderId === order.id
+								? 'Sending...'
+								: order.payment_status === 'paid'
+									? 'Send Thank You Email'
+									: 'Send Order Email'}
 						</button>
 
 						<button
@@ -252,9 +273,11 @@ const AdminPage = () => {
 	const [savingBusiness, setSavingBusiness] = useState(false);
 	const [savingEvent, setSavingEvent] = useState(false);
 	const [savingNewsletter, setSavingNewsletter] = useState(false);
+	const [savingCommunication, setSavingCommunication] = useState(false);
 	const [savingSettings, setSavingSettings] = useState(false);
 	const [savingInvite, setSavingInvite] = useState(false);
 	const [approvingOrderId, setApprovingOrderId] = useState(null);
+	const [emailingOrderId, setEmailingOrderId] = useState(null);
 	const [exportingCSV, setExportingCSV] = useState(false);
 	const [orders, setOrders] = useState([]);
 	const [ordersLoading, setOrdersLoading] = useState(false);
@@ -264,6 +287,7 @@ const AdminPage = () => {
 	const [businessForm, setBusinessForm] = useState(initialBusinessForm);
 	const [eventForm, setEventForm] = useState(initialEventForm);
 	const [newsletterForm, setNewsletterForm] = useState(initialNewsletterForm);
+	const [communicationForm, setCommunicationForm] = useState(initialCommunicationForm);
 	const [settingsForm, setSettingsForm] = useState(initialSettingsForm);
 	const [inviteForm, setInviteForm] = useState(initialInviteForm);
 	const [newsletterDocuments, setNewsletterDocuments] = useState([]);
@@ -349,6 +373,10 @@ const AdminPage = () => {
 	useEffect(() => {
 		if (dashboard?.tenant) {
 			setSettingsForm(buildSettingsForm(dashboard.tenant));
+			setCommunicationForm((current) => ({
+				...current,
+				replyTo: current.replyTo || dashboard.tenant.support_email || '',
+			}));
 		}
 	}, [dashboard?.tenant]);
 
@@ -572,14 +600,53 @@ const AdminPage = () => {
 		setSavingInvite(false);
 	};
 
+	const handleCommunicationChange = (event) => {
+		const { name, value } = event.target;
+		setCommunicationForm((current) => ({
+			...current,
+			[name]: value,
+		}));
+	};
+
+	const handleCommunicationSubmit = async (event) => {
+		event.preventDefault();
+		setSavingCommunication(true);
+
+		const result = await sendFamilyCommunication(communicationForm);
+
+		if (result.ok) {
+			toast({
+				title: 'Email sent',
+				description: result.message,
+			});
+			setCommunicationForm((current) => ({
+				...initialCommunicationForm,
+				replyTo: current.replyTo,
+				signature: current.signature,
+			}));
+		} else {
+			toast({
+				title: 'Email not sent',
+				description: result.message,
+				variant: 'destructive',
+			});
+		}
+
+		setSavingCommunication(false);
+	};
+
 	const handleApproveOrder = async (orderId) => {
 		setApprovingOrderId(orderId);
 		const result = await updateOrderPaymentStatus(orderId, 'paid');
 
 		if (result.ok) {
+			const emailResult = await resendOrderConfirmation(orderId, { variant: 'payment-confirmed' });
 			toast({
-				title: 'Order approved',
-				description: 'Payment status marked as paid.',
+				title: emailResult.ok ? 'Order approved' : 'Order approved, email pending',
+				description: emailResult.ok
+					? 'Payment marked as paid and thank-you email sent.'
+					: `Payment marked as paid, but the thank-you email failed: ${emailResult.message || 'Unknown error'}`,
+				variant: emailResult.ok ? 'default' : 'destructive',
 			});
 			await Promise.all([loadDashboard(), loadOrders()]);
 		} else {
@@ -610,39 +677,20 @@ const AdminPage = () => {
 		setConfirmDelete({ type: 'ticket', id: ticketId, label: label || 'ticket' });
 	};
 
-	const handleEmailConfirmation = (order) => {
-		const byRaffle = (order.tickets || []).reduce((acc, ticket) => {
-			const name = ticket.raffle_name || 'General';
-			if (!acc[name]) {
-				acc[name] = [];
-			}
-			acc[name].push(`#${ticket.ticket_number}`);
-			return acc;
-		}, {});
+	const handleEmailConfirmation = async (order) => {
+		setEmailingOrderId(order.id);
+		const variant = order.payment_status === 'paid' ? 'payment-confirmed' : 'payment-pending';
+		const result = await resendOrderConfirmation(order.id, { variant });
 
-		const ticketLines = Object.entries(byRaffle)
-			.map(([raffle, nums]) => `  ${raffle}: ${nums.join(', ')}`)
-			.join('\n');
+		toast({
+			title: result.ok ? 'Email sent' : 'Email failed',
+			description: result.ok
+				? `Resend delivered to ${order.email}.`
+				: result.message || 'Could not send the order email.',
+			variant: result.ok ? 'default' : 'destructive',
+		});
 
-		const subject = `Your Sumlin Family Reunion Fundraiser Tickets — Ref ${order.reference_code}`;
-		const body = [
-			`Hi ${order.purchaser_name},`,
-			'',
-			'Thank you for supporting the Sumlin Family Reunion 2026. Your payment has been confirmed and your raffle entries are now active.',
-			'',
-			`Reference Code: ${order.reference_code}`,
-			`Amount Paid: ${formatMoney(order.donation_amount_cents)}`,
-			`Entries: ${order.entry_count}`,
-			`Your Ticket Numbers by Raffle:\n${ticketLines || 'Pending assignment'}`,
-			`Payment Method: ${order.payment_method}`,
-			'',
-			'Please keep this email as your record. The drawing details will be announced at the reunion.',
-			'',
-			'With love,',
-			'The Sumlin Family Reunion Committee',
-		].join('\n');
-
-		window.location.href = `mailto:${order.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+		setEmailingOrderId(null);
 	};
 
 	// Confirmation dialog state for destructive actions
@@ -773,6 +821,7 @@ const AdminPage = () => {
 
 	const adminTabs = [
 		{ id: 'orders', label: 'Orders', icon: Wallet, count: orders.length },
+		{ id: 'communications', label: 'Communications', icon: Mail, count: 'Send' },
 		{ id: 'tickets', label: 'Tickets', icon: Ticket, count: dashboard?.tickets?.length || 0 },
 		{ id: 'events', label: 'Events', icon: CalendarDays, count: dashboard?.events?.length || 0 },
 		{ id: 'newsletter', label: 'Newsletter', icon: Download, count: newsletterDocuments.length },
@@ -1103,6 +1152,7 @@ const AdminPage = () => {
 															onEmail={handleEmailConfirmation}
 															onDelete={handleDeleteOrder}
 															approvingOrderId={approvingOrderId}
+															emailingOrderId={emailingOrderId}
 														/>
 													))}
 													{filteredOrders.length === 0 && (
@@ -1110,6 +1160,128 @@ const AdminPage = () => {
 													)}
 												</div>
 											)}
+										</div>
+									)}
+
+									{activeTab === 'communications' && (
+										<div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
+											<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+												<div className="flex items-center gap-3 mb-4">
+													<Mail className="h-5 w-5 text-primary" />
+													<div>
+														<h2 className="text-2xl font-bold">Send family email</h2>
+														<p className="text-sm text-muted-foreground mt-0.5">Use Resend for announcements, donation reminders, reunion updates, and family communications.</p>
+													</div>
+												</div>
+												<form onSubmit={handleCommunicationSubmit} className="space-y-4">
+													<textarea
+														name="recipients"
+														value={communicationForm.recipients}
+														onChange={handleCommunicationChange}
+														rows={4}
+														placeholder="Recipient emails, separated by commas or new lines"
+														className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3"
+														required
+													/>
+													<div className="grid gap-4 md:grid-cols-2">
+														<input
+															type="text"
+															name="audienceLabel"
+															value={communicationForm.audienceLabel}
+															onChange={handleCommunicationChange}
+															placeholder="Audience label"
+															className="w-full"
+														/>
+														<input
+															type="text"
+															name="replyTo"
+															value={communicationForm.replyTo}
+															onChange={handleCommunicationChange}
+															placeholder="Reply-to email"
+															className="w-full"
+														/>
+													</div>
+													<input
+														type="text"
+														name="subject"
+														value={communicationForm.subject}
+														onChange={handleCommunicationChange}
+														placeholder="Email subject"
+														className="w-full"
+														required
+													/>
+													<div className="grid gap-4 md:grid-cols-2">
+														<input
+															type="text"
+															name="previewText"
+															value={communicationForm.previewText}
+															onChange={handleCommunicationChange}
+															placeholder="Preview text"
+															className="w-full"
+														/>
+														<input
+															type="text"
+															name="heading"
+															value={communicationForm.heading}
+															onChange={handleCommunicationChange}
+															placeholder="Email heading"
+															className="w-full"
+														/>
+													</div>
+													<textarea
+														name="message"
+														value={communicationForm.message}
+														onChange={handleCommunicationChange}
+														rows={10}
+														placeholder="Write the family message here. Separate paragraphs with a blank line."
+														className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3"
+														required
+													/>
+													<div className="grid gap-4 md:grid-cols-2">
+														<input
+															type="text"
+															name="ctaLabel"
+															value={communicationForm.ctaLabel}
+															onChange={handleCommunicationChange}
+															placeholder="Button label"
+															className="w-full"
+														/>
+														<input
+															type="url"
+															name="ctaUrl"
+															value={communicationForm.ctaUrl}
+															onChange={handleCommunicationChange}
+															placeholder="Button URL"
+															className="w-full"
+														/>
+													</div>
+													<input
+														type="text"
+														name="signature"
+														value={communicationForm.signature}
+														onChange={handleCommunicationChange}
+														placeholder="Signature"
+														className="w-full"
+													/>
+													<button
+														type="submit"
+														disabled={savingCommunication}
+														className="inline-flex items-center gap-2 rounded-2xl gradient-burgundy px-5 py-3 font-semibold text-white disabled:opacity-70"
+													>
+														<Mail className="h-4 w-4" />
+														{savingCommunication ? 'Sending...' : 'Send family email'}
+													</button>
+												</form>
+											</div>
+
+											<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+												<h2 className="text-2xl font-bold mb-4">What this sends</h2>
+												<div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
+													<p>The email is sent from your configured `RESEND_EMAIL` address and uses the same family styling as payment confirmations.</p>
+													<p>Use this for reunion updates, thank-you notes, donation reminders, memorial messages, or general family announcements.</p>
+													<p>The order approval flow now sends a thank-you email automatically as soon as payment is marked paid.</p>
+												</div>
+											</div>
 										</div>
 									)}
 
