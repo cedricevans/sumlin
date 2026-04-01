@@ -7,66 +7,11 @@ import ParallaxHero from '@/components/ParallaxHero';
 import SmoothScroller from '@/components/SmoothScroller';
 import CountdownTimer from '@/components/CountdownTimer';
 import LegacySection from '@/components/LegacySection';
+import FamilyTreePreview from '@/components/FamilyTreePreview';
 import { FAMILY_REUNION_DETAILS } from '@/lib/sumlinData';
-import { Calendar, Users, Heart, Gift, TreePine, Camera, ShoppingBag, Star, Sparkles, Award } from 'lucide-react';
+import { Calendar, Users, Heart, Gift, TreePine, ShoppingBag, Star, Sparkles, Award } from 'lucide-react';
 
 const HomePage = () => {
-  const features = [
-    {
-      icon: Calendar,
-      title: 'Reunion 2026',
-      description: 'Join us for an unforgettable celebration of family, faith, and heritage.',
-      gradient: 'from-rose-950 via-red-950 to-amber-950',
-      iconColor: 'text-rose-950',
-      bgGlow: 'shadow-rose-950/50',
-      image: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&q=80'
-    },
-    {
-      icon: Gift,
-      title: 'Fundraiser baskets',
-      description: 'Support our reunion fundraiser, explore basket options, and join the family excitement around drawing day.',
-      gradient: 'from-amber-950 via-yellow-950 to-orange-950',
-      iconColor: 'text-amber-950',
-      bgGlow: 'shadow-amber-950/50',
-      image: 'https://images.unsplash.com/photo-1513885535751-8b9238bd345a?w=800&q=80'
-    },
-    {
-      icon: ShoppingBag,
-      title: 'Family business',
-      description: 'Find family-owned businesses, event help, and reunion planning support all in one place.',
-      gradient: 'from-stone-950 via-zinc-900 to-slate-950',
-      iconColor: 'text-stone-950',
-      bgGlow: 'shadow-stone-950/50',
-      image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80'
-    },
-    {
-      icon: Camera,
-      title: 'Family portraits',
-      description: 'Capture precious memories with professional family portrait sessions.',
-      gradient: 'from-emerald-950 via-green-950 to-teal-950',
-      iconColor: 'text-emerald-950',
-      bgGlow: 'shadow-emerald-950/50',
-      image: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&q=80'
-    },
-    {
-      icon: Heart,
-      title: 'Our legacy',
-      description: 'Discover the rich history and symbolism of the Sumlin Family crest.',
-      gradient: 'from-red-950 via-rose-950 to-pink-950',
-      iconColor: 'text-red-950',
-      bgGlow: 'shadow-red-950/50',
-      image: 'https://images.unsplash.com/photo-1604357209793-fca5dca89f97?w=800&q=80'
-    },
-    {
-      icon: TreePine,
-      title: 'Family tree',
-      description: 'Explore generations of Sumlin family history and connections.',
-      gradient: 'from-green-950 via-emerald-950 to-lime-950',
-      iconColor: 'text-green-950',
-      bgGlow: 'shadow-green-950/50',
-      image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&q=80'
-    }
-  ];
 
   return (
     <>
@@ -152,9 +97,10 @@ const HomePage = () => {
 
       {/* Countdown Section with Nature Background */}
       <section className="py-3 md:py-4 lg:py-6 relative overflow-hidden shadow-inner">
-        {/* Nature/Trees background image */}
+        {/* Trees background */}
         <div className="absolute inset-0 bg-cover bg-center" style={{backgroundImage: "url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1600&q=80')"}}></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-rose-950/90 via-red-950/90 to-amber-950/90"></div>
+        {/* Light overlay so text stays readable */}
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-50/80 via-orange-50/75 to-rose-50/80"></div>
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 mix-blend-overlay pointer-events-none"></div>
         
         {/* Subtle animated orbs */}
@@ -196,22 +142,22 @@ const HomePage = () => {
                 transition={{ duration: 0.6 }}
                 className="mb-3"
               >
-                <TreePine className="w-8 h-8 text-amber-400 mx-auto mb-2" />
+                <TreePine className="w-8 h-8 text-amber-700 mx-auto mb-2" />
               </motion.div>
-              <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-4 tracking-wide drop-shadow-md">
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-stone-900 mb-4 tracking-wide">
                 Countdown to Reunion 2026
               </h2>
               <div className="countdown-compact w-full max-w-4xl mx-auto">
                 <CountdownTimer />
               </div>
-              <div className="mt-5 space-y-2 text-white/90">
+              <div className="mt-5 space-y-2 text-stone-700">
                 <p className="text-base md:text-lg font-semibold">
                   2026 Reunion Dates: {FAMILY_REUNION_DETAILS.dateRangeLabel}
                 </p>
-                <p className="text-sm md:text-base uppercase tracking-[0.2em] text-amber-200">
+                <p className="text-sm md:text-base uppercase tracking-[0.2em] text-amber-700 font-semibold">
                   {FAMILY_REUNION_DETAILS.locationLabel}
                 </p>
-                <p className="text-sm md:text-base text-white/80">
+                <p className="text-sm md:text-base text-stone-500">
                   {FAMILY_REUNION_DETAILS.registrationLabel}
                 </p>
               </div>
@@ -220,11 +166,15 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Features Section with Nature Theme */}
+      {/* Family Tree Section */}
       <section className="section-spacing relative overflow-hidden">
-        {/* Subtle nature background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-stone-50 via-amber-50/30 to-rose-50/40"></div>
-        
+        {/* Deep heritage background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-stone-900 via-rose-950 to-amber-950"></div>
+        {/* Texture overlay */}
+        <div className="absolute inset-0 opacity-10" style={{backgroundImage: "url('https://images.unsplash.com/photo-1511497584788-876760111969?w=1600&q=80')", backgroundSize: 'cover', backgroundPosition: 'center'}}></div>
+        {/* Soft inner glow */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/20"></div>
+
         <div className="container-custom relative z-10">
           <SmoothScroller>
             <div className="text-center mb-16">
@@ -241,117 +191,22 @@ const HomePage = () => {
                   <Heart className="w-4 h-4" />
                 </div>
               </motion.div>
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-rose-950 via-red-950 to-amber-950 bg-clip-text text-transparent">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-rose-200 via-amber-200 to-orange-200 bg-clip-text text-transparent">
                 Welcome to our family
               </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-lg text-stone-300 max-w-2xl mx-auto">
                 The Sumlin Family Reunion is more than an event it's a celebration of our shared heritage, faith, and the bonds that unite us across generations.
               </p>
             </div>
           </SmoothScroller>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
-            {features.map((feature, index) => (
-              <SmoothScroller key={index} delay={index * 0.1}>
-                <motion.div
-                  whileHover={{ 
-                    y: -8,
-                    scale: 1.02
-                  }}
-                  transition={{ 
-                    type: "spring", 
-                    stiffness: 300,
-                    damping: 20
-                  }}
-                  className="group relative bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 flex flex-col h-full overflow-hidden"
-                >
-                  {/* Image at top of card */}
-                  <div className="relative w-full h-48 overflow-hidden">
-                    <img 
-                      src={feature.image} 
-                      alt={feature.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                    <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-60 group-hover:opacity-50 transition-opacity duration-500`}></div>
-                    
-                    {/* Icon floating on image */}
-                    <motion.div
-                      whileHover={{ rotate: [0, -5, 5, -5, 0] }}
-                      transition={{ duration: 0.5 }}
-                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-                    >
-                      <div className={`w-20 h-20 rounded-2xl bg-white/95 backdrop-blur-sm flex items-center justify-center shadow-2xl ${feature.bgGlow} group-hover:shadow-xl transition-all duration-300`}>
-                        <feature.icon className={`w-10 h-10 ${feature.iconColor}`} />
-                      </div>
-                    </motion.div>
-                  </div>
-
-                  {/* Card content */}
-                  <div className="relative z-10 p-8 flex-grow flex flex-col">
-                    {/* Subtle background effect on hover */}
-                    <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}></div>
-                    
-                    <h3 className="text-2xl font-bold mb-3 text-stone-900 group-hover:bg-gradient-to-r group-hover:${feature.gradient} group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300 relative z-10">
-                      {feature.title}
-                    </h3>
-                    
-                    <p className="text-muted-foreground leading-relaxed flex-grow relative z-10">
-                      {feature.description}
-                    </p>
-                    
-                    {/* Decorative element */}
-                    <motion.div
-                      initial={{ width: 0 }}
-                      whileInView={{ width: "100%" }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.1 + 0.5, duration: 0.8 }}
-                      className={`h-1 bg-gradient-to-r ${feature.gradient} rounded-full mt-6 opacity-80 relative z-10`}
-                    ></motion.div>
-                  </div>
-                </motion.div>
-              </SmoothScroller>
-            ))}
+          <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl shadow-black/40 p-6 md:p-10 border border-white/20">
+            <FamilyTreePreview />
           </div>
         </div>
       </section>
 
-      {/* Image Separator with Earth Tones */}
-      <SmoothScroller>
-        <div className="py-4 md:py-6 lg:py-8 relative overflow-hidden">
-          {/* Earth tone gradient background */}
-          <div className="absolute inset-0 bg-gradient-to-r from-stone-100 via-amber-50 to-rose-100/40"></div>
-          
-          <div className="container-custom relative z-10">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="relative max-w-sm md:max-w-xl lg:max-w-2xl mx-auto"
-            >
-              {/* Subtle border effect */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-rose-950 via-red-950 to-amber-950 rounded-2xl blur opacity-40 group-hover:opacity-60 transition duration-1000"></div>
-              
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
-                <img
-                  src="https://horizons-cdn.hostinger.com/6ddbc4c1-b479-4ef4-be4a-ff36b8b1842e/4e13b087f02f8b089679f220666f2c15.png"
-                  alt="Two vintage black and white family portrait photographs showing historical Sumlin family members"
-                  className="w-full h-auto object-cover"
-                />
-                
-                {/* Subtle overlay on hover */}
-                <div className="absolute inset-0 bg-gradient-to-t from-rose-950/10 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-500"></div>
-              </div>
-              
-              {/* Decorative corner elements with earth tones */}
-              <div className="absolute -top-2 -left-2 w-8 h-8 border-t-4 border-l-4 border-rose-950 rounded-tl-lg"></div>
-              <div className="absolute -top-2 -right-2 w-8 h-8 border-t-4 border-r-4 border-red-950 rounded-tr-lg"></div>
-              <div className="absolute -bottom-2 -left-2 w-8 h-8 border-b-4 border-l-4 border-amber-950 rounded-bl-lg"></div>
-              <div className="absolute -bottom-2 -right-2 w-8 h-8 border-b-4 border-r-4 border-orange-950 rounded-br-lg"></div>
-            </motion.div>
-          </div>
-        </div>
-      </SmoothScroller>
+
 
       {/* New Legacy Section */}
       <LegacySection />

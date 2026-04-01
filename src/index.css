@@ -286,20 +286,19 @@
   }
 
   .countdown-compact .countdown-unit {
-    @apply bg-white/15 backdrop-blur-md border border-white/25 shadow-lg min-w-[3rem] md:min-w-[4rem] lg:min-w-[5rem] p-2 md:p-2.5 lg:p-3 rounded-xl hover:-translate-y-0.5 hover:bg-white/25 hover:shadow-xl transition-all duration-300;
-    background: rgba(255, 255, 255, 0.15);
+    @apply bg-white shadow-md border border-amber-200 min-w-[3rem] md:min-w-[4rem] lg:min-w-[5rem] p-2 md:p-2.5 lg:p-3 rounded-xl hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300;
   }
 
   .countdown-compact .countdown-value {
-    @apply text-xl md:text-3xl lg:text-4xl text-white mb-0.5 md:mb-1;
+    @apply text-xl md:text-3xl lg:text-4xl text-stone-900 font-bold mb-0.5 md:mb-1;
   }
 
   .countdown-compact .countdown-label {
-    @apply text-[0.6rem] md:text-xs lg:text-sm text-white/90 tracking-wide;
+    @apply text-[0.6rem] md:text-xs lg:text-sm text-amber-700 font-semibold tracking-wide;
   }
 
   .countdown-compact .countdown-separator {
-    @apply text-lg md:text-2xl lg:text-3xl text-white/50 pb-2 md:pb-3 px-0.5 md:px-1;
+    @apply text-lg md:text-2xl lg:text-3xl text-stone-400 pb-2 md:pb-3 px-0.5 md:px-1;
   }
 
   /* Legacy Section Utilities */

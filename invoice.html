@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Invoice – IndigoGraphix</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f0f5;
+      color: #1a1a2e;
+      padding: 0;
+      margin: 0;
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1100px;
+      width: 100%;
+      min-height: 100vh;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 0;
+      overflow: hidden;
+      box-shadow: 0 0 60px rgba(0,0,0,0.1);
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #2d1b69 0%, #4b2fa0 60%, #6c47d4 100%);
+      padding: 50px 80px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .brand h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .brand p {
+      color: rgba(255,255,255,0.65);
+      font-size: 13px;
+      margin-top: 4px;
+      letter-spacing: 1px;
+    }
+
+    .invoice-label {
+      text-align: right;
+    }
+
+    .invoice-label h2 {
+      font-size: 36px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .invoice-label p {
+      color: rgba(255,255,255,0.65);
+      font-size: 13px;
+      margin-top: 6px;
+    }
+
+    .invoice-label span {
+      color: #c4b0ff;
+      font-weight: 600;
+    }
+
+    /* ── Meta strip ── */
+    .meta-strip {
+      background: #f7f5ff;
+      border-bottom: 2px solid #e8e2ff;
+      padding: 20px 80px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .meta-item label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #7c6daa;
+      margin-bottom: 3px;
+    }
+
+    .meta-item p {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2d1b69;
+    }
+
+    /* ── Body ── */
+    .body {
+      padding: 50px 80px;
+    }
+
+    /* ── Bill To / From ── */
+    .parties {
+      display: flex;
+      justify-content: space-between;
+      gap: 30px;
+      margin-bottom: 40px;
+    }
+
+    .party {
+      flex: 1;
+    }
+
+    .party label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #7c6daa;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #e8e2ff;
+    }
+
+    .party h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #2d1b69;
+      margin-bottom: 6px;
+    }
+
+    .party p {
+      font-size: 13px;
+      color: #555;
+      line-height: 1.8;
+    }
+
+    .party a {
+      color: #6c47d4;
+      text-decoration: none;
+    }
+
+    /* ── Services Table ── */
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #7c6daa;
+      margin-bottom: 12px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+    }
+
+    thead th {
+      background: #2d1b69;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 12px 16px;
+      text-align: left;
+    }
+
+    thead th:last-child { text-align: right; }
+
+    tbody tr:nth-child(even) { background: #f7f5ff; }
+    tbody tr:hover { background: #ede8ff; transition: background 0.2s; }
+
+    tbody td {
+      padding: 13px 16px;
+      font-size: 14px;
+      color: #333;
+      border-bottom: 1px solid #e8e2ff;
+    }
+
+    tbody td:last-child {
+      text-align: right;
+      font-weight: 600;
+      color: #2d1b69;
+    }
+
+    .service-name {
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+
+    .service-desc {
+      font-size: 12px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    /* ── Totals ── */
+    .totals {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 40px;
+    }
+
+    .totals-box {
+      width: 300px;
+    }
+
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 14px;
+      border-bottom: 1px solid #e8e2ff;
+      color: #555;
+    }
+
+    .totals-row:last-child { border-bottom: none; }
+
+    .totals-row.total-due {
+      background: linear-gradient(135deg, #2d1b69, #6c47d4);
+      color: #fff;
+      padding: 14px 16px;
+      border-radius: 8px;
+      margin-top: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      border: none;
+    }
+
+    .totals-row.hosting {
+      background: #f0ebff;
+      padding: 10px 16px;
+      border-radius: 6px;
+      margin-top: 8px;
+      font-size: 13px;
+      color: #4b2fa0;
+      font-weight: 600;
+      border: 1px dashed #c4b0ff;
+    }
+
+    /* ── Notes ── */
+    .notes {
+      background: #f7f5ff;
+      border-left: 4px solid #6c47d4;
+      border-radius: 0 8px 8px 0;
+      padding: 16px 20px;
+      margin-bottom: 30px;
+    }
+
+    .notes label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #7c6daa;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .notes p {
+      font-size: 13px;
+      color: #444;
+      line-height: 1.7;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      background: #2d1b69;
+      padding: 20px 80px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .footer p {
+      color: rgba(255,255,255,0.6);
+      font-size: 12px;
+    }
+
+    .footer span {
+      color: #c4b0ff;
+      font-weight: 600;
+    }
+
+    /* ── Print ── */
+    @media print {
+      body { background: #fff; padding: 0; }
+      .page { box-shadow: none; border-radius: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="brand">
+        <h1>IndigoGraphix</h1>
+        <p>Web Design &amp; Digital Branding</p>
+      </div>
+      <div class="invoice-label">
+        <h2>Invoice</h2>
+        <p>Invoice #: <span>IGX-2026-001</span></p>
+        <p>Date: <span>April 1, 2026</span></p>
+        <p>Due: <span>Upon Receipt</span></p>
+      </div>
+    </div>
+
+    <!-- Meta Strip -->
+    <div class="meta-strip">
+      <div class="meta-item">
+        <label>Project</label>
+        <p>Sumlin Family Website</p>
+      </div>
+      <div class="meta-item">
+        <label>Website</label>
+        <p>sumlinfamily.com</p>
+      </div>
+      <div class="meta-item">
+        <label>Status</label>
+        <p style="color:#4b2fa0;">&#10003; Completed &amp; Delivered</p>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="body">
+
+      <!-- Parties -->
+      <div class="parties">
+        <div class="party">
+          <label>From</label>
+          <h3>Cedric Evans</h3>
+          <p>
+            IndigoGraphix<br/>
+            <a href="mailto:cedric.evans@gmail.com">cedric.evans@gmail.com</a><br/>
+            404.889.0186<br/>
+            <a href="http://www.indigographix.com" target="_blank">www.indigographix.com</a>
+          </p>
+        </div>
+        <div class="party">
+          <label>Billed To</label>
+          <h3>Debi Bass</h3>
+          <p>
+            Sumlin Family<br/>
+            sumlinfamily.com
+          </p>
+        </div>
+      </div>
+
+      <!-- Services -->
+      <p class="section-title">Services Rendered</p>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Service</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>01</td>
+            <td>
+              <div class="service-name">Family Crest &amp; Logo Design</div>
+              <div class="service-desc">Custom family crest illustration, logo design, and brand mark creation</div>
+            </td>
+            <td>$150.00</td>
+          </tr>
+          <tr>
+            <td>02</td>
+            <td>
+              <div class="service-name">UI/UX Design &amp; Brand Identity</div>
+              <div class="service-desc">Full site visual design, color palette, typography, layout &amp; brand guidelines</div>
+            </td>
+            <td>$200.00</td>
+          </tr>
+          <tr>
+            <td>03</td>
+            <td>
+              <div class="service-name">Multi-Page Website Development</div>
+              <div class="service-desc">12+ custom pages including Home, Family Legacy, Portraits, Reunion 2026, Events, Newsletter, About, Contact &amp; more</div>
+            </td>
+            <td>$500.00</td>
+          </tr>
+          <tr>
+            <td>04</td>
+            <td>
+              <div class="service-name">E-Commerce Integration</div>
+              <div class="service-desc">Online store, product listings, shopping cart, and checkout system</div>
+            </td>
+            <td>$274.00</td>
+          </tr>
+          <tr>
+            <td>05</td>
+            <td>
+              <div class="service-name">Admin Dashboard &amp; Authentication</div>
+              <div class="service-desc">Secure admin panel for managing content, events, businesses, and admins</div>
+            </td>
+            <td>$200.00</td>
+          </tr>
+          <tr>
+            <td>06</td>
+            <td>
+              <div class="service-name">Supabase Backend &amp; Database Setup</div>
+              <div class="service-desc">Full backend architecture, database design, and Supabase integration</div>
+            </td>
+            <td>$200.00</td>
+          </tr>
+          <tr>
+            <td>07</td>
+            <td>
+              <div class="service-name">Donation &amp; Fundraiser System</div>
+              <div class="service-desc">Donation pages, fundraiser tracker, rules page, and contribution management</div>
+            </td>
+            <td>$100.00</td>
+          </tr>
+          <tr>
+            <td>08</td>
+            <td>
+              <div class="service-name">Deployment &amp; Hosting Configuration</div>
+              <div class="service-desc">Domain setup, deployment pipeline, and site go-live</div>
+            </td>
+            <td>$100.00</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Totals -->
+      <div class="totals">
+        <div class="totals-box">
+          <div class="totals-row">
+            <span>Subtotal</span>
+            <span>$1,724.00</span>
+          </div>
+          <div class="totals-row total-due">
+            <span>Total Due</span>
+            <span>$1,724.00</span>
+          </div>
+          <div class="totals-row hosting">
+            <span>&#8635; Monthly Hosting (recurring)</span>
+            <span>$20.00/mo</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="notes">
+        <label>Payment &amp; Notes</label>
+        <p>
+          Payment is due upon receipt. Please remit via Zelle, Venmo, or PayPal to
+          <strong>cedric.evans@gmail.com</strong> or call <strong>404.889.0186</strong> to arrange payment.<br/>
+          Monthly hosting of <strong>$20.00</strong> is billed on the 1st of each month beginning May 2026.
+          Thank you for your business!
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>IndigoGraphix &nbsp;|&nbsp; <span>www.indigographix.com</span></p>
+      <p>Questions? <span>cedric.evans@gmail.com</span> &nbsp;|&nbsp; <span>404.889.0186</span></p>
+    </div>
+
+  </div>
+</body>
+</html>
