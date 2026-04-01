@@ -164,19 +164,6 @@ function buildSettingsForm(tenant) {
 	};
 }
 
-function parseBusinessSubmissionMessage(message) {
-	const raw = String(message || '').trim();
-	const businessCategoryMatch = raw.match(/Business category:\s*(.+)/i);
-	const contactLinkMatch = raw.match(/Contact link:\s*(.+)/i);
-	const descriptionMatch = raw.match(/Description:\s*([\s\S]+)/i);
-
-	return {
-		businessCategory: businessCategoryMatch?.[1]?.trim() || '',
-		contactLink: contactLinkMatch?.[1]?.trim() || '',
-		description: descriptionMatch?.[1]?.trim() || raw,
-	};
-}
-
 function OrderAccordion({ order, onApprove, onEmail, onDelete, approvingOrderId, emailingOrderId }) {
 	const [open, setOpen] = useState(false);
 
@@ -301,7 +288,6 @@ const AdminPage = () => {
 	const [eventForm, setEventForm] = useState(initialEventForm);
 	const [newsletterForm, setNewsletterForm] = useState(initialNewsletterForm);
 	const [communicationForm, setCommunicationForm] = useState(initialCommunicationForm);
-	const [communicationFeedback, setCommunicationFeedback] = useState(null);
 	const [settingsForm, setSettingsForm] = useState(initialSettingsForm);
 	const [inviteForm, setInviteForm] = useState(initialInviteForm);
 	const [newsletterDocuments, setNewsletterDocuments] = useState([]);
@@ -625,44 +611,24 @@ const AdminPage = () => {
 	const handleCommunicationSubmit = async (event) => {
 		event.preventDefault();
 		setSavingCommunication(true);
-		setCommunicationFeedback(null);
 
 		const result = await sendFamilyCommunication(communicationForm);
 
 		if (result.ok) {
-			const recipientCount = communicationForm.recipients
-				.split(/[\n,;]+/)
-				.map((entry) => entry.trim())
-				.filter(Boolean).length;
-
 			toast({
-				title: 'Announcement sent',
-				description: result.message || 'Resend accepted the message for delivery.',
+				title: 'Email sent',
+				description: result.message,
 			});
-			setCommunicationFeedback({
-				status: 'success',
-				title: 'Message sent through Resend',
-				description: result.message || 'Resend accepted the message for delivery.',
-				subject: communicationForm.subject,
-				recipientCount,
-				sentAt: new Date().toISOString(),
-			});
+			setCommunicationForm((current) => ({
+				...initialCommunicationForm,
+				replyTo: current.replyTo,
+				signature: current.signature,
+			}));
 		} else {
 			toast({
-				title: 'Message not sent',
+				title: 'Email not sent',
 				description: result.message,
 				variant: 'destructive',
-			});
-			setCommunicationFeedback({
-				status: 'error',
-				title: 'Send failed',
-				description: result.message || 'Resend did not accept the message.',
-				subject: communicationForm.subject,
-				recipientCount: communicationForm.recipients
-					.split(/[\n,;]+/)
-					.map((entry) => entry.trim())
-					.filter(Boolean).length,
-				sentAt: new Date().toISOString(),
 			});
 		}
 
@@ -832,26 +798,6 @@ const AdminPage = () => {
 		setActiveTab('business');
 	};
 
-	const handleBusinessSubmissionLoad = (request) => {
-		const parsed = parseBusinessSubmissionMessage(request.message);
-		setBusinessForm({
-			...initialBusinessForm,
-			title: request.event_type || '',
-			category: parsed.businessCategory || 'Professional Services',
-			description: parsed.description,
-			price_label: request.budget_label || '',
-			sort_order: '0',
-			is_featured: false,
-		});
-		setActiveTab('business');
-		toast({
-			title: 'Listing draft loaded',
-			description: request.event_type
-				? `${request.event_type} is ready in the business editor.`
-				: 'The submission is ready in the business editor.',
-		});
-	};
-
 	const handleEventEdit = (item) => {
 		setEventForm({
 			id: item.id,
@@ -872,9 +818,6 @@ const AdminPage = () => {
 	const filteredOrders = orders.filter((order) => (
 		ordersFilter === 'all' || order.payment_status === ordersFilter
 	));
-	const businessSubmissionRequests = (dashboard?.serviceRequests || []).filter(
-		(request) => request.category === 'Business Directory Submission',
-	);
 
 	const adminTabs = [
 		{ id: 'orders', label: 'Orders', icon: Wallet, count: orders.length },
@@ -1220,36 +1163,27 @@ const AdminPage = () => {
 										</div>
 									)}
 
-										{activeTab === 'communications' && (
-											<div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
-												<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
-													<div className="flex items-center gap-3 mb-4">
-														<Mail className="h-5 w-5 text-primary" />
-														<div>
-															<h2 className="text-2xl font-bold">Family announcements and updates</h2>
-															<p className="text-sm text-muted-foreground mt-0.5">Send announcements, donation reminders, reunion updates, thank-you notes, and general family communications through Resend.</p>
-														</div>
+									{activeTab === 'communications' && (
+										<div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
+											<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+												<div className="flex items-center gap-3 mb-4">
+													<Mail className="h-5 w-5 text-primary" />
+													<div>
+														<h2 className="text-2xl font-bold">Send family email</h2>
+														<p className="text-sm text-muted-foreground mt-0.5">Use Resend for announcements, donation reminders, reunion updates, and family communications.</p>
 													</div>
-													{communicationFeedback && (
-														<div className={`mb-5 rounded-2xl border px-4 py-4 ${communicationFeedback.status === 'success' ? 'border-green-200 bg-green-50/60' : 'border-rose-200 bg-rose-50/60'}`}>
-															<p className={`font-semibold ${communicationFeedback.status === 'success' ? 'text-green-800' : 'text-rose-800'}`}>{communicationFeedback.title}</p>
-															<p className={`mt-1 text-sm ${communicationFeedback.status === 'success' ? 'text-green-700' : 'text-rose-700'}`}>{communicationFeedback.description}</p>
-															<p className={`mt-3 text-xs ${communicationFeedback.status === 'success' ? 'text-green-700/90' : 'text-rose-700/90'}`}>
-																Subject: {communicationFeedback.subject || 'Untitled message'} • Recipients: {communicationFeedback.recipientCount} • {formatDateTime(communicationFeedback.sentAt)}
-															</p>
-														</div>
-													)}
-													<form onSubmit={handleCommunicationSubmit} className="space-y-4">
-														<textarea
-															name="recipients"
-															value={communicationForm.recipients}
-															onChange={handleCommunicationChange}
-															rows={4}
-															placeholder="Recipient emails, separated by commas or new lines"
-															className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3"
-															required
-														/>
-														<div className="grid gap-4 md:grid-cols-2">
+												</div>
+												<form onSubmit={handleCommunicationSubmit} className="space-y-4">
+													<textarea
+														name="recipients"
+														value={communicationForm.recipients}
+														onChange={handleCommunicationChange}
+														rows={4}
+														placeholder="Recipient emails, separated by commas or new lines"
+														className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3"
+														required
+													/>
+													<div className="grid gap-4 md:grid-cols-2">
 														<input
 															type="text"
 															name="audienceLabel"
@@ -1267,15 +1201,15 @@ const AdminPage = () => {
 															className="w-full"
 														/>
 													</div>
-														<input
-															type="text"
-															name="subject"
-															value={communicationForm.subject}
-															onChange={handleCommunicationChange}
-															placeholder="Subject line"
-															className="w-full"
-															required
-														/>
+													<input
+														type="text"
+														name="subject"
+														value={communicationForm.subject}
+														onChange={handleCommunicationChange}
+														placeholder="Email subject"
+														className="w-full"
+														required
+													/>
 													<div className="grid gap-4 md:grid-cols-2">
 														<input
 															type="text"
@@ -1294,15 +1228,15 @@ const AdminPage = () => {
 															className="w-full"
 														/>
 													</div>
-														<textarea
-															name="message"
-															value={communicationForm.message}
-															onChange={handleCommunicationChange}
-															rows={10}
-															placeholder="Write the family update here. Separate paragraphs with a blank line."
-															className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3"
-															required
-														/>
+													<textarea
+														name="message"
+														value={communicationForm.message}
+														onChange={handleCommunicationChange}
+														rows={10}
+														placeholder="Write the family message here. Separate paragraphs with a blank line."
+														className="w-full rounded-2xl border border-border/60 bg-background px-4 py-3"
+														required
+													/>
 													<div className="grid gap-4 md:grid-cols-2">
 														<input
 															type="text"
@@ -1329,28 +1263,27 @@ const AdminPage = () => {
 														placeholder="Signature"
 														className="w-full"
 													/>
-														<button
-															type="submit"
-															disabled={savingCommunication}
-															className="inline-flex items-center gap-2 rounded-2xl gradient-burgundy px-5 py-3 font-semibold text-white disabled:opacity-70"
-														>
-															<Mail className="h-4 w-4" />
-															{savingCommunication ? 'Sending update...' : 'Send family update'}
-														</button>
-													</form>
-												</div>
+													<button
+														type="submit"
+														disabled={savingCommunication}
+														className="inline-flex items-center gap-2 rounded-2xl gradient-burgundy px-5 py-3 font-semibold text-white disabled:opacity-70"
+													>
+														<Mail className="h-4 w-4" />
+														{savingCommunication ? 'Sending...' : 'Send family email'}
+													</button>
+												</form>
+											</div>
 
-												<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
-													<h2 className="text-2xl font-bold mb-4">How this works</h2>
-													<div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
-														<p>The message is sent from your configured `RESEND_EMAIL` address and uses the same family styling as payment confirmations.</p>
-														<p>Use this for reunion updates, thank-you notes, donation reminders, memorial messages, schedule changes, or general family announcements.</p>
-														<p>After a successful send, the confirmation stays on this page so you can see what was sent and when it was accepted by Resend.</p>
-														<p>The order approval flow also sends a thank-you email automatically as soon as payment is marked paid.</p>
-													</div>
+											<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+												<h2 className="text-2xl font-bold mb-4">What this sends</h2>
+												<div className="space-y-4 text-sm text-muted-foreground leading-relaxed">
+													<p>The email is sent from your configured `RESEND_EMAIL` address and uses the same family styling as payment confirmations.</p>
+													<p>Use this for reunion updates, thank-you notes, donation reminders, memorial messages, or general family announcements.</p>
+													<p>The order approval flow now sends a thank-you email automatically as soon as payment is marked paid.</p>
 												</div>
 											</div>
-										)}
+										</div>
+									)}
 
 									{activeTab === 'events' && (
 										<div className="space-y-8">
@@ -1653,48 +1586,19 @@ const AdminPage = () => {
 													<h2 className="text-2xl font-bold">Directory submissions</h2>
 												</div>
 												<div className="space-y-3">
-													{businessSubmissionRequests.length === 0 ? (
-														<p className="rounded-2xl border border-border/50 px-4 py-6 text-sm text-muted-foreground">
-															No business submissions have come in yet.
-														</p>
-													) : (
-														businessSubmissionRequests.map((request) => {
-															const parsed = parseBusinessSubmissionMessage(request.message);
-															return (
-																<div key={request.id} className="rounded-2xl border border-border/50 px-4 py-4">
-																	<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-																		<div className="min-w-0">
-																			<p className="font-semibold">{request.event_type || request.requester_name}</p>
-																			<p className="text-sm text-muted-foreground">{parsed.businessCategory || 'Business submission'}</p>
-																			<p className="text-sm text-muted-foreground mt-1">{request.requester_name} • {request.email}</p>
-																			{request.phone && (
-																				<p className="text-sm text-muted-foreground">{request.phone}</p>
-																			)}
-																		</div>
-																		<div className="flex flex-col items-start gap-2 sm:items-end">
-																			<span className="inline-flex rounded-full bg-secondary/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
-																				{request.status}
-																			</span>
-																			<button
-																				type="button"
-																				onClick={() => handleBusinessSubmissionLoad(request)}
-																				className="text-sm font-semibold text-primary"
-																			>
-																				Load into listing editor
-																			</button>
-																		</div>
-																	</div>
-																	{request.budget_label && (
-																		<p className="text-xs text-muted-foreground mt-3">Service area: {request.budget_label}</p>
-																	)}
-																	{parsed.contactLink && parsed.contactLink !== 'Not provided' && (
-																		<p className="text-xs text-muted-foreground mt-1 break-all">Contact link: {parsed.contactLink}</p>
-																	)}
-																	<p className="text-sm text-muted-foreground mt-3 whitespace-pre-line">{parsed.description}</p>
-																</div>
-															);
-														})
-													)}
+													{dashboard.serviceRequests.map((request) => (
+														<div key={request.id} className="rounded-2xl border border-border/50 px-4 py-3">
+															<div className="flex items-start justify-between gap-3 mb-2">
+																<p className="font-semibold">{request.requester_name}</p>
+																<span className="inline-flex rounded-full bg-secondary/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
+																	{request.status}
+																</span>
+															</div>
+															<p className="text-sm text-muted-foreground">{request.email}</p>
+															<p className="text-sm text-muted-foreground mt-1">{request.message}</p>
+															<p className="text-xs text-muted-foreground mt-2">{request.budget_label || 'No budget or location added'}</p>
+														</div>
+													))}
 												</div>
 											</div>
 										</div>
