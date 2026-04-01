@@ -175,26 +175,29 @@ export default function FamilyTreePreview() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
-        className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white max-w-md mx-auto"
+        className="w-full max-w-sm mx-auto rounded-3xl overflow-hidden shadow-2xl border-4 border-white"
       >
-        <div className="absolute -inset-1 bg-gradient-to-r from-rose-950 via-red-950 to-amber-950 rounded-3xl blur opacity-40" />
-        <div className="relative rounded-3xl overflow-hidden">
+        {/* Image — fixed height, no overflow */}
+        <div className="w-full overflow-hidden" style={{ maxHeight: '340px' }}>
           <img
             src={PORTRAIT}
             alt="Mark and Lydia Sumlin"
-            className="w-full h-auto object-cover"
+            className="w-full h-full object-cover object-top"
+            style={{ display: 'block' }}
           />
-          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-rose-950/95 via-rose-950/70 to-transparent p-6">
-            <h3 className="text-white font-bold text-2xl leading-tight">Mark &amp; Lydia Sumlin</h3>
-            <p className="text-rose-200 text-base mt-1">Married 1880 · Rivertown, Georgia</p>
-            <div className="flex flex-wrap items-center gap-4 mt-2">
-              <span className="text-base text-amber-300 flex items-center gap-1.5 font-semibold">
-                <Users className="w-4 h-4" /> 15 Children
-              </span>
-              <span className="text-base text-amber-300 flex items-center gap-1.5 font-semibold">
-                <Users className="w-4 h-4" /> 34 Grandchildren
-              </span>
-            </div>
+        </div>
+
+        {/* Info below image — always visible */}
+        <div className="bg-gradient-to-br from-rose-950 to-amber-950 px-5 py-4 text-center">
+          <h3 className="text-white font-bold text-xl leading-tight">Mark &amp; Lydia Sumlin</h3>
+          <p className="text-rose-200 text-sm mt-1">Married 1880 · Rivertown, Georgia</p>
+          <div className="flex justify-center flex-wrap gap-4 mt-3">
+            <span className="text-sm text-amber-300 flex items-center gap-1.5 font-semibold">
+              <Users className="w-4 h-4" /> 15 Children
+            </span>
+            <span className="text-sm text-amber-300 flex items-center gap-1.5 font-semibold">
+              <Users className="w-4 h-4" /> 34 Grandchildren
+            </span>
           </div>
         </div>
       </motion.div>
@@ -258,17 +261,17 @@ export default function FamilyTreePreview() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ delay: 0.3 }}
-        className="flex flex-col items-center gap-3 mt-10"
+        className="flex flex-col items-center gap-3 mt-10 px-4"
       >
-        <p className="text-base text-stone-500 italic text-center">
+        <p className="text-sm md:text-base text-stone-500 italic text-center">
           The Sumlin family history spans <strong className="text-stone-700">7 generations</strong> — explore the complete legacy
         </p>
         <Link
           to="/family-legacy"
-          className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl border-2 border-rose-900 text-rose-900 text-lg font-bold hover:bg-rose-900 hover:text-white transition-all duration-200 shadow-md"
+          className="w-full sm:w-auto text-center inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl border-2 border-rose-900 text-rose-900 text-base md:text-lg font-bold hover:bg-rose-900 hover:text-white transition-all duration-200 shadow-md"
         >
-          <BookOpen className="w-5 h-5" />
-          Explore Full Family Legacy
+          <BookOpen className="w-5 h-5 flex-shrink-0" />
+          Our Legacy
         </Link>
       </motion.div>
     </div>
