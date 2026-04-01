@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Globe, Phone, Mail, Facebook, Instagram } from 'lucide-react';
-import { FAMILY_CONTACT_INFO, FAMILY_REUNION_DETAILS } from '@/lib/sumlinData';
+import { Globe, Mail, Facebook, Instagram } from 'lucide-react';
+import { FAMILY_CONTACT_INFO, FAMILY_OFFICERS, FAMILY_REUNION_DETAILS } from '@/lib/sumlinData';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -16,14 +16,6 @@ const Footer = () => {
     { name: 'Family Legacy', path: '/family-legacy' },
     { name: 'Official Rules', path: '/fundraiser-rules' },
     { name: 'Admin Command Central', path: '/admin' }
-  ];
-
-  const familyOfficers = [
-    { name: 'Mike Cranford', phone: '703.899.6189' },
-    { name: 'Debi Bass', phone: '513.265.5770' },
-    { name: 'Ronika Sumlin', phone: '410.807.2337' },
-    { name: 'Carrie Farley', phone: '937.931.0941' },
-    { name: 'David Dowell', phone: '937.902.0020' }
   ];
 
   return (
@@ -68,15 +60,15 @@ const Footer = () => {
           <div>
             <span className="font-semibold text-lg mb-4 block">Family officers</span>
             <ul className="space-y-2">
-              {familyOfficers.map((officer, index) => (
+              {FAMILY_OFFICERS.map((officer, index) => (
                 <li key={index} className="text-sm">
                   <span className="text-background/80 block">{officer.name}</span>
                   <a 
-                    href={`tel:${officer.phone.replace(/\./g, '')}`}
+                    href={`mailto:${officer.email}`}
                     className="text-background/60 hover:text-primary transition-colors duration-200 flex items-center gap-1"
                   >
-                    <Phone className="w-3 h-3" />
-                    {officer.phone}
+                    <Mail className="w-3 h-3" />
+                    {officer.email}
                   </a>
                 </li>
               ))}

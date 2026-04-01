@@ -5,13 +5,21 @@ export const NEWSLETTER_BUCKET = 'sumlin-newsletters';
 export const FAMILY_CONTACT_INFO = {
 	websiteUrl: 'https://www.sumlinfamily.com/',
 	websiteLabel: 'www.sumlinfamily.com',
-	email: 'sumlinfamilylegacy@gmail.com',
+	email: 'contact@sumlinfamily.com',
 	instagramHandle: '@SumlinFamilyStrong',
 	instagramUrl: 'https://www.instagram.com/SumlinFamilyStrong/',
 	facebookLabel: 'Sumlin Family of Rivertown, Georgia',
 	facebookSearchUrl:
 		'https://www.facebook.com/search/top?q=Sumlin%20Family%20of%20Rivertown%2C%20Georgia',
 };
+export const FAMILY_OFFICERS = [
+	{ name: 'Mike Cranford', email: 'President@sumlinfamily.com' },
+	{ name: 'Debi Bass', email: 'Vpres@sumlinfamily.com' },
+	{ name: 'David Dowell', email: 'Treasurer@sumlinfamily.com' },
+	{ name: 'Ronika Sumlin', email: 'Secretary@sumlinfamily.com' },
+	{ name: 'Carrie Farley', email: 'Historian@sumlinfamily.com' },
+	{ name: 'Denise Winters', email: 'Admin@sumlinfamily.com' },
+];
 export const FAMILY_REUNION_DETAILS = {
 	countdownDate: '2026-09-05T00:00:00',
 	countdownLabel: 'September 5, 2026',

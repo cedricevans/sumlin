@@ -17,18 +17,11 @@ import {
 import { Button } from '@/components/ui/button';
 import {
 	FAMILY_CONTACT_INFO,
+	FAMILY_OFFICERS,
 	fetchBusinessSnapshot,
 	submitServiceRequest,
 } from '@/lib/sumlinData';
 import { useToast } from '@/hooks/use-toast';
-
-const familyOfficers = [
-	{ name: 'Mike Cranford', phone: '703.899.6189' },
-	{ name: 'Debi Bass', phone: '513.265.5770' },
-	{ name: 'Ronika Sumlin', phone: '410.807.2337' },
-	{ name: 'Carrie Farley', phone: '937.931.0941' },
-	{ name: 'David Dowell', phone: '937.902.0020' },
-];
 
 const helpPaths = [
 	{
@@ -398,7 +391,7 @@ const Contact = () => {
 							>
 								<div className="mb-8">
 									<p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
-										Direct Numbers
+										Direct Email
 									</p>
 									<h2 className="mt-3 text-4xl font-bold text-foreground">Family officers</h2>
 									<p className="mt-4 text-muted-foreground">
@@ -407,7 +400,7 @@ const Contact = () => {
 								</div>
 
 								<div className="space-y-4">
-									{familyOfficers.map((officer) => (
+									{FAMILY_OFFICERS.map((officer) => (
 										<div
 											key={officer.name}
 											className="flex items-center justify-between gap-4 rounded-2xl border border-border/50 bg-muted/40 p-4"
@@ -418,14 +411,14 @@ const Contact = () => {
 												</div>
 												<div>
 													<p className="font-semibold text-foreground">{officer.name}</p>
-													<p className="text-sm text-muted-foreground">Family officer contact</p>
+													<p className="text-sm text-muted-foreground">Family officer email</p>
 												</div>
 											</div>
 											<a
-												href={`tel:${officer.phone.replace(/\./g, '')}`}
+												href={`mailto:${officer.email}`}
 												className="text-sm font-semibold text-primary hover:text-primary/80"
 											>
-												{officer.phone}
+												{officer.email}
 											</a>
 										</div>
 									))}

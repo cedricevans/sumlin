@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { Globe, Phone, Mail, Facebook, Instagram } from 'lucide-react';
+import { Globe, Mail, Facebook, Instagram } from 'lucide-react';
 import SmoothScroller from '@/components/SmoothScroller';
-import { FAMILY_CONTACT_INFO } from '@/lib/sumlinData';
+import { FAMILY_CONTACT_INFO, FAMILY_OFFICERS } from '@/lib/sumlinData';
 
 const ContactSection = () => {
   const [formData, setFormData] = useState({
@@ -10,14 +10,6 @@ const ContactSection = () => {
     email: '',
     message: ''
   });
-
-  const familyOfficers = [
-    { name: 'Mike Cranford', phone: '703.899.6189' },
-    { name: 'Debi Bass', phone: '513.265.5770' },
-    { name: 'Ronika Sumlin', phone: '410.807.2337' },
-    { name: 'Carrie Farley', phone: '937.931.0941' },
-    { name: 'David Dowell', phone: '937.902.0020' }
-  ];
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -48,7 +40,7 @@ const ContactSection = () => {
             <div className="bg-card rounded-2xl p-8 shadow-lg">
               <h3 className="text-2xl font-bold mb-6">Family officers</h3>
               <div className="space-y-4">
-                {familyOfficers.map((officer, index) => (
+                {FAMILY_OFFICERS.map((officer, index) => (
                   <div 
                     key={index}
                     className="flex items-center gap-4 p-4 bg-muted rounded-xl hover:bg-muted/80 transition-colors duration-200"
@@ -59,11 +51,11 @@ const ContactSection = () => {
                     <div className="flex-grow">
                       <p className="font-semibold">{officer.name}</p>
                       <a 
-                        href={`tel:${officer.phone.replace(/\./g, '')}`}
+                        href={`mailto:${officer.email}`}
                         className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200 flex items-center gap-1"
                       >
-                        <Phone className="w-3 h-3" />
-                        {officer.phone}
+                        <Mail className="w-3 h-3" />
+                        {officer.email}
                       </a>
                     </div>
                   </div>
