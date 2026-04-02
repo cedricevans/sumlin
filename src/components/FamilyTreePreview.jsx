@@ -175,30 +175,80 @@ export default function FamilyTreePreview() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
-        className="w-full max-w-sm mx-auto rounded-3xl overflow-hidden shadow-2xl border-4 border-white"
+        className="overflow-hidden rounded-3xl shadow-2xl border-2 border-rose-200"
       >
-        {/* Image — fixed height, no overflow */}
-        <div className="w-full overflow-hidden" style={{ maxHeight: '340px' }}>
-          <img
-            src={PORTRAIT}
-            alt="Mark and Lydia Sumlin"
-            className="w-full h-full object-cover object-top"
-            style={{ display: 'block' }}
-          />
+        {/* Two columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+          {/* Left col — portrait with overlay stats + story */}
+          <div className="flex flex-col bg-white">
+            {/* Portrait with overlay */}
+            <div className="relative w-full flex-shrink-0" style={{ minHeight: '220px' }}>
+              <img
+                src="https://horizons-cdn.hostinger.com/6ddbc4c1-b479-4ef4-be4a-ff36b8b1842e/4e13b087f02f8b089679f220666f2c15.png"
+                alt="Mark and Lydia Sumlin"
+                className="w-full object-cover object-top"
+                style={{ maxHeight: '220px' }}
+              />
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-rose-950/60" />
+              {/* Stats text over overlay */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+                <h3 className="text-white font-bold text-xl leading-tight drop-shadow">Mark &amp; Lydia Sumlin</h3>
+                <p className="text-rose-200 text-sm mt-1 drop-shadow">Married 1880 · Rivertown, Georgia</p>
+                <div className="flex justify-center gap-6 mt-3">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-amber-300">15</p>
+                    <p className="text-xs text-rose-200 uppercase tracking-wider mt-0.5">Children</p>
+                  </div>
+                  <div className="w-px bg-white/30" />
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-amber-300">34</p>
+                    <p className="text-xs text-rose-200 uppercase tracking-wider mt-0.5">Grandchildren</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Story text */}
+            <div className="p-6 md:p-8">
+              <div className="space-y-4 text-base leading-relaxed text-stone-700">
+                <p>
+                  Mark Sumlin was born to Charles and Martha Wilson Sumlin in Carrollton,
+                  Georgia, one of eight children. Lydia Jackson came from Douglasville,
+                  Georgia, one of fourteen children born to Berry and Judy Jackson. The
+                  young couple married in 1880 and made their home in Rivertown, Georgia.
+                </p>
+                <p>
+                  Mark served the community as an AME minister and farmer. Lydia devoted
+                  herself to others as a nurse and midwife — her name appears on the birth
+                  certificates of several grandchildren, a quiet testament to the lives she
+                  helped bring into the world. Her brother Taylor Jackson served as a
+                  schoolteacher in Palmetto, where many of those grandchildren received
+                  their education.
+                </p>
+                <p>
+                  Together they raised fifteen children — seven sons and eight daughters.
+                  All but one reached adulthood; their daughter Minnie passed away at the
+                  age of three.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right col — family tree image */}
+          <div className="bg-white border-l border-rose-100">
+            <img
+              src="/family_tree.png"
+              alt="Sumlin family tree"
+              className="w-full h-auto"
+            />
+          </div>
         </div>
 
-        {/* Info below image — always visible */}
-        <div className="bg-gradient-to-br from-rose-950 to-amber-950 px-5 py-4 text-center">
-          <h3 className="text-white font-bold text-xl leading-tight">Mark &amp; Lydia Sumlin</h3>
-          <p className="text-rose-200 text-sm mt-1">Married 1880 · Rivertown, Georgia</p>
-          <div className="flex justify-center flex-wrap gap-4 mt-3">
-            <span className="text-sm text-amber-300 flex items-center gap-1.5 font-semibold">
-              <Users className="w-4 h-4" /> 15 Children
-            </span>
-            <span className="text-sm text-amber-300 flex items-center gap-1.5 font-semibold">
-              <Users className="w-4 h-4" /> 34 Grandchildren
-            </span>
-          </div>
+        {/* Full-width quote bar across the bottom */}
+        <div className="bg-rose-950 px-6 py-4 text-center col-span-2">
+          <p className="text-base italic text-amber-200 font-medium">
+            &ldquo;The past is our heritage, the present is our responsibility, and the future is our grand destiny.&rdquo;
+          </p>
         </div>
       </motion.div>
 
