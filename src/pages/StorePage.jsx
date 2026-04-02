@@ -1,9 +1,13 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import SmoothScroller from '@/components/SmoothScroller';
 import ProductsList from '@/components/ProductsList';
+import { fetchFundraiserProgress } from '@/lib/sumlinData';
+
+const TICKET_GOAL = 500;
+const DOLLAR_GOAL = 500;
 
 const fundraiserHighlights = [
   {
@@ -21,6 +25,21 @@ const fundraiserHighlights = [
 ];
 
 const StorePage = ({ setIsCartOpen }) => {
+  const [progress, setProgress] = useState({ ticketsSold: 0, dollarsRaised: 0, loaded: false });
+
+  useEffect(() => {
+    fetchFundraiserProgress().then((res) => {
+      setProgress({
+        ticketsSold: res.ticketsSold || 0,
+        dollarsRaised: res.dollarsRaised || 0,
+        loaded: true,
+      });
+    });
+  }, []);
+
+  const ticketPct = Math.min(100, Math.round((progress.ticketsSold / TICKET_GOAL) * 100));
+  const dollarPct = Math.min(100, Math.round((progress.dollarsRaised / DOLLAR_GOAL) * 100));
+
   return (
     <>
       <Helmet>
@@ -121,6 +140,54 @@ const StorePage = ({ setIsCartOpen }) => {
               </div>
             </div>
           </SmoothScroller>
+
+          {/* ── Fundraiser Progress ── hidden until donations are connected */}
+          {false && <SmoothScroller delay={0.1}>
+            <div className="max-w-6xl mx-auto mb-10 rounded-[2rem] border border-yellow-300/60 bg-gradient-to-br from-yellow-50 via-amber-50 to-white shadow-md overflow-hidden p-7 md:p-10">
+              <p className="text-sm uppercase tracking-[0.24em] text-yellow-900 font-semibold mb-1">Fundraiser Progress</p>
+              <h3 className="text-2xl md:text-3xl font-bold text-yellow-950 mb-6">How we're doing — live totals</h3>
+
+              <div className="grid sm:grid-cols-2 gap-8">
+                {/* Tickets sold */}
+                <div>
+                  <div className="flex justify-between items-end mb-2">
+                    <span className="text-sm font-semibold text-yellow-900 uppercase tracking-wide">Tickets Sold</span>
+                    <span className="text-sm text-yellow-800 font-bold">
+                      {progress.loaded ? progress.ticketsSold : '—'} / {TICKET_GOAL}
+                    </span>
+                  </div>
+                  <div className="w-full h-4 bg-yellow-100 rounded-full overflow-hidden border border-yellow-200">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-yellow-700 to-amber-500 transition-all duration-700"
+                      style={{ width: progress.loaded ? `${ticketPct}%` : '0%' }}
+                    />
+                  </div>
+                  <p className="text-xs text-yellow-700 mt-1.5">{ticketPct}% of {TICKET_GOAL}-ticket goal</p>
+                </div>
+
+                {/* Dollars raised */}
+                <div>
+                  <div className="flex justify-between items-end mb-2">
+                    <span className="text-sm font-semibold text-yellow-900 uppercase tracking-wide">Donations Raised</span>
+                    <span className="text-sm text-yellow-800 font-bold">
+                      {progress.loaded ? `$${progress.dollarsRaised.toFixed(0)}` : '—'} / ${DOLLAR_GOAL}
+                    </span>
+                  </div>
+                  <div className="w-full h-4 bg-yellow-100 rounded-full overflow-hidden border border-yellow-200">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-rose-800 to-amber-600 transition-all duration-700"
+                      style={{ width: progress.loaded ? `${dollarPct}%` : '0%' }}
+                    />
+                  </div>
+                  <p className="text-xs text-yellow-700 mt-1.5">{dollarPct}% of ${DOLLAR_GOAL} donation goal</p>
+                </div>
+              </div>
+
+              <p className="text-xs text-yellow-800/60 mt-6 italic">
+                Totals reflect confirmed paid orders only and update in real time.
+              </p>
+            </div>
+          </SmoothScroller>}
 
           <SmoothScroller delay={0.15}>
             <div className="max-w-6xl mx-auto mb-10 grid lg:grid-cols-[0.95fr_1.05fr] gap-5">

@@ -1194,6 +1194,28 @@ export async function sendFamilyCommunication(payload) {
 	}
 }
 
+export async function fetchFundraiserProgress(slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return { ok: false, ticketsSold: 0, dollarsRaised: 0 };
+	}
+
+	const { data, error } = await sumlinDb
+		.from('orders')
+		.select('entry_count, donation_amount_cents, payment_status')
+		.eq('tenant_slug', slug)
+		.eq('payment_status', 'paid');
+
+	if (error) {
+		return { ok: false, ticketsSold: 0, dollarsRaised: 0 };
+	}
+
+	const orders = data || [];
+	const ticketsSold = orders.reduce((sum, o) => sum + (o.entry_count || 0), 0);
+	const dollarsRaised = orders.reduce((sum, o) => sum + (o.donation_amount_cents || 0), 0) / 100;
+
+	return { ok: true, ticketsSold, dollarsRaised };
+}
+
 export async function fetchAllOrdersForExport(slug = DEFAULT_TENANT_SLUG) {
 	const result = await getAdminData(slug);
 	if (!result.ok) {

@@ -179,7 +179,7 @@ export default function FamilyTreePreview() {
       >
         {/* Two columns */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
-          {/* Left col — portrait with overlay stats + story */}
+          {/* Left col portrait with overlay stats + story */}
           <div className="flex flex-col bg-white">
             {/* Portrait with overlay */}
             <div className="relative w-full flex-shrink-0" style={{ minHeight: '220px' }}>
@@ -219,14 +219,14 @@ export default function FamilyTreePreview() {
                 </p>
                 <p>
                   Mark served the community as an AME minister and farmer. Lydia devoted
-                  herself to others as a nurse and midwife — her name appears on the birth
+                  herself to others as a nurse and midwife her name appears on the birth
                   certificates of several grandchildren, a quiet testament to the lives she
                   helped bring into the world. Her brother Taylor Jackson served as a
                   schoolteacher in Palmetto, where many of those grandchildren received
                   their education.
                 </p>
                 <p>
-                  Together they raised fifteen children — seven sons and eight daughters.
+                  Together they raised fifteen children seven sons and eight daughters.
                   All but one reached adulthood; their daughter Minnie passed away at the
                   age of three.
                 </p>
@@ -274,7 +274,7 @@ export default function FamilyTreePreview() {
           className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-900 to-rose-900 text-white text-lg font-bold shadow-xl hover:shadow-2xl transition-shadow duration-200"
         >
           <Users className="w-6 h-6" />
-          {showGen3 ? 'Hide' : 'Show'} Grandchildren — 3rd Generation
+          {showGen3 ? 'Hide' : 'Show'} Grandchildren 3rd Generation
           {showGen3 ? <ChevronUp className="w-6 h-6" /> : <ChevronDown className="w-6 h-6" />}
         </motion.button>
       </div>
@@ -314,7 +314,7 @@ export default function FamilyTreePreview() {
         className="flex flex-col items-center gap-3 mt-10 px-4"
       >
         <p className="text-sm md:text-base text-stone-500 italic text-center">
-          The Sumlin family history spans <strong className="text-stone-700">7 generations</strong> — explore the complete legacy
+          The Sumlin family history spans <strong className="text-stone-700">7 generations</strong> explore the complete legacy
         </p>
         <Link
           to="/family-legacy"

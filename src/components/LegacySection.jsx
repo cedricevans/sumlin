@@ -23,8 +23,8 @@ const LegacySection = () => {
           </div>
         </SmoothScroller>
 
-        {/* Two panels */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        {/* Three panels */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
 
           {/* Our Crest */}
           <SmoothScroller delay={0.1}>
@@ -46,6 +46,29 @@ const LegacySection = () => {
                   The crossed swords symbolize courage and protection, while the castle towers
                   represent our enduring legacy and foundation. The lion emblem stands for
                   nobility and pride in our family name.
+                </p>
+              </div>
+            </div>
+          </SmoothScroller>
+
+          {/* Mark & Lydia — center panel */}
+          <SmoothScroller delay={0.15}>
+            <div className="group rounded-2xl overflow-hidden border border-white/10 bg-stone-800 hover:border-amber-700/40 transition-colors duration-300 h-full flex flex-col">
+              <div className="relative overflow-hidden bg-stone-950" style={{ height: '280px' }}>
+                <img
+                  src="/Mark_Lydia.png"
+                  alt="Mark and Lydia Sumlin"
+                  className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                />
+              </div>
+              <div className="p-6 md:p-8 flex-1">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-8 h-0.5 bg-amber-500" />
+                  <h3 className="text-xl font-bold text-white uppercase tracking-wide">The Sumlin Family Patriarch &amp; Matriarch</h3>
+                </div>
+                <p className="text-stone-400 leading-relaxed">
+                  Mark &amp; LydiaSumlin married 1880 in Rivertown, Georgia. The roots of our
+                  family tree, united in faith and legacy.
                 </p>
               </div>
             </div>
