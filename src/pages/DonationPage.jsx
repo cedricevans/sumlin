@@ -223,7 +223,7 @@ const DonationPage = () => {
                     Choose how to pay
                   </p>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {/* PayPal */}
+                    {/* Credit / Debit Card */}
                     <motion.a
                       href={paypalUrl}
                       target="_blank"
@@ -232,19 +232,15 @@ const DonationPage = () => {
                       whileTap={{ scale: 0.98 }}
                       className="flex flex-col items-center gap-3 rounded-2xl border-2 border-primary/30 bg-primary/5 px-6 py-7 text-center font-bold hover:border-primary hover:bg-primary/10 transition-all duration-200 cursor-pointer"
                     >
-                      <img
-                        src="https://www.paypalobjects.com/webstatic/icon/pp258.png"
-                        alt="PayPal"
-                        className="w-10 h-10 object-contain"
-                      />
+                      <CreditCard className="w-10 h-10 text-primary" />
                       <div>
-                        <p className="text-lg font-bold">Pay with PayPal</p>
-                        <p className="text-sm text-muted-foreground mt-1">Secure online payment — no account required.</p>
+                        <p className="text-lg font-bold">Pay by Debit or Credit Card</p>
+                        <p className="text-sm text-muted-foreground mt-1">Secure online payment — no PayPal account required.</p>
                         <p className="text-2xl font-bold text-primary mt-2">{formatCurrency(amountFromQuery || 0)}</p>
                       </div>
                       <span className="inline-flex items-center gap-2 gradient-burgundy text-white px-5 py-2.5 rounded-xl text-sm font-semibold">
                         <CreditCard className="w-4 h-4" />
-                        Pay {formatCurrency(amountFromQuery || 0)} with PayPal
+                        Pay {formatCurrency(amountFromQuery || 0)} by Card
                       </span>
                     </motion.a>
 
@@ -343,7 +339,7 @@ const DonationPage = () => {
                 Choose how to donate
               </p>
               <div className="grid gap-4 sm:grid-cols-2">
-                {/* PayPal */}
+                {/* Credit / Debit Card */}
                 <motion.a
                   href={standalonePaypalUrl}
                   target="_blank"
@@ -352,21 +348,17 @@ const DonationPage = () => {
                   whileTap={{ scale: 0.98 }}
                   className="flex flex-col items-center gap-3 rounded-2xl border-2 border-primary/30 bg-primary/5 px-6 py-7 text-center font-bold hover:border-primary hover:bg-primary/10 transition-all duration-200"
                 >
-                  <img
-                    src="https://www.paypalobjects.com/webstatic/icon/pp258.png"
-                    alt="PayPal"
-                    className="w-10 h-10 object-contain"
-                  />
+                  <CreditCard className="w-10 h-10 text-primary" />
                   <div>
-                    <p className="text-lg font-bold">Donate with PayPal</p>
-                    <p className="text-sm text-muted-foreground mt-1">Secure online donation — no account required.</p>
+                    <p className="text-lg font-bold">Donate by Debit or Credit Card</p>
+                    <p className="text-sm text-muted-foreground mt-1">Secure online donation — no PayPal account required.</p>
                     {parsedCustom > 0 && (
                       <p className="text-2xl font-bold text-primary mt-2">{formatCurrency(parsedCustom)}</p>
                     )}
                   </div>
                   <span className="inline-flex items-center gap-2 gradient-burgundy text-white px-5 py-2.5 rounded-xl text-sm font-semibold">
                     <CreditCard className="w-4 h-4" />
-                    {parsedCustom > 0 ? `Donate ${formatCurrency(parsedCustom)} via PayPal` : 'Donate with PayPal'}
+                    {parsedCustom > 0 ? `Donate ${formatCurrency(parsedCustom)} by Card` : 'Donate by Card'}
                   </span>
                 </motion.a>
 
