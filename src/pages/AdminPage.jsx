@@ -7,10 +7,12 @@ import {
 	Download,
 	LogOut,
 	Mail,
+	PlusCircle,
 	RefreshCcw,
 	ShieldCheck,
 	Store,
 	Ticket,
+	TrendingUp,
 	Users,
 	Wallet,
 } from 'lucide-react';
@@ -23,6 +25,8 @@ import {
 	formatDateTime,
 	formatMoney,
 	getAdminSession,
+	recordManualDonation,
+	recordManualTicketOrder,
 	saveAdminInvite,
 	saveBusinessListing,
 	saveEvent,
@@ -93,6 +97,28 @@ const initialSettingsForm = {
 const initialInviteForm = {
 	email: '',
 	role: 'admin',
+};
+
+const initialManualDonationForm = {
+	name: '',
+	email: '',
+	phone: '',
+	amount: '',
+	paymentMethod: 'paypal',
+	externalReference: '',
+	notes: '',
+};
+
+const initialManualTicketForm = {
+	name: '',
+	email: '',
+	phone: '',
+	quantity: '',
+	pricePerTicket: '',
+	raffleName: 'General',
+	paymentMethod: 'paypal',
+	externalReference: '',
+	notes: '',
 };
 
 const initialNewsletterForm = {
@@ -293,6 +319,10 @@ const AdminPage = () => {
 	const [newsletterDocuments, setNewsletterDocuments] = useState([]);
 	const [newsletterLoading, setNewsletterLoading] = useState(false);
 	const [newsletterUploadKey, setNewsletterUploadKey] = useState(0);
+	const [manualDonationForm, setManualDonationForm] = useState(initialManualDonationForm);
+	const [savingManualDonation, setSavingManualDonation] = useState(false);
+	const [manualTicketForm, setManualTicketForm] = useState(initialManualTicketForm);
+	const [savingManualTicket, setSavingManualTicket] = useState(false);
 
 	const showDashboard = Boolean(session);
 	const showDisconnectedState = !hasSupabaseConfig;
@@ -300,6 +330,13 @@ const AdminPage = () => {
 	const canInviteAdmins = ['owner', 'admin'].includes(dashboard?.currentAdminRole || '');
 
 	const loadDashboard = async () => {
+		clearAdminDataCache();
+		// Don't set loading=true for background refreshes — only show the loading state on initial mount
+		const nextDashboard = await fetchAdminDashboard();
+		setDashboard(nextDashboard);
+	};
+
+	const loadDashboardFull = async () => {
 		clearAdminDataCache();
 		setLoading(true);
 		const nextDashboard = await fetchAdminDashboard();
@@ -423,6 +460,66 @@ const AdminPage = () => {
 		setInviteForm((current) => ({ ...current, [name]: value }));
 	};
 
+	const handleManualDonationChange = (event) => {
+		const { name, value } = event.target;
+		setManualDonationForm((current) => ({ ...current, [name]: value }));
+	};
+
+	const handleManualDonationSubmit = async (event) => {
+		event.preventDefault();
+		setSavingManualDonation(true);
+
+		const result = await recordManualDonation(manualDonationForm);
+
+		if (result.ok) {
+			toast({
+				title: 'Donation recorded',
+				description: result.message,
+				variant: result.warning ? 'destructive' : 'default',
+			});
+			setManualDonationForm(initialManualDonationForm);
+			await Promise.all([loadDashboard(), loadOrders()]);
+		} else {
+			toast({
+				title: 'Could not record donation',
+				description: result.message,
+				variant: 'destructive',
+			});
+		}
+
+		setSavingManualDonation(false);
+	};
+
+	const handleManualTicketChange = (event) => {
+		const { name, value } = event.target;
+		setManualTicketForm((current) => ({ ...current, [name]: value }));
+	};
+
+	const handleManualTicketSubmit = async (event) => {
+		event.preventDefault();
+		setSavingManualTicket(true);
+
+		const result = await recordManualTicketOrder(manualTicketForm);
+
+		if (result.ok) {
+			toast({
+				title: 'Tickets issued',
+				description: result.message,
+				variant: result.warning ? 'destructive' : 'default',
+			});
+			setManualTicketForm(initialManualTicketForm);
+			await Promise.all([loadDashboard(), loadOrders()]);
+		} else {
+			toast({
+				title: 'Could not issue tickets',
+				description: result.message,
+				variant: 'destructive',
+			});
+		}
+
+		setSavingManualTicket(false);
+	};
+
 	const handleSignIn = async (event) => {
 		event.preventDefault();
 		setSigningIn(true);
@@ -478,7 +575,7 @@ const AdminPage = () => {
 	};
 
 	const handleRefresh = async () => {
-		await Promise.all([loadDashboard(), loadOrders(), loadNewsletterArchive()]);
+		await Promise.all([loadDashboardFull(), loadOrders(), loadNewsletterArchive()]);
 		toast({
 			title: 'Dashboard refreshed',
 			description: 'Latest family records loaded.',
@@ -855,28 +952,27 @@ const AdminPage = () => {
 				</AlertDialogContent>
 			</AlertDialog>
 
-			<section className="section-spacing bg-background pt-24 md:pt-32">
+			<section className="bg-background pt-20 pb-4 border-b border-border/50">
 				<div className="container-custom">
-					<div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-10">
-						<div>
-							<div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary mb-5">
-								<ShieldCheck className="h-4 w-4" />
-								Family admin panel
+					<div className="flex flex-wrap items-center justify-between gap-3 py-3">
+						<div className="flex items-center gap-3 min-w-0">
+							<div className="flex-shrink-0 w-9 h-9 rounded-xl gradient-burgundy flex items-center justify-center">
+								<ShieldCheck className="h-4 w-4 text-white" />
 							</div>
-							<h1 className="text-5xl md:text-6xl font-bold mb-4">Manage businesses, events, tickets, and family signups</h1>
-							<p className="text-lg text-muted-foreground max-w-3xl">
-								The admin area is organized around quick sections so tickets, events, newsletter uploads, and family updates stay easy to manage.
-							</p>
+							<div className="min-w-0">
+								<p className="text-xs font-semibold uppercase tracking-widest text-primary leading-none mb-0.5">Family Admin Panel</p>
+								<h1 className="text-lg font-bold leading-tight truncate">Manage businesses, events, tickets &amp; signups</h1>
+							</div>
 						</div>
 
-						<div className="flex flex-wrap gap-3">
+						<div className="flex items-center gap-2">
 							{showDashboard && (
 								<button
 									type="button"
 									onClick={handleRefresh}
-									className="inline-flex items-center justify-center gap-2 bg-card border border-border/60 px-5 py-3 rounded-xl font-semibold hover:bg-muted transition-colors duration-200"
+									className="inline-flex items-center gap-1.5 bg-card border border-border/60 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-muted transition-colors duration-200"
 								>
-									<RefreshCcw className="h-4 w-4" />
+									<RefreshCcw className="h-3.5 w-3.5" />
 									Refresh
 								</button>
 							)}
@@ -884,14 +980,19 @@ const AdminPage = () => {
 								<button
 									type="button"
 									onClick={handleSignOut}
-									className="inline-flex items-center justify-center gap-2 bg-card border border-border/60 px-5 py-3 rounded-xl font-semibold hover:bg-muted transition-colors duration-200"
+									className="inline-flex items-center gap-1.5 bg-card border border-border/60 px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-muted transition-colors duration-200"
 								>
-									<LogOut className="h-4 w-4" />
+									<LogOut className="h-3.5 w-3.5" />
 									Sign out
 								</button>
 							)}
 						</div>
 					</div>
+				</div>
+			</section>
+
+			<section className="bg-background py-6">
+				<div className="container-custom">
 
 					{!session && hasSupabaseConfig && (
 						<div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-8 mb-10">
@@ -967,17 +1068,34 @@ const AdminPage = () => {
 										</div>
 									)}
 
-									<div className="grid md:grid-cols-2 xl:grid-cols-4 gap-5 mb-10">
+									<div className="grid md:grid-cols-2 xl:grid-cols-5 gap-4 mb-6">
+										{/* Injected $ raised card — computed live from orders */}
+										{(() => {
+											const paidOrders = orders.filter((o) => o.payment_status === 'paid');
+											const totalRaisedCents = paidOrders.reduce((s, o) => s + (o.donation_amount_cents || 0), 0);
+											const ticketRevenueCents = paidOrders.filter((o) => (o.entry_count || 0) > 0).reduce((s, o) => s + (o.donation_amount_cents || 0), 0);
+											const donationCents = totalRaisedCents - ticketRevenueCents;
+											const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n / 100);
+											return (
+												<div className="bg-card border border-green-200 rounded-2xl p-4 shadow-sm xl:col-span-1">
+													<p className="text-xs uppercase tracking-[0.2em] text-green-700 font-semibold mb-1">Total Raised</p>
+													<p className="text-3xl font-bold mb-1 text-green-700">{fmt(totalRaisedCents)}</p>
+													<p className="text-xs text-muted-foreground leading-relaxed">
+														{fmt(ticketRevenueCents)} tickets · {fmt(donationCents)} donations
+													</p>
+												</div>
+											);
+										})()}
 										{dashboard.kpis.map((kpi) => (
-											<div key={kpi.label} className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm">
-												<p className="text-sm uppercase tracking-[0.2em] text-primary font-semibold mb-3">{kpi.label}</p>
-												<p className="text-4xl font-bold mb-3">{kpi.value}</p>
-												<p className="text-sm text-muted-foreground leading-relaxed">{kpi.detail}</p>
+											<div key={kpi.label} className="bg-card border border-border/50 rounded-2xl p-4 shadow-sm">
+												<p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold mb-1">{kpi.label}</p>
+												<p className="text-3xl font-bold mb-1">{kpi.value}</p>
+												<p className="text-xs text-muted-foreground leading-relaxed">{kpi.detail}</p>
 											</div>
 										))}
 									</div>
 
-									<div className="sticky top-20 z-10 mb-8 rounded-3xl border border-border/50 bg-background/95 p-3 shadow-sm backdrop-blur">
+									<div className="sticky top-16 z-10 mb-6 rounded-2xl border border-border/50 bg-background/95 p-2 shadow-sm backdrop-blur">
 										<div className="flex flex-wrap gap-2">
 											{adminTabs.map((tab) => {
 												const Icon = tab.icon;
@@ -1004,51 +1122,179 @@ const AdminPage = () => {
 									</div>
 
 									{activeTab === 'tickets' && (
-										<div className="grid xl:grid-cols-[1.35fr_0.65fr] gap-8">
-											<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
-												<div className="flex items-center justify-between gap-4 mb-6">
-													<div className="flex items-center gap-3">
-														<Ticket className="h-5 w-5 text-primary" />
-														<div>
-															<h2 className="text-2xl font-bold">Latest tickets</h2>
-															<p className="text-sm text-muted-foreground mt-0.5">Compact list view to keep ticket intake at the top with less scrolling.</p>
+										<div className="space-y-6">
+
+											{/* ── Issue Tickets Manually — full width at top ── */}
+											<div className="bg-card border border-primary/20 rounded-3xl p-6 shadow-sm">
+												<div className="flex items-center gap-3 mb-1">
+													<Ticket className="h-5 w-5 text-primary" />
+													<h2 className="text-xl font-bold">Issue Tickets Manually</h2>
+												</div>
+												<p className="text-sm text-muted-foreground mb-5">
+													Type the number of tickets purchased — no need to click +/− for each one. This creates a paid order and assigns ticket numbers automatically.
+												</p>
+												<form onSubmit={handleManualTicketSubmit} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+													<input
+														type="text"
+														name="name"
+														placeholder="Buyer name *"
+														value={manualTicketForm.name}
+														onChange={handleManualTicketChange}
+														required
+														className="w-full rounded-xl border border-border/60 bg-background px-4 py-3 text-sm"
+													/>
+													<input
+														type="email"
+														name="email"
+														placeholder="Buyer email (optional)"
+														value={manualTicketForm.email}
+														onChange={handleManualTicketChange}
+														className="w-full rounded-xl border border-border/60 bg-background px-4 py-3 text-sm"
+													/>
+													<input
+														type="tel"
+														name="phone"
+														placeholder="Buyer phone (optional)"
+														value={manualTicketForm.phone}
+														onChange={handleManualTicketChange}
+														className="w-full rounded-xl border border-border/60 bg-background px-4 py-3 text-sm"
+													/>
+													<input
+														type="text"
+														name="raffleName"
+														placeholder="Raffle name (e.g. General, Basket #1)"
+														value={manualTicketForm.raffleName}
+														onChange={handleManualTicketChange}
+														required
+														className="w-full rounded-xl border border-border/60 bg-background px-4 py-3 text-sm"
+													/>
+													<div>
+														<label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block mb-1">
+															# of Tickets *
+														</label>
+														<input
+															type="number"
+															name="quantity"
+															min="1"
+															max="500"
+															step="1"
+															placeholder="e.g. 10"
+															value={manualTicketForm.quantity}
+															onChange={handleManualTicketChange}
+															required
+															className="w-full rounded-xl border border-border/60 bg-background px-4 py-3 text-sm font-bold"
+														/>
+													</div>
+													<div>
+														<label className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block mb-1">
+															$ per Ticket *
+														</label>
+														<div className="relative">
+															<span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold text-sm">$</span>
+															<input
+																type="number"
+																name="pricePerTicket"
+																min="0.01"
+																step="0.01"
+																placeholder="e.g. 5.00"
+																value={manualTicketForm.pricePerTicket}
+																onChange={handleManualTicketChange}
+																required
+																className="w-full rounded-xl border border-border/60 bg-background pl-7 pr-4 py-3 text-sm font-bold"
+															/>
 														</div>
 													</div>
-													<div className="text-right">
-														<p className="text-2xl font-bold">{dashboard.tickets.length}</p>
-														<p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Visible tickets</p>
+													<select
+														name="paymentMethod"
+														value={manualTicketForm.paymentMethod}
+														onChange={handleManualTicketChange}
+														className="w-full rounded-xl border border-border/60 bg-background px-4 py-3 text-sm"
+													>
+														<option value="paypal">PayPal</option>
+														<option value="cashapp">Cash App</option>
+														<option value="venmo">Venmo</option>
+														<option value="cash">Cash</option>
+														<option value="other">Other (Zelle, Check, etc.)</option>
+													</select>
+													<input
+														type="text"
+														name="externalReference"
+														placeholder="Transaction ID / reference (optional)"
+														value={manualTicketForm.externalReference}
+														onChange={handleManualTicketChange}
+														className="w-full rounded-xl border border-border/60 bg-background px-4 py-3 text-sm"
+													/>
+													{manualTicketForm.quantity && manualTicketForm.pricePerTicket && (
+														<p className="text-sm font-semibold text-primary text-center rounded-xl bg-primary/10 py-2 sm:col-span-2 lg:col-span-2">
+															Total: ${(Number(manualTicketForm.quantity) * Number(manualTicketForm.pricePerTicket)).toFixed(2)} for {manualTicketForm.quantity} ticket{Number(manualTicketForm.quantity) !== 1 ? 's' : ''}
+														</p>
+													)}
+													<textarea
+														name="notes"
+														placeholder="Internal notes (optional)"
+														value={manualTicketForm.notes}
+														onChange={handleManualTicketChange}
+														rows={2}
+														className="w-full rounded-xl border border-border/60 bg-background px-4 py-3 text-sm sm:col-span-2 lg:col-span-2"
+													/>
+													<div className="sm:col-span-2 lg:col-span-4">
+														<button
+															type="submit"
+															disabled={savingManualTicket}
+															className="inline-flex items-center justify-center gap-2 gradient-burgundy text-white px-6 py-3 rounded-xl font-semibold hover:shadow-burgundy transition-all duration-200 disabled:opacity-70"
+														>
+															<Ticket className="h-4 w-4" />
+															{savingManualTicket ? 'Issuing...' : 'Issue Tickets & Mark Paid'}
+														</button>
 													</div>
-												</div>
-												<div className="overflow-hidden rounded-2xl border border-border/50">
-													<div className="grid grid-cols-[96px_minmax(0,1fr)_120px] gap-4 bg-muted/50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-														<p>Ticket</p>
-														<p>Raffle</p>
-														<p>Status</p>
-													</div>
-													<div className="divide-y divide-border/50">
-														{dashboard.tickets.map((ticket) => (
-															<div key={ticket.id} className="grid grid-cols-[96px_minmax(0,1fr)_120px] gap-4 px-4 py-3 text-sm items-center">
-																<p className="font-semibold text-foreground">#{ticket.ticket_number}</p>
-																<div className="min-w-0">
-																	<p className="font-medium text-foreground truncate">{ticket.raffle_name || 'General raffle'}</p>
-																	<p className="text-xs text-muted-foreground truncate">Order {ticket.order_id}</p>
-																</div>
-																<div className="flex items-center justify-end gap-3">
-																	<p className="text-sm text-muted-foreground">{ticket.status}</p>
-																	<button type="button" onClick={() => handleDeleteTicket(ticket.id, `#${ticket.ticket_number}`)} className="text-sm font-semibold text-rose-600 hover:text-rose-700">
-																		Delete
-																	</button>
-																</div>
-															</div>
-														))}
-														{dashboard.tickets.length === 0 && (
-															<p className="px-4 py-8 text-center text-sm text-muted-foreground">No tickets found yet.</p>
-														)}
-													</div>
-												</div>
+												</form>
 											</div>
 
-											<div className="space-y-8">
+											{/* ── Ticket list + Recent purchases below ── */}
+											<div className="grid xl:grid-cols-[1.35fr_0.65fr] gap-8">
+												<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+													<div className="flex items-center justify-between gap-4 mb-6">
+														<div className="flex items-center gap-3">
+															<Ticket className="h-5 w-5 text-primary" />
+															<div>
+																<h2 className="text-2xl font-bold">Latest tickets</h2>
+																<p className="text-sm text-muted-foreground mt-0.5">Compact list view to keep ticket intake at the top with less scrolling.</p>
+															</div>
+														</div>
+														<div className="text-right">
+															<p className="text-2xl font-bold">{dashboard.tickets.length}</p>
+															<p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Visible tickets</p>
+														</div>
+													</div>
+													<div className="overflow-hidden rounded-2xl border border-border/50">
+														<div className="grid grid-cols-[96px_minmax(0,1fr)_120px] gap-4 bg-muted/50 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+															<p>Ticket</p>
+															<p>Raffle</p>
+															<p>Status</p>
+														</div>
+														<div className="divide-y divide-border/50">
+															{dashboard.tickets.map((ticket) => (
+																<div key={ticket.id} className="grid grid-cols-[96px_minmax(0,1fr)_120px] gap-4 px-4 py-3 text-sm items-center">
+																	<p className="font-semibold text-foreground">#{ticket.ticket_number}</p>
+																	<div className="min-w-0">
+																		<p className="font-medium text-foreground truncate">{ticket.raffle_name || 'General raffle'}</p>
+																		<p className="text-xs text-muted-foreground truncate">Order {ticket.order_id}</p>
+																	</div>
+																	<div className="flex items-center justify-end gap-3">
+																		<p className="text-sm text-muted-foreground">{ticket.status}</p>
+																		<button type="button" onClick={() => handleDeleteTicket(ticket.id, `#${ticket.ticket_number}`)} className="text-sm font-semibold text-rose-600 hover:text-rose-700">
+																			Delete
+																		</button>
+																	</div>
+																</div>
+															))}
+															{dashboard.tickets.length === 0 && (
+																<p className="px-4 py-8 text-center text-sm text-muted-foreground">No tickets found yet.</p>
+															)}
+														</div>
+													</div>
+												</div>
+
 												<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
 													<div className="flex items-center gap-3 mb-6">
 														<Wallet className="h-5 w-5 text-primary" />
@@ -1069,102 +1315,241 @@ const AdminPage = () => {
 														))}
 													</div>
 												</div>
-
-												<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
-													<div className="flex items-center gap-3 mb-6">
-														<Users className="h-5 w-5 text-primary" />
-														<h2 className="text-2xl font-bold">Event signups</h2>
-													</div>
-													<div className="space-y-3">
-														{dashboard.eventSignups.slice(0, 6).map((signup) => (
-															<div key={signup.id} className="rounded-2xl border border-border/50 px-4 py-3">
-																<p className="font-semibold">{signup.attendee_name}</p>
-																<p className="text-sm text-muted-foreground">{signup.events?.title || 'Event not found'}</p>
-																<p className="text-xs text-muted-foreground mt-1">{signup.party_size} people • {signup.status}</p>
-															</div>
-														))}
-													</div>
-												</div>
 											</div>
 										</div>
 									)}
 
-									{activeTab === 'orders' && (
-										<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
-											<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-												<div className="flex items-center gap-3">
-													<Wallet className="h-5 w-5 text-primary" />
-													<div>
-														<h2 className="text-2xl font-bold">Payment Command Center</h2>
-														<p className="text-sm text-muted-foreground mt-0.5">Compact order review with approvals and email confirmations in one place.</p>
-													</div>
-												</div>
-												<button
-													type="button"
-													onClick={handleExportCSV}
-													disabled={exportingCSV}
-													className="inline-flex items-center gap-2 bg-card border border-border/60 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-muted transition-colors duration-200 disabled:opacity-70"
-												>
-													<Download className="h-4 w-4" />
-													{exportingCSV ? 'Exporting...' : 'Export CSV'}
-												</button>
-											</div>
+								{activeTab === 'orders' && (
+									<div className="space-y-6">
 
-											<div className="grid grid-cols-3 gap-4 mb-6">
-												{[
-													{ label: 'Total Orders', value: orders.length },
-													{ label: 'Pending', value: orders.filter((order) => order.payment_status === 'pending').length },
-													{ label: 'Confirmed', value: orders.filter((order) => order.payment_status === 'paid').length },
-												].map((stat) => (
-													<div key={stat.label} className="rounded-2xl bg-muted/50 border border-border/50 p-4 text-center">
-														<p className="text-2xl font-bold">{stat.value}</p>
-														<p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">{stat.label}</p>
-													</div>
-												))}
+										{/* ── Record an Offline Donation — full width above the 2-col card ── */}
+										<div className="rounded-2xl border border-border/50 bg-muted/40 p-6">
+											<div className="flex items-center gap-3 mb-2">
+												<PlusCircle className="h-5 w-5 text-primary" />
+												<h3 className="text-xl font-bold">Record an Offline Donation</h3>
 											</div>
-
-											<div className="flex flex-wrap gap-2 mb-6">
-												{['all', 'pending', 'paid'].map((filter) => (
-													<button
-														key={filter}
-														type="button"
-														onClick={() => setOrdersFilter(filter)}
-														className={`px-4 py-2 rounded-xl text-sm font-semibold capitalize transition-colors duration-200 ${
-															ordersFilter === filter
-																? 'gradient-burgundy text-white'
-																: 'bg-muted text-muted-foreground hover:bg-muted/80'
-														}`}
-													>
-														{filter === 'all' ? `All (${orders.length})` : filter === 'pending' ? `Pending (${orders.filter((order) => order.payment_status === 'pending').length})` : `Paid (${orders.filter((order) => order.payment_status === 'paid').length})`}
+											<p className="text-sm text-muted-foreground mb-3">
+												Use this to log a <strong>money donation</strong> received via PayPal dashboard, Cash App, Venmo, or in person. The donation will be recorded as <strong>paid</strong> immediately.
+											</p>
+											<div className="mb-5 flex items-start gap-2 rounded-xl border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+												<Ticket className="h-4 w-4 mt-0.5 shrink-0" />
+												<span>
+													<strong>Donations only — no raffle tickets.</strong> If the person wants to buy tickets online, send them to{' '}
+													<a href="/store" target="_blank" rel="noopener noreferrer" className="underline font-semibold hover:text-amber-900">
+														Fundraiser
+													</a>
+													. If they already paid offline and need tickets issued manually, use the{' '}
+													<button type="button" onClick={() => setActiveTab('tickets')} className="underline font-semibold hover:text-amber-900">
+														Tickets tab
 													</button>
-												))}
+													.
+												</span>
 											</div>
+											<form onSubmit={handleManualDonationSubmit} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+												<input
+													type="text"
+													name="name"
+													placeholder="Donor name"
+													value={manualDonationForm.name}
+													onChange={handleManualDonationChange}
+													required
+													className="w-full rounded-xl border border-border/60 bg-background px-4 py-3"
+												/>
+												<input
+													type="email"
+													name="email"
+													placeholder="Donor email (optional)"
+													value={manualDonationForm.email}
+													onChange={handleManualDonationChange}
+													className="w-full rounded-xl border border-border/60 bg-background px-4 py-3"
+												/>
+												<div className="relative">
+													<span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">$</span>
+													<input
+														type="number"
+														name="amount"
+														min="1"
+														step="0.01"
+														placeholder="Amount (e.g. 50.00)"
+														value={manualDonationForm.amount}
+														onChange={handleManualDonationChange}
+														required
+														className="w-full rounded-xl border border-border/60 bg-background pl-8 pr-4 py-3"
+													/>
+												</div>
+												<select
+													name="paymentMethod"
+													value={manualDonationForm.paymentMethod}
+													onChange={handleManualDonationChange}
+													className="w-full rounded-xl border border-border/60 bg-background px-4 py-3"
+												>
+													<option value="paypal">PayPal</option>
+													<option value="cashapp">Cash App</option>
+													<option value="venmo">Venmo</option>
+													<option value="cash">Cash</option>
+													<option value="other">Other (Zelle, Check, etc.)</option>
+												</select>
+												<input
+													type="text"
+													name="externalReference"
+													placeholder="PayPal transaction ID / reference (optional)"
+													value={manualDonationForm.externalReference}
+													onChange={handleManualDonationChange}
+													className="w-full rounded-xl border border-border/60 bg-background px-4 py-3"
+												/>
+												<input
+													type="tel"
+													name="phone"
+													placeholder="Donor phone (optional)"
+													value={manualDonationForm.phone}
+													onChange={handleManualDonationChange}
+													className="w-full rounded-xl border border-border/60 bg-background px-4 py-3"
+												/>
+												<textarea
+													name="notes"
+													placeholder="Internal notes (optional)"
+													value={manualDonationForm.notes}
+													onChange={handleManualDonationChange}
+													rows={2}
+													className="w-full rounded-xl border border-border/60 bg-background px-4 py-3 sm:col-span-2"
+												/>
+												<div className="sm:col-span-2 lg:col-span-4">
+													<button
+														type="submit"
+														disabled={savingManualDonation}
+														className="inline-flex items-center gap-2 gradient-gold text-foreground px-6 py-3 rounded-xl font-semibold hover:shadow-gold transition-all duration-200 disabled:opacity-70"
+													>
+														<PlusCircle className="h-4 w-4" />
+														{savingManualDonation ? 'Recording...' : 'Record Donation'}
+													</button>
+												</div>
+											</form>
+										</div>
 
-											{ordersLoading ? (
-												<p className="py-8 text-center text-sm text-muted-foreground">Loading orders...</p>
-											) : (
-												<div className="space-y-3">
-													{filteredOrders.map((order) => (
-														<OrderAccordion
-															key={order.id}
-															order={order}
-															onApprove={handleApproveOrder}
-															onEmail={handleEmailConfirmation}
-															onDelete={handleDeleteOrder}
-															approvingOrderId={approvingOrderId}
-															emailingOrderId={emailingOrderId}
-														/>
-													))}
-													{filteredOrders.length === 0 && (
-														<p className="py-8 text-center text-sm text-muted-foreground">No matching orders found.</p>
+									<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+										<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+											<div className="flex items-center gap-3">
+												<Wallet className="h-5 w-5 text-primary" />
+												<div>
+													<h2 className="text-2xl font-bold">Payment Command Center</h2>
+													<p className="text-sm text-muted-foreground mt-0.5">Compact order review with approvals and email confirmations in one place.</p>
+												</div>
+											</div>
+											<button
+												type="button"
+												onClick={handleExportCSV}
+												disabled={exportingCSV}
+												className="inline-flex items-center gap-2 bg-card border border-border/60 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-muted transition-colors duration-200 disabled:opacity-70"
+											>
+												<Download className="h-4 w-4" />
+												{exportingCSV ? 'Exporting...' : 'Export CSV'}
+											</button>
+										</div>
+
+										{/* ── $ Dollar Tracker ── */}
+										{(() => {
+											const FUNDRAISER_GOAL = 5000;
+											const paidOrders = orders.filter((o) => o.payment_status === 'paid');
+											const pendingOrders = orders.filter((o) => o.payment_status === 'pending');
+											const ticketRevenue = paidOrders.filter((o) => (o.entry_count || 0) > 0).reduce((s, o) => s + (o.donation_amount_cents || 0), 0) / 100;
+											const donationRevenue = paidOrders.filter((o) => (o.entry_count || 0) === 0).reduce((s, o) => s + (o.donation_amount_cents || 0), 0) / 100;
+											const totalRaised = ticketRevenue + donationRevenue;
+											const pendingDollars = pendingOrders.reduce((s, o) => s + (o.donation_amount_cents || 0), 0) / 100;
+											const ticketsSold = paidOrders.reduce((s, o) => s + (o.entry_count || 0), 0);
+											const pendingTickets = pendingOrders.reduce((s, o) => s + (o.entry_count || 0), 0);
+											const goalPct = Math.min(100, FUNDRAISER_GOAL > 0 ? Math.round((totalRaised / FUNDRAISER_GOAL) * 100) : 0);
+											const methodTotals = paidOrders.reduce((acc, o) => { const m = o.payment_method || 'other'; acc[m] = (acc[m] || 0) + (o.donation_amount_cents || 0) / 100; return acc; }, {});
+											const methodEntries = Object.entries(methodTotals).sort((a, b) => b[1] - a[1]);
+											const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
+											return (
+												<div className="mb-6 rounded-2xl border border-primary/20 bg-primary/5 p-5">
+													<div className="flex items-center justify-between gap-3 mb-4">
+														<div className="flex items-center gap-2">
+															<TrendingUp className="h-4 w-4 text-primary" />
+															<p className="text-sm font-bold uppercase tracking-widest text-primary">$ Dollar Tracker</p>
+															<span className="inline-flex items-center gap-1 rounded-full bg-green-100 border border-green-200 px-2 py-0.5 text-xs font-semibold text-green-700">● Live</span>
+														</div>
+														<div className="text-right">
+															<p className="text-xs text-muted-foreground">{paidOrders.length} paid · {pendingOrders.length} pending</p>
+															<p className="text-xs text-muted-foreground/60">Updates after every submission</p>
+														</div>
+													</div>
+													<div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+														<div className="rounded-xl bg-background border border-border/50 p-3 text-center"><p className="text-2xl font-black text-green-600">{fmt(totalRaised)}</p><p className="text-xs text-muted-foreground mt-0.5 uppercase tracking-wider">Total Raised</p></div>
+														<div className="rounded-xl bg-background border border-border/50 p-3 text-center"><p className="text-2xl font-black text-primary">{fmt(ticketRevenue)}</p><p className="text-xs text-muted-foreground mt-0.5 uppercase tracking-wider">Ticket Sales</p><p className="text-xs text-primary/70 font-semibold">{ticketsSold} tickets</p></div>
+														<div className="rounded-xl bg-background border border-border/50 p-3 text-center"><p className="text-2xl font-black text-amber-600">{fmt(donationRevenue)}</p><p className="text-xs text-muted-foreground mt-0.5 uppercase tracking-wider">Direct Donations</p><p className="text-xs text-amber-600/70 font-semibold">No ticket</p></div>
+														<div className="rounded-xl bg-background border border-border/50 p-3 text-center"><p className="text-2xl font-black text-muted-foreground">{fmt(pendingDollars)}</p><p className="text-xs text-muted-foreground mt-0.5 uppercase tracking-wider">Pending</p><p className="text-xs text-muted-foreground/70 font-semibold">{pendingTickets} tickets</p></div>
+													</div>
+													{/* Fundraiser Goal Progress bar — hidden until launch
+													<div className="mb-4">
+														<div className="flex justify-between text-xs text-muted-foreground mb-1"><span className="font-semibold">Fundraiser Goal Progress</span><span>{fmt(totalRaised)} of {fmt(FUNDRAISER_GOAL)} — <strong className="text-foreground">{goalPct}%</strong></span></div>
+														<div className="h-3 w-full rounded-full bg-border/40 overflow-hidden"><div className="h-full rounded-full gradient-burgundy transition-all duration-700" style={{ width: `${goalPct}%` }} /></div>
+													</div>
+													*/}
+													{methodEntries.length > 0 && (
+														<div>
+															<p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">By Payment Method (paid)</p>
+															<div className="flex flex-wrap gap-2">{methodEntries.map(([method, amount]) => (<span key={method} className="inline-flex items-center gap-1.5 rounded-lg bg-background border border-border/50 px-3 py-1.5 text-xs font-semibold capitalize"><span className="text-primary">{method}</span><span className="text-muted-foreground">{fmt(amount)}</span></span>))}</div>
+														</div>
 													)}
 												</div>
-											)}
-										</div>
-									)}
+											);
+										})()}
 
-									{activeTab === 'communications' && (
-										<div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
+										<div className="grid grid-cols-3 gap-3 mb-6">
+											{[
+												{ label: 'Total Orders', value: orders.length },
+												{ label: 'Pending', value: orders.filter((order) => order.payment_status === 'pending').length },
+												{ label: 'Confirmed', value: orders.filter((order) => order.payment_status === 'paid').length },
+											].map((stat) => (
+												<div key={stat.label} className="rounded-xl bg-muted/50 border border-border/50 p-3 text-center">
+													<p className="text-xl font-bold">{stat.value}</p>
+													<p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">{stat.label}</p>
+												</div>
+											))}
+										</div>
+
+										<div className="flex flex-wrap gap-2 mb-6">
+											{['all', 'pending', 'paid'].map((filter) => (
+												<button
+													key={filter}
+													type="button"
+													onClick={() => setOrdersFilter(filter)}
+													className={`px-4 py-2 rounded-xl text-sm font-semibold capitalize transition-colors duration-200 ${
+														ordersFilter === filter
+															? 'gradient-burgundy text-white'
+															: 'bg-muted text-muted-foreground hover:bg-muted/80'
+													}`}
+												>
+													{filter === 'all' ? `All (${orders.length})` : filter === 'pending' ? `Pending (${orders.filter((order) => order.payment_status === 'pending').length})` : `Paid (${orders.filter((order) => order.payment_status === 'paid').length})`}
+												</button>
+											))}
+										</div>
+
+										{ordersLoading ? (
+											<p className="py-8 text-center text-sm text-muted-foreground">Loading orders...</p>
+										) : (
+											<div className="space-y-3">
+												{filteredOrders.map((order) => (
+													<OrderAccordion
+														key={order.id}
+														order={order}
+														onApprove={handleApproveOrder}
+														onEmail={handleEmailConfirmation}
+														onDelete={handleDeleteOrder}
+														approvingOrderId={approvingOrderId}
+														emailingOrderId={emailingOrderId}
+													/>
+												))}
+												{filteredOrders.length === 0 && (
+													<p className="py-8 text-center text-sm text-muted-foreground">No matching orders found.</p>
+												)}
+											</div>
+										)}
+									</div>
+									</div>
+								)}								{activeTab === 'communications' && (
+									<div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
 											<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
 												<div className="flex items-center gap-3 mb-4">
 													<Mail className="h-5 w-5 text-primary" />

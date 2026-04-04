@@ -1,15 +1,17 @@
 ## Pages
 - [- Our Store](/productdetail): No description available
 - [About the Reunion | Sumlin Family Reunion 2026](/about): Learn more about the Sumlin Family Reunion 2026, our purpose, our legacy, and the family members helping bring this gathering to life.
-- [Admin Dashboard | Sumlin Family](/admin): Manage the Sumlin family business directory, family calendar links, events, signups, and reunion support records.
+- [Admin Dashboard | Sumlin Family](/admin): Manage the Sumlin family calendar, newsletter uploads, business directory, fundraiser records, and family signups.
 - [Business Corner | Sumlin Family](/familybusiness): Browse the Sumlin Business Corner, sign up for family events, and submit your business for the directory.
-- [Contact Us - Midcentury Decor](/contact): Get in touch with Midcentury Decor. We
+- [Contact the Family | Sumlin Family Reunion 2026](/contact): Contact the Sumlin Family Reunion team for reunion updates, fundraiser questions, family business support, and portrait inquiries.
 - [Donate | Sumlin Family Reunion 2026](/donation): Support the Sumlin Family Reunion 2026 with a donation. Every contribution helps make our reunion unforgettable.
+- [Events & Family Calendar | Sumlin Family Reunion 2026](/events): View the Sumlin family calendar, upcoming reunion events, planning calls, and public event updates in one place.
 - [Family Legacy | Sumlin Family Reunion 2026](/familylegacy): Learn the meaning behind the Sumlin Family crest and support the reunion through our family fundraiser.
 - [Family Portraits - Sumlin Family Reunion 2026](/familyportraits): Professional family portrait sessions at the Sumlin Family Reunion. Capture precious memories with multi-generational photos and candid moments.
 - [Fundraiser - Sumlin Family Reunion Support](/store): Support the Sumlin Family Reunion fundraiser, explore basket options, and review the official entry rules.
 - [Fundraiser Disclaimer and Rules | Sumlin Family](/fundraiserrules): Review the Sumlin Family Reunion fundraiser disclaimer, payment guidance, and entry rules.
 - [Midcentury Decor - Vintage & Retro Home Furniture](/home): Discover curated midcentury modern, vintage, and retro home decor from Berlin. Shop unique furniture, lighting, and decorative pieces.
+- [Newsletter Archive | Sumlin Family Reunion 2026](/newsletter): Download the latest Sumlin family newsletter and browse archived issues, reunion updates, and family announcements.
 - [Operational Notes | Sumlin Family](/shippingpolicy): Operational notes for the Sumlin Family Reunion website.
 - [Order Confirmed - Sumlin Family Reunion](/success): Thank you for supporting the Sumlin Family Reunion fundraiser.
 - [Reunion 2026 - Sumlin Family Reunion](/reunion2026): Join us for the Sumlin Family Reunion 2026. A weekend celebration of faith, family, and heritage with activities for all ages.

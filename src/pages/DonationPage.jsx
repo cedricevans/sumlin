@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
-import { Heart, Mail, Receipt, Ticket, User, Users, Star, Gift } from 'lucide-react';
+import { CheckCircle, Copy, CreditCard, Gift, Heart, Mail, Receipt, Star, Ticket, User, Users } from 'lucide-react';
 import ParallaxHero from '@/components/ParallaxHero';
 import SmoothScroller from '@/components/SmoothScroller';
 import ContactSection from '@/components/ContactSection';
 
 const PAYPAL_BUSINESS_EMAIL = 'dbass@seniorcarexpress.com';
+const CASH_APP_HANDLE = '$SumlinReunionClub';
 const PAYPAL_DONATE_LINK = `https://www.paypal.com/donate/?business=${encodeURIComponent(PAYPAL_BUSINESS_EMAIL)}&currency_code=USD`;
 
 function formatCurrency(amount) {
@@ -69,9 +70,13 @@ const reasons = [
   },
 ];
 
+const PRESET_AMOUNTS = [10, 25, 50, 100, 250];
+
 const DonationPage = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
+  const [customAmount, setCustomAmount] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const amountFromQuery = Number.parseFloat(searchParams.get('amount') || '0');
   const ticketsFromQuery = Number.parseInt(searchParams.get('tickets') || '0', 10);
@@ -105,6 +110,22 @@ const DonationPage = () => {
     reference: referenceCode,
   });
 
+  // For the standalone donation amount chooser
+  const parsedCustom = Number.parseFloat(customAmount) || 0;
+  const standalonePaypalUrl = parsedCustom > 0
+    ? buildPayPalUrl({ amount: parsedCustom, tickets: 0, reference: null })
+    : PAYPAL_DONATE_LINK;
+
+  const handleCopyCashApp = async () => {
+    try {
+      await navigator.clipboard.writeText(CASH_APP_HANDLE);
+    } catch {
+      // fallback: select a temp input
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
   return (
     <>
       <Helmet>
@@ -128,14 +149,14 @@ const DonationPage = () => {
             <div className="text-center mb-12">
               <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-5 py-2 text-sm font-semibold uppercase tracking-wider text-primary mb-6">
                 <Heart className="w-4 h-4" />
-                Final Payment
+                {hasCheckoutContext ? 'Final Payment' : 'Support the Family'}
               </div>
               <h2 className="text-4xl md:text-5xl font-bold mb-6">
                 {hasCheckoutContext ? 'Complete Your Fundraiser Payment' : 'Make a Difference'}
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed max-w-3xl mx-auto">
                 {hasCheckoutContext
-                  ? 'Your entry information has been saved. Use the PayPal button below to finish the payment for the exact number of tickets you selected.'
+                  ? 'Your entry information has been saved. Complete your ticket payment below — or scroll down to make a separate donation of any amount, no ticket needed.'
                   : 'Your generosity keeps the Sumlin Family Reunion alive. Every contribution helps us create unforgettable memories and honor the legacy that connects us all.'}
               </p>
             </div>
@@ -196,56 +217,188 @@ const DonationPage = () => {
                   </div>
                 )}
 
-                <div className="mt-8 text-center">
-                  <motion.a
-                    href={paypalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="inline-flex items-center gap-3 gradient-burgundy text-white px-10 py-5 rounded-2xl font-bold text-xl shadow-xl hover:shadow-2xl transition-all duration-300"
-                  >
-                    <img
-                      src="https://www.paypalobjects.com/webstatic/icon/pp258.png"
-                      alt="PayPal"
-                      className="w-7 h-7 object-contain"
-                    />
-                    Pay {formatCurrency(amountFromQuery || 0)} with PayPal
-                  </motion.a>
+                {/* Payment options */}
+                <div className="mt-8">
+                  <p className="text-center text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground mb-6">
+                    Choose how to pay
+                  </p>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {/* PayPal */}
+                    <motion.a
+                      href={paypalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="flex flex-col items-center gap-3 rounded-2xl border-2 border-primary/30 bg-primary/5 px-6 py-7 text-center font-bold hover:border-primary hover:bg-primary/10 transition-all duration-200 cursor-pointer"
+                    >
+                      <img
+                        src="https://www.paypalobjects.com/webstatic/icon/pp258.png"
+                        alt="PayPal"
+                        className="w-10 h-10 object-contain"
+                      />
+                      <div>
+                        <p className="text-lg font-bold">Pay with PayPal</p>
+                        <p className="text-sm text-muted-foreground mt-1">Secure online payment — no account required.</p>
+                        <p className="text-2xl font-bold text-primary mt-2">{formatCurrency(amountFromQuery || 0)}</p>
+                      </div>
+                      <span className="inline-flex items-center gap-2 gradient-burgundy text-white px-5 py-2.5 rounded-xl text-sm font-semibold">
+                        <CreditCard className="w-4 h-4" />
+                        Pay {formatCurrency(amountFromQuery || 0)} with PayPal
+                      </span>
+                    </motion.a>
 
-                  <p className="text-sm text-muted-foreground mt-4">
-                    Please pay the exact amount shown above so the donation matches your ticket count.
+                    {/* Cash App */}
+                    <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-border/50 bg-muted/40 px-6 py-7 text-center">
+                      <div className="w-10 h-10 rounded-xl bg-[#00D632] flex items-center justify-center text-white font-bold text-lg">$</div>
+                      <div>
+                        <p className="text-lg font-bold">Pay with Cash App</p>
+                        <p className="text-sm text-muted-foreground mt-1">Open Cash App and send to the handle below.</p>
+                        <p className="text-2xl font-bold text-foreground mt-2">{CASH_APP_HANDLE}</p>
+                        <p className="text-sm text-muted-foreground mt-1">Amount: {formatCurrency(amountFromQuery || 0)}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Add <strong>{referenceCode || orderId || 'your order number'}</strong> in the note.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleCopyCashApp}
+                        className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${copied ? 'bg-green-600 text-white' : 'gradient-gold text-foreground hover:shadow-gold'}`}
+                      >
+                        {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        {copied ? 'Copied!' : 'Copy Cash App Handle'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-muted-foreground text-center mt-5">
+                    Please send the exact amount shown so we can match your payment to your ticket reservation.
                   </p>
                 </div>
               </div>
             </SmoothScroller>
           )}
 
-          {!hasCheckoutContext && (
-            <SmoothScroller delay={0.05}>
-              <div className="text-center mb-10">
+          {/* ── Standalone Donation Bucket — always visible ── */}
+          <SmoothScroller delay={hasCheckoutContext ? 0.1 : 0.05}>
+            <div className="bg-card border border-border/50 rounded-3xl p-8 shadow-lg mb-10">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 rounded-xl gradient-gold flex items-center justify-center">
+                  <Heart className="w-5 h-5 text-foreground" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold">Make a Direct Donation</h3>
+                  <p className="text-sm text-muted-foreground">No ticket needed — any amount is welcome.</p>
+                </div>
+              </div>
+
+              {hasCheckoutContext && (
+                <div className="mt-4 mb-6 rounded-2xl bg-primary/5 border border-primary/20 px-5 py-3">
+                  <p className="text-sm text-muted-foreground">
+                    This is <strong>separate</strong> from your ticket payment above. Use this section to add a gift on top of your entry, or to donate on behalf of a family member.
+                  </p>
+                </div>
+              )}
+
+              {/* Amount chooser */}
+              <div className={hasCheckoutContext ? 'mt-4 mb-8' : 'mb-8'}>
+                <p className="text-center text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground mb-5">
+                  Choose a donation amount
+                </p>
+                <div className="flex flex-wrap justify-center gap-3 mb-5">
+                  {PRESET_AMOUNTS.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setCustomAmount(String(preset))}
+                      className={`px-5 py-2.5 rounded-xl font-semibold text-sm border-2 transition-all duration-200 ${
+                        customAmount === String(preset)
+                          ? 'gradient-burgundy border-transparent text-white shadow-md'
+                          : 'border-border/60 bg-card hover:border-primary/50 hover:bg-muted'
+                      }`}
+                    >
+                      {formatCurrency(preset)}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-3 max-w-xs mx-auto">
+                  <span className="text-muted-foreground font-semibold">$</span>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder="Enter custom amount"
+                    value={customAmount}
+                    onChange={(e) => setCustomAmount(e.target.value)}
+                    className="w-full rounded-xl border border-border/60 bg-background px-4 py-3 text-center text-lg font-bold focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                {parsedCustom > 0 && (
+                  <p className="text-center text-sm text-muted-foreground mt-3">
+                    Donating <span className="font-bold text-foreground">{formatCurrency(parsedCustom)}</span> to the Sumlin Family Reunion
+                  </p>
+                )}
+              </div>
+
+              {/* Payment options */}
+              <p className="text-center text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground mb-6">
+                Choose how to donate
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {/* PayPal */}
                 <motion.a
-                  href={PAYPAL_DONATE_LINK}
+                  href={standalonePaypalUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="inline-flex items-center gap-3 gradient-burgundy text-white px-10 py-5 rounded-2xl font-bold text-xl shadow-xl hover:shadow-2xl transition-all duration-300"
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex flex-col items-center gap-3 rounded-2xl border-2 border-primary/30 bg-primary/5 px-6 py-7 text-center font-bold hover:border-primary hover:bg-primary/10 transition-all duration-200"
                 >
                   <img
                     src="https://www.paypalobjects.com/webstatic/icon/pp258.png"
                     alt="PayPal"
-                    className="w-7 h-7 object-contain brightness-0 invert"
+                    className="w-10 h-10 object-contain"
                   />
-                  Donate with PayPal
+                  <div>
+                    <p className="text-lg font-bold">Donate with PayPal</p>
+                    <p className="text-sm text-muted-foreground mt-1">Secure online donation — no account required.</p>
+                    {parsedCustom > 0 && (
+                      <p className="text-2xl font-bold text-primary mt-2">{formatCurrency(parsedCustom)}</p>
+                    )}
+                  </div>
+                  <span className="inline-flex items-center gap-2 gradient-burgundy text-white px-5 py-2.5 rounded-xl text-sm font-semibold">
+                    <CreditCard className="w-4 h-4" />
+                    {parsedCustom > 0 ? `Donate ${formatCurrency(parsedCustom)} via PayPal` : 'Donate with PayPal'}
+                  </span>
                 </motion.a>
 
-                <p className="text-sm text-muted-foreground mt-4">
-                  Secure payment via PayPal — no account required.
-                </p>
+                {/* Cash App */}
+                <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-border/50 bg-muted/40 px-6 py-7 text-center">
+                  <div className="w-10 h-10 rounded-xl bg-[#00D632] flex items-center justify-center text-white font-bold text-lg">$</div>
+                  <div>
+                    <p className="text-lg font-bold">Donate with Cash App</p>
+                    <p className="text-sm text-muted-foreground mt-1">Open Cash App, search the handle, and send your donation.</p>
+                    <p className="text-2xl font-bold text-foreground mt-2">{CASH_APP_HANDLE}</p>
+                    {parsedCustom > 0 && (
+                      <p className="text-sm text-muted-foreground mt-1">Amount: <span className="font-bold">{formatCurrency(parsedCustom)}</span></p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">Add <strong>"Sumlin Reunion Donation"</strong> in the note.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCopyCashApp}
+                    className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${copied ? 'bg-green-600 text-white' : 'gradient-gold text-foreground hover:shadow-gold'}`}
+                  >
+                    {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    {copied ? 'Copied!' : 'Copy Cash App Handle'}
+                  </button>
+                </div>
               </div>
-            </SmoothScroller>
-          )}
+
+              <p className="text-xs text-muted-foreground text-center mt-6">
+                Secure payment via PayPal or Cash App. Every dollar supports the Sumlin Family Reunion.
+              </p>
+            </div>
+          </SmoothScroller>
+
         </div>
       </section>
 

@@ -1224,6 +1224,160 @@ export async function fetchAllOrdersForExport(slug = DEFAULT_TENANT_SLUG) {
 	return { ok: true, orders: result.orders || [] };
 }
 
+/**
+ * recordManualDonation — admin only
+ * Records a donation received outside the website (PayPal dashboard, Cash App, Venmo, etc.)
+ * Calls the create_public_fundraiser_order RPC and then immediately marks it paid.
+ */
+export async function recordManualDonation(payload, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return { ok: false, message: 'Supabase is not configured.' };
+	}
+
+	const amountCents = Math.round((Number.parseFloat(payload.amount) || 0) * 100);
+	if (amountCents <= 0) {
+		return { ok: false, message: 'Please enter a valid donation amount.' };
+	}
+
+	const itemsSnapshot = [
+		{
+			title: 'Manual donation',
+			quantity: 1,
+			price_cents: amountCents,
+		},
+	];
+
+	const rpcResult = await sumlinDb.rpc('create_public_fundraiser_order', {
+		target_slug: slug,
+		purchaser_name: payload.name || 'Anonymous',
+		purchaser_email: payload.email || '',
+		payment_method: payload.paymentMethod || 'other',
+		items_snapshot: itemsSnapshot,
+		purchaser_phone: payload.phone ?? null,
+		purchaser_address: null,
+		external_payment_reference: payload.externalReference ?? null,
+		order_notes: payload.notes ?? null,
+	});
+
+	if (rpcResult.error) {
+		return {
+			ok: false,
+			message: normalizeError(rpcResult.error)?.message || rpcResult.error.message || 'Unable to record the donation.',
+		};
+	}
+
+	const raw = rpcResult.data;
+	const result = Array.isArray(raw) ? (raw[0] ?? {}) : (raw ?? {});
+	const orderId = result.order_id ?? null;
+
+	if (!orderId) {
+		return { ok: false, message: result.message || 'Order was not created.' };
+	}
+
+	// Immediately mark as paid since admin is recording it manually
+	const statusResult = await sumlinDb.rpc('update_order_status', {
+		p_order_id: orderId,
+		p_status: 'paid',
+		target_slug: slug,
+	});
+
+	if (statusResult.error) {
+		return {
+			ok: true,
+			orderId,
+			referenceCode: result.reference_code ?? null,
+			message: 'Donation recorded but could not auto-mark as paid — please approve it in the Orders tab.',
+			warning: true,
+		};
+	}
+
+	return {
+		ok: true,
+		orderId,
+		referenceCode: result.reference_code ?? null,
+		message: `Donation recorded and marked as paid (${result.reference_code ?? orderId}).`,
+	};
+}
+
+/**
+ * recordManualTicketOrder — admin only
+ * Creates a ticket order with a typed quantity (no +/- clicker) and marks it paid immediately.
+ * payload: { name, email, phone, quantity, pricePerTicket, raffleName, paymentMethod, externalReference, notes }
+ */
+export async function recordManualTicketOrder(payload, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return { ok: false, message: 'Supabase is not configured.' };
+	}
+
+	const quantity = Math.max(1, Number.parseInt(payload.quantity, 10) || 1);
+	const pricePerTicket = Math.round((Number.parseFloat(payload.pricePerTicket) || 0) * 100);
+	if (pricePerTicket <= 0) {
+		return { ok: false, message: 'Please enter a valid price per ticket.' };
+	}
+
+	const raffleName = (payload.raffleName || 'General').trim();
+	const itemsSnapshot = [
+		{
+			title: raffleName,
+			quantity,
+			price_cents: pricePerTicket,
+		},
+	];
+
+	const rpcResult = await sumlinDb.rpc('create_public_fundraiser_order', {
+		target_slug: slug,
+		purchaser_name: payload.name || 'Anonymous',
+		purchaser_email: payload.email || '',
+		payment_method: payload.paymentMethod || 'other',
+		items_snapshot: itemsSnapshot,
+		purchaser_phone: payload.phone ?? null,
+		purchaser_address: null,
+		external_payment_reference: payload.externalReference ?? null,
+		order_notes: payload.notes ?? null,
+	});
+
+	if (rpcResult.error) {
+		return {
+			ok: false,
+			message: normalizeError(rpcResult.error)?.message || rpcResult.error.message || 'Unable to create the ticket order.',
+		};
+	}
+
+	const raw = rpcResult.data;
+	const result = Array.isArray(raw) ? (raw[0] ?? {}) : (raw ?? {});
+	const orderId = result.order_id ?? null;
+
+	if (!orderId) {
+		return { ok: false, message: result.message || 'Order was not created.' };
+	}
+
+	// Immediately mark as paid since admin is recording it manually
+	const statusResult = await sumlinDb.rpc('update_order_status', {
+		p_order_id: orderId,
+		p_status: 'paid',
+		target_slug: slug,
+	});
+
+	if (statusResult.error) {
+		return {
+			ok: true,
+			orderId,
+			referenceCode: result.reference_code ?? null,
+			tickets: result.tickets || [],
+			message: 'Ticket order recorded but could not auto-mark as paid — please approve it in the Orders tab.',
+			warning: true,
+		};
+	}
+
+	return {
+		ok: true,
+		orderId,
+		referenceCode: result.reference_code ?? null,
+		tickets: result.tickets || [],
+		message: `${quantity} ticket${quantity === 1 ? '' : 's'} issued and marked paid (${result.reference_code ?? orderId}).`,
+	};
+}
+
 export async function submitFundraiserOrder(payload, slug = DEFAULT_TENANT_SLUG) {
 	if (!supabase) {
 		return {
