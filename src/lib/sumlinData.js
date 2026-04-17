@@ -1302,27 +1302,43 @@ export async function recordManualDonation(payload, slug = DEFAULT_TENANT_SLUG) 
 /**
  * recordManualTicketOrder — admin only
  * Creates a ticket order with a typed quantity (no +/- clicker) and marks it paid immediately.
- * payload: { name, email, phone, quantity, pricePerTicket, raffleName, paymentMethod, externalReference, notes }
+ * payload: {
+ *   name, email, phone,
+ *   ticketGroups?: [{ raffleName, quantity, pricePerTicket }],
+ *   quantity?, pricePerTicket?, raffleName?, // legacy fallback
+ *   paymentMethod, externalReference, notes
+ * }
  */
 export async function recordManualTicketOrder(payload, slug = DEFAULT_TENANT_SLUG) {
 	if (!supabase) {
 		return { ok: false, message: 'Supabase is not configured.' };
 	}
 
-	const quantity = Math.max(1, Number.parseInt(payload.quantity, 10) || 1);
-	const pricePerTicket = Math.round((Number.parseFloat(payload.pricePerTicket) || 0) * 100);
-	if (pricePerTicket <= 0) {
-		return { ok: false, message: 'Please enter a valid price per ticket.' };
+	const normalizedGroups = Array.isArray(payload.ticketGroups)
+		? payload.ticketGroups
+		: [{
+			raffleName: payload.raffleName || 'General',
+			quantity: payload.quantity,
+			pricePerTicket: payload.pricePerTicket,
+		}];
+
+	const itemsSnapshot = normalizedGroups
+		.map((group) => {
+			const quantity = Number.parseInt(group.quantity, 10);
+			const pricePerTicketCents = Math.round((Number.parseFloat(group.pricePerTicket) || 0) * 100);
+			return {
+				title: (group.raffleName || 'General').trim() || 'General',
+				quantity: Number.isFinite(quantity) ? quantity : 0,
+				price_cents: pricePerTicketCents,
+			};
+		})
+		.filter((group) => group.quantity > 0 && group.price_cents > 0);
+
+	if (itemsSnapshot.length === 0) {
+		return { ok: false, message: 'Please add at least one valid ticket group with quantity and price.' };
 	}
 
-	const raffleName = (payload.raffleName || 'General').trim();
-	const itemsSnapshot = [
-		{
-			title: raffleName,
-			quantity,
-			price_cents: pricePerTicket,
-		},
-	];
+	const totalQuantity = itemsSnapshot.reduce((sum, item) => sum + item.quantity, 0);
 
 	const rpcResult = await sumlinDb.rpc('create_public_fundraiser_order', {
 		target_slug: slug,
@@ -1374,7 +1390,7 @@ export async function recordManualTicketOrder(payload, slug = DEFAULT_TENANT_SLU
 		orderId,
 		referenceCode: result.reference_code ?? null,
 		tickets: result.tickets || [],
-		message: `${quantity} ticket${quantity === 1 ? '' : 's'} issued and marked paid (${result.reference_code ?? orderId}).`,
+		message: `${totalQuantity} ticket${totalQuantity === 1 ? '' : 's'} issued and marked paid (${result.reference_code ?? orderId}).`,
 	};
 }
 
