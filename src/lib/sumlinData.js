@@ -1153,6 +1153,33 @@ export async function deleteTicket(ticketId, slug = DEFAULT_TENANT_SLUG) {
 	return { ok: Boolean(result.ok), message: result.message || null };
 }
 
+export async function resetAllTicketWinners(slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) return { ok: false, message: 'Supabase is not configured.' };
+
+	const { data, error } = await sumlinDb.rpc('reset_raffle_winners', { target_slug: slug });
+
+	if (error) return { ok: false, message: error.message };
+
+	const result = Array.isArray(data) ? (data[0] ?? {}) : (data ?? {});
+	clearAdminDataCache();
+	return { ok: Boolean(result.ok), message: result.message || null };
+}
+
+export async function markTicketWinner(ticketNumber, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) return { ok: false, message: 'Supabase is not configured.' };
+
+	const { data, error } = await sumlinDb.rpc('mark_raffle_winner', {
+		p_ticket_number: ticketNumber,
+		target_slug: slug,
+	});
+
+	if (error) return { ok: false, message: error.message };
+
+	const result = Array.isArray(data) ? (data[0] ?? {}) : (data ?? {});
+	clearAdminDataCache();
+	return { ok: Boolean(result.ok), message: result.message || null };
+}
+
 export async function resendOrderConfirmation(orderId, options = {}) {
 	if (!orderId) return { ok: false, message: 'Missing orderId' };
 

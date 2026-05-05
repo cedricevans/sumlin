@@ -38,14 +38,7 @@ const Header = ({ setIsCartOpen }) => {
 
   const navLinks = [
     { name: 'Home', path: '/' },
-    {
-      name: 'Family Legacy',
-      path: '/family-legacy',
-      matchPaths: ['/family-legacy', '/family-portraits'],
-      children: [
-        { name: 'Family Portraits', path: '/family-portraits' }
-      ]
-    },
+    { name: 'Family Legacy', path: '/family-legacy' },
     { name: 'Events', path: '/events' },
     { name: 'Business Corner', path: '/family-business' },
     { name: 'Newsletter', path: '/newsletter' },

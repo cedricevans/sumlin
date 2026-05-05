@@ -12,7 +12,8 @@ const boardMembers = [
   { name: 'Debi', position: 'Vice President', image: '/debi.png' },
   { name: 'David', position: 'Officer / Treasurer', image: '/David Officer-Treasurer.png' },
   { name: 'Ronika Sumlin', position: 'Secretary', image: '/Ronika Sumlin-Secretary.png' },
-  { name: 'Peggy W.', position: 'Co-Treasurer', image: '/Peggy W - Co Treasure.png' },
+  { name: 'Peggy W.', position: 'Treasurer Emeritus', image: '/Peggy W - Co Treasure.png' },
+  { name: 'Kenneth', position: 'Vice Treasurer', image: '/kenneth wynn.png', objectPosition: 'center 20%' },
   { name: 'Carrie', position: 'Historian', image: '/Carrie - Historian.png' },
   { name: 'Denise', position: 'Administrator', image: '/Winters_Denise.jpeg' },
   { name: 'Nia P.', position: 'Historian Assistant', image: '/Nia P - Historian Assistant-new.jpeg' },
@@ -140,6 +141,7 @@ const FamilyLegacyPage = () => {
                         src={member.image}
                         alt={`${member.name} - ${member.position}`}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        style={member.objectPosition ? { objectPosition: member.objectPosition } : undefined}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       {index === 0 && (

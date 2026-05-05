@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import {
 	CalendarDays,
@@ -10,6 +11,7 @@ import {
 	PlusCircle,
 	RefreshCcw,
 	ShieldCheck,
+	Shuffle,
 	Store,
 	Ticket,
 	TrendingUp,
@@ -290,6 +292,7 @@ function OrderAccordion({ order, onApprove, onEmail, onDelete, approvingOrderId,
 }
 
 const AdminPage = () => {
+	const navigate = useNavigate();
 	const { toast } = useToast();
 	const [session, setSession] = useState(null);
 	const [dashboard, setDashboard] = useState(null);
@@ -1215,6 +1218,14 @@ const AdminPage = () => {
 													</button>
 												);
 											})}
+											<button
+												type="button"
+												onClick={() => navigate('/raffle-draw')}
+												className="inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 bg-amber-500/15 text-amber-600 hover:bg-amber-500/25 border border-amber-500/30"
+											>
+												<Shuffle className="h-4 w-4" />
+												<span>Raffle Draw</span>
+											</button>
 										</div>
 									</div>
 
