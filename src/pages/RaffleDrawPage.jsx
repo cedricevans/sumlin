@@ -423,7 +423,22 @@ export default function RaffleDrawPage() {
     if (drawing || pool.length === 0) return;
 
     // In test mode draw from every ticket so no numbers are excluded
-    const activePool = testMode ? (allTicketsByBasket[basketKey] || pool) : pool;
+    const basePool = testMode ? (allTicketsByBasket[basketKey] || pool) : pool;
+
+    // Exclude anyone who already won a different basket (1 win per person rule)
+    const priorWinnerNames = new Set(
+      Object.entries(winners)
+        .filter(([key]) => key !== basketKey)
+        .map(([, w]) => w?.purchaser_name)
+        .filter(Boolean)
+    );
+    const activePool = basePool.filter((t) => !priorWinnerNames.has(t.purchaser_name));
+
+    if (activePool.length === 0) {
+      alert('All remaining tickets belong to people who already won a different basket.');
+      return;
+    }
+
     const winner = activePool[Math.floor(Math.random() * activePool.length)];
     setDrawing(basketKey);
 
