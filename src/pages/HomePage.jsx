@@ -117,12 +117,36 @@ const HomePage = () => {
             </SmoothScroller>
 
             <SmoothScroller direction="right" delay={0.2}>
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white flex flex-col items-center justify-center p-6 bg-white">
                 <img
-                  src="https://horizons-cdn.hostinger.com/6ddbc4c1-b479-4ef4-be4a-ff36b8b1842e/image-7-KlQC4.png"
-                  alt="Sumlin Family fundraiser baskets"
-                  className="w-full"
+                  src="/winners.png"
+                  alt="2026 Basket Winners"
+                  className="w-full max-w-md mb-4 rounded-xl border border-amber-200 shadow"
+                  style={{ objectFit: 'cover' }}
                 />
+                <div className="text-center">
+                  <h3 className="text-2xl font-bold text-amber-900 mb-2">Congratulations to Our 2026 Basket Winners!</h3>
+                  <p className="text-stone-700 mb-2">
+                    Announced May 9, 2026 — Thank you to everyone who participated in the 25-Ticket Challenge and supported our family reunion!
+                  </p>
+                  <ul className="mb-4 text-stone-800 font-semibold space-y-2">
+                    <li>
+                      <span className="block text-lg text-amber-900 font-bold">Men's BBQ Basket</span>
+                      <span className="block text-stone-700">Winner: <span className="text-amber-700 font-bold">Vicky Robertson</span></span>
+                    </li>
+                    <li>
+                      <span className="block text-lg text-fuchsia-900 font-bold">Women's Spa Basket</span>
+                      <span className="block text-stone-700">Winner: <span className="text-fuchsia-700 font-bold">O'Dell Rich Jr.</span></span>
+                    </li>
+                    <li>
+                      <span className="block text-lg text-blue-900 font-bold">Children's Fun Basket</span>
+                      <span className="block text-stone-700">Winner: <span className="text-blue-700 font-bold">Faye Boyd</span></span>
+                    </li>
+                  </ul>
+                  <p className="text-stone-600 text-sm">
+                    Stay tuned for more raffles and giveaways throughout the year!
+                  </p>
+                </div>
               </div>
             </SmoothScroller>
           </div>
