@@ -121,7 +121,7 @@ const Success = () => {
                 </p>
                 <p className="text-sm text-amber-700">
                   Send <strong>{orderDetails?.total}</strong> via Cash App to{' '}
-                  <strong className="font-bold">$SumlinReunionClub</strong>
+                  <strong className="font-bold">$SumlinFamilyLegacy</strong>
                 </p>
                 <p className="text-xs text-amber-600 mt-2">
                   Include your reference code <strong>{orderDetails?.referenceCode}</strong> in the Cash App note.

@@ -75,7 +75,7 @@ const fallbackTenant = {
 	business_tagline: 'A directory of family-owned businesses, services, and community connections.',
 	business_summary:
 		'Explore and support family-owned businesses across the Sumlin family network, from food and events to photography, travel, and professional services.',
-	cash_app_handle: '$SumlinReunionClub',
+	cash_app_handle: '$SumlinFamilyLegacy',
 	venmo_handle: '',
 	paypal_donate_url: '',
 	google_calendar_public_url: '',
@@ -377,7 +377,7 @@ function normalizeNewsletterError(error) {
 	) {
 		return {
 			type: 'newsletter_setup_missing',
-			message: 'Newsletter uploads are not configured yet. Run supabase/add_newsletter_documents.sql and try again.',
+			message: 'Newsletter uploads are temporarily unavailable. Please try again or contact the site administrator.',
 		};
 	}
 
@@ -1421,6 +1421,74 @@ export async function recordManualTicketOrder(payload, slug = DEFAULT_TENANT_SLU
 	};
 }
 
+/**
+ * submitReunionRegistration — public-facing
+ * Creates a reunion_registrations row via RPC and returns reference code + total.
+ */
+export async function submitReunionRegistration(payload, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return { ok: false, message: 'Supabase is not configured yet.' };
+	}
+
+	const rpcResult = await sumlinDb.rpc('create_reunion_registration', {
+		target_slug: slug,
+		registrant_name: payload.name,
+		registrant_email: payload.email,
+		registrant_phone: payload.phone ?? null,
+		p_adult_count: payload.adultCount ?? 0,
+		p_teen_count: payload.teenCount ?? 0,
+		p_child_count: payload.childCount ?? 0,
+		p_toddler_count: payload.toddlerCount ?? 0,
+		p_guest_count: payload.guestCount ?? 0,
+		p_dues_count: payload.duesCount ?? 0,
+		payment_method: payload.paymentMethod || 'cashapp',
+		registration_notes: payload.notes ?? null,
+	});
+
+	if (rpcResult.error) {
+		return {
+			ok: false,
+			message: normalizeError(rpcResult.error)?.message || rpcResult.error.message || 'Unable to submit registration.',
+		};
+	}
+
+	const raw = rpcResult.data;
+	const result = Array.isArray(raw) ? (raw[0] ?? {}) : (raw ?? {});
+
+	if (!result.ok) {
+		return { ok: false, message: result.message || 'Unable to submit registration.' };
+	}
+
+	return {
+		ok: true,
+		registrationId: result.registration_id ?? null,
+		referenceCode: result.reference_code ?? null,
+		totalCents: result.total_amount_cents ?? 0,
+		totalAttendees: result.total_attendees ?? 0,
+	};
+}
+
+/**
+ * updateRegistrationStatus — admin only
+ */
+export async function updateRegistrationStatus(registrationId, status, slug = DEFAULT_TENANT_SLUG) {
+	if (!supabase) {
+		return { ok: false, message: 'Supabase is not configured.' };
+	}
+
+	const rpcResult = await sumlinDb.rpc('update_registration_status', {
+		p_registration_id: registrationId,
+		p_status: status,
+		target_slug: slug,
+	});
+
+	if (rpcResult.error) {
+		return { ok: false, message: normalizeError(rpcResult.error)?.message || 'Unable to update registration.' };
+	}
+
+	return { ok: true };
+}
+
 export async function submitFundraiserOrder(payload, slug = DEFAULT_TENANT_SLUG) {
 	if (!supabase) {
 		return {
@@ -1539,6 +1607,7 @@ export async function fetchAdminDashboard(slug = DEFAULT_TENANT_SLUG) {
 	const eventSignups = data.event_signups || [];
 	const admins = data.admins || [];
 	const adminInvites = data.invites || [];
+	const reunionRegistrations = data.reunion_registrations || [];
 
 	const pendingPayments = recentOrders.filter((o) => o.payment_status === 'pending').length;
 	const activeTickets = tickets.filter((t) => t.status === 'active').length;
@@ -1562,6 +1631,7 @@ export async function fetchAdminDashboard(slug = DEFAULT_TENANT_SLUG) {
 		eventSignups,
 		admins,
 		adminInvites,
+		reunionRegistrations,
 		currentAdminRole: data.role,
 	};
 }

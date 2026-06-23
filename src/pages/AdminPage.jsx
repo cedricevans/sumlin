@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import {
 	CalendarDays,
 	CheckCircle,
+	ClipboardList,
 	Database,
 	Download,
 	LogOut,
@@ -44,6 +45,7 @@ import {
 	deleteTicket,
 	resendOrderConfirmation,
 	updateOrderPaymentStatus,
+	updateRegistrationStatus,
 	watchAdminSession,
 } from '@/lib/sumlinData';
 import {
@@ -326,6 +328,7 @@ const AdminPage = () => {
 	const [savingManualDonation, setSavingManualDonation] = useState(false);
 	const [manualTicketForm, setManualTicketForm] = useState(initialManualTicketForm);
 	const [savingManualTicket, setSavingManualTicket] = useState(false);
+	const [updatingRegistrationId, setUpdatingRegistrationId] = useState(null);
 
 	const showDashboard = Boolean(session);
 	const showDisconnectedState = !hasSupabaseConfig;
@@ -918,6 +921,18 @@ const AdminPage = () => {
 		setExportingCSV(false);
 	};
 
+	const handleUpdateRegistration = async (registrationId, status) => {
+		setUpdatingRegistrationId(registrationId);
+		const result = await updateRegistrationStatus(registrationId, status);
+		if (result.ok) {
+			toast({ title: 'Registration updated', description: `Marked as ${status}.` });
+			await loadDashboard();
+		} else {
+			toast({ title: 'Update failed', description: result.message, variant: 'destructive' });
+		}
+		setUpdatingRegistrationId(null);
+	};
+
 	const handleBusinessEdit = (item) => {
 		setBusinessForm({
 			id: item.id,
@@ -1018,6 +1033,7 @@ const AdminPage = () => {
 
 	const adminTabs = [
 		{ id: 'orders', label: 'Orders', icon: Wallet, count: orders.length },
+		{ id: 'registrations', label: 'Registrations', icon: ClipboardList, count: dashboard?.reunionRegistrations?.length || 0 },
 		{ id: 'communications', label: 'Communications', icon: Mail, count: 'Send' },
 		{ id: 'tickets', label: 'Tickets', icon: Ticket, count: dashboard?.tickets?.length || 0 },
 		{ id: 'events', label: 'Events', icon: CalendarDays, count: dashboard?.events?.length || 0 },
@@ -1140,11 +1156,10 @@ const AdminPage = () => {
 						<div className="rounded-3xl border border-amber-500/30 bg-amber-500/10 p-8 mb-10">
 							<div className="flex items-center gap-3 mb-4">
 								<Database className="h-5 w-5 text-amber-600" />
-								<h2 className="text-2xl font-bold">Database setup in progress</h2>
+								<h2 className="text-2xl font-bold">Admin panel unavailable</h2>
 							</div>
 							<div className="space-y-3 text-muted-foreground leading-relaxed">
-								<p>The admin panel is currently being configured. Once the database connection is complete, you'll be able to sign in and manage family events, businesses, and signups.</p>
-								<p>Check back soon or contact the site administrator for updates.</p>
+								<p>The admin panel is temporarily unavailable. Please check back soon.</p>
 							</div>
 						</div>
 					)}
@@ -1161,10 +1176,8 @@ const AdminPage = () => {
 								<>
 									{dashboard.error && (
 										<div className="rounded-3xl border border-rose-950/30 bg-rose-50 p-6 mb-8">
-											<h2 className="text-xl font-semibold mb-2 text-rose-950">
-												{dashboard.error.type === 'membership_missing' ? 'Access denied' : 'Database setup needed'}
-											</h2>
-											<p className="text-muted-foreground">{dashboard.error.message}</p>
+											<h2 className="text-xl font-semibold mb-2 text-rose-950">Access denied</h2>
+											<p className="text-muted-foreground">Your account does not have access to this panel. Contact an existing administrator to request access.</p>
 										</div>
 									)}
 
@@ -1680,7 +1693,120 @@ const AdminPage = () => {
 										)}
 									</div>
 									</div>
-								)}								{activeTab === 'communications' && (
+								)}								{activeTab === 'registrations' && (
+									<div className="space-y-6">
+										{/* Summary strip */}
+										{(() => {
+											const regs = dashboard?.reunionRegistrations || [];
+											const paid = regs.filter((r) => r.payment_status === 'paid').length;
+											const pending = regs.filter((r) => r.payment_status === 'pending').length;
+											const totalCents = regs.filter((r) => r.payment_status === 'paid').reduce((s, r) => s + (r.total_amount_cents || 0), 0);
+											const totalPeople = regs.reduce((s, r) => s + (r.total_attendees || 0), 0);
+											const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n / 100);
+											return (
+												<div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+													<div className="rounded-2xl border border-border/50 bg-card p-4 text-center">
+														<p className="text-2xl font-black text-primary">{regs.length}</p>
+														<p className="text-xs uppercase tracking-wider text-muted-foreground mt-0.5">Total Registrations</p>
+													</div>
+													<div className="rounded-2xl border border-green-200 bg-green-50/30 p-4 text-center">
+														<p className="text-2xl font-black text-green-700">{paid}</p>
+														<p className="text-xs uppercase tracking-wider text-muted-foreground mt-0.5">Paid</p>
+													</div>
+													<div className="rounded-2xl border border-amber-200 bg-amber-50/30 p-4 text-center">
+														<p className="text-2xl font-black text-amber-700">{pending}</p>
+														<p className="text-xs uppercase tracking-wider text-muted-foreground mt-0.5">Pending</p>
+													</div>
+													<div className="rounded-2xl border border-border/50 bg-card p-4 text-center">
+														<p className="text-2xl font-black text-foreground">{fmt(totalCents)}</p>
+														<p className="text-xs uppercase tracking-wider text-muted-foreground mt-0.5">{totalPeople} Attendees</p>
+													</div>
+												</div>
+											);
+										})()}
+
+										<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
+											<div className="flex items-center gap-3 mb-6">
+												<ClipboardList className="h-5 w-5 text-primary" />
+												<div>
+													<h2 className="text-2xl font-bold">Reunion Registrations</h2>
+													<p className="text-sm text-muted-foreground mt-0.5">Review and confirm payments for the 2026 Sumlin Family Reunion.</p>
+												</div>
+											</div>
+
+											{(dashboard?.reunionRegistrations || []).length === 0 ? (
+												<p className="py-8 text-center text-sm text-muted-foreground">No registrations yet.</p>
+											) : (
+												<div className="space-y-3">
+													{(dashboard?.reunionRegistrations || []).map((reg) => (
+														<div key={reg.id} className={`rounded-2xl border ${reg.payment_status === 'paid' ? 'border-green-200 bg-green-50/30' : 'border-border/50 bg-background'} px-5 py-4`}>
+															<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+																<div className="min-w-0">
+																	<div className="flex flex-wrap items-center gap-2 mb-1">
+																		<p className="font-bold">{reg.registrant_name}</p>
+																		<span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${reg.payment_status === 'paid' ? 'bg-green-100 text-green-700' : reg.payment_status === 'cancelled' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'}`}>
+																			{reg.payment_status}
+																		</span>
+																	</div>
+																	<p className="text-sm text-muted-foreground">{reg.reference_code} · {reg.email}{reg.phone ? ` · ${reg.phone}` : ''}</p>
+																	<div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+																		{reg.dues_count > 0 && <span>Dues ×{reg.dues_count}</span>}
+																		{reg.adult_count > 0 && <span>Adults ×{reg.adult_count}</span>}
+																		{reg.teen_count > 0 && <span>Teens ×{reg.teen_count}</span>}
+																		{reg.child_count > 0 && <span>Children ×{reg.child_count}</span>}
+																		{reg.toddler_count > 0 && <span>Toddlers ×{reg.toddler_count}</span>}
+																		{reg.guest_count > 0 && <span>Guests ×{reg.guest_count}</span>}
+																	</div>
+																	<p className="text-xs text-muted-foreground mt-1">{reg.payment_method} · {reg.total_attendees} attendee{reg.total_attendees !== 1 ? 's' : ''}</p>
+																	{reg.notes && <p className="text-xs text-muted-foreground mt-1 italic">{reg.notes}</p>}
+																</div>
+																<div className="flex flex-col items-end gap-2 shrink-0">
+																	<p className="text-lg font-bold text-primary">{formatMoney(reg.total_amount_cents)}</p>
+																	<p className="text-xs text-muted-foreground">{formatDateTime(reg.created_at)}</p>
+																	<div className="flex gap-2 mt-1">
+																		{reg.payment_status !== 'paid' && (
+																			<button
+																				type="button"
+																				onClick={() => handleUpdateRegistration(reg.id, 'paid')}
+																				disabled={updatingRegistrationId === reg.id}
+																				className="inline-flex items-center gap-1.5 gradient-gold text-foreground px-3 py-1.5 rounded-xl text-xs font-semibold hover:shadow-gold transition-all duration-200 disabled:opacity-70"
+																			>
+																				<CheckCircle className="h-3.5 w-3.5" />
+																				{updatingRegistrationId === reg.id ? 'Saving...' : 'Mark Paid'}
+																			</button>
+																		)}
+																		{reg.payment_status !== 'cancelled' && (
+																			<button
+																				type="button"
+																				onClick={() => handleUpdateRegistration(reg.id, 'cancelled')}
+																				disabled={updatingRegistrationId === reg.id}
+																				className="inline-flex items-center gap-1.5 bg-rose-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold hover:bg-rose-700 transition-colors duration-200 disabled:opacity-70"
+																			>
+																				Cancel
+																			</button>
+																		)}
+																		{reg.payment_status === 'cancelled' && (
+																			<button
+																				type="button"
+																				onClick={() => handleUpdateRegistration(reg.id, 'pending')}
+																				disabled={updatingRegistrationId === reg.id}
+																				className="inline-flex items-center gap-1.5 bg-card border border-border/60 px-3 py-1.5 rounded-xl text-xs font-semibold hover:bg-muted transition-colors duration-200 disabled:opacity-70"
+																			>
+																				Restore
+																			</button>
+																		)}
+																	</div>
+																</div>
+															</div>
+														</div>
+													))}
+												</div>
+											)}
+										</div>
+									</div>
+								)}
+
+								{activeTab === 'communications' && (
 									<div className="grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
 											<div className="bg-card border border-border/50 rounded-3xl p-8 shadow-sm">
 												<div className="flex items-center gap-3 mb-4">
@@ -1838,7 +1964,10 @@ const AdminPage = () => {
 																<input type="datetime-local" name="intake_deadline" value={eventForm.intake_deadline} onChange={handleEventChange} className="w-full" />
 																<input type="number" min="1" name="capacity" placeholder="Capacity" value={eventForm.capacity} onChange={handleEventChange} className="w-full" />
 															</div>
-															<input type="url" name="google_calendar_event_url" placeholder="Google Calendar event link" value={eventForm.google_calendar_event_url} onChange={handleEventChange} className="w-full" />
+															<div>
+																	<label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Registration / Event link</label>
+																	<input type="url" name="google_calendar_event_url" placeholder="https://... (registration form, Google Calendar event, or sign-up link)" value={eventForm.google_calendar_event_url} onChange={handleEventChange} className="w-full" />
+																</div>
 															<button
 																type="submit"
 																disabled={savingEvent}
@@ -1973,7 +2102,7 @@ const AdminPage = () => {
 														<div className="space-y-4 text-muted-foreground">
 															<p>The newest issue becomes the featured download on the public newsletter page.</p>
 															<p>Older uploads stay listed as archives so family members can return and download past issues at any time.</p>
-															<p>If upload fails because storage is not configured yet, run <code>supabase/add_newsletter_documents.sql</code> in Supabase and try again.</p>
+															<p>If an upload fails, contact the site administrator to verify storage is properly configured.</p>
 														</div>
 													</div>
 												</div>
@@ -2205,7 +2334,7 @@ const AdminPage = () => {
 														<input type="text" name="primary_cta_label" placeholder="Main button label" value={settingsForm.primary_cta_label} onChange={handleSettingsChange} className="w-full" />
 														<input type="email" name="support_email" placeholder="Family contact email" value={settingsForm.support_email} onChange={handleSettingsChange} className="w-full" />
 														<input type="tel" name="support_phone" placeholder="Family contact phone" value={settingsForm.support_phone} onChange={handleSettingsChange} className="w-full" />
-														<input type="text" name="cash_app_handle" placeholder="Cash App handle" value={settingsForm.cash_app_handle} onChange={handleSettingsChange} className="w-full" />
+														<input type="text" name="cash_app_handle" placeholder="Cash App handle (e.g. $SumlinFamilyLegacy)" value={settingsForm.cash_app_handle} onChange={handleSettingsChange} className="w-full" />
 														<input type="text" name="venmo_handle" placeholder="Venmo handle" value={settingsForm.venmo_handle} onChange={handleSettingsChange} className="w-full" />
 														<input type="url" name="paypal_donate_url" placeholder="PayPal donation link" value={settingsForm.paypal_donate_url} onChange={handleSettingsChange} className="w-full lg:col-span-2" />
 														<input type="url" name="google_calendar_public_url" placeholder="Google Calendar public link" value={settingsForm.google_calendar_public_url} onChange={handleSettingsChange} className="w-full lg:col-span-2" />

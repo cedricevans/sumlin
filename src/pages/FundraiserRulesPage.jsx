@@ -17,17 +17,51 @@ const FundraiserRulesPage = () => {
 
 			<section className="section-spacing bg-background pt-24 md:pt-32">
 				<div className="container-custom max-w-5xl">
-					<div className="text-center mb-12">
-						<div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary mb-5">
-							<ShieldCheck className="h-4 w-4" />
-							Family fundraiser guide
-						</div>
-						<h1 className="text-4xl md:text-6xl font-bold mb-4">{fundraiserRules.title}</h1>
-						<p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-							This page shares the public giveaway guidance, entry information, and reunion support notes for the family fundraiser.
-						</p>
-						<p className="text-sm text-muted-foreground mt-4">Last updated {fundraiserRules.lastUpdated}</p>
-					</div>
+										{/* Winners Announcement Section */}
+										<div className="text-center mb-12">
+											<div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary mb-5">
+												<ShieldCheck className="h-4 w-4" />
+												Family fundraiser guide
+											</div>
+											<h1 className="text-4xl md:text-6xl font-bold mb-4">{fundraiserRules.title}</h1>
+											<p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+												This page shares the public giveaway guidance, entry information, and reunion support notes for the family fundraiser.
+											</p>
+											<p className="text-sm text-muted-foreground mt-4">Last updated {fundraiserRules.lastUpdated}</p>
+
+											{/* Winners Announcement */}
+											<section className="mt-12 bg-white/80 rounded-2xl shadow border border-amber-100 p-6 max-w-2xl mx-auto flex flex-col items-center">
+												<img
+													src="/winners.png"
+													alt="2026 Basket Winners"
+													className="w-full max-w-md mb-4 rounded-xl border border-amber-200 shadow"
+													style={{ objectFit: 'cover' }}
+												/>
+												<div className="text-center">
+													<h3 className="text-2xl font-bold text-amber-900 mb-2">Congratulations to Our 2026 Basket Winners!</h3>
+													<p className="text-stone-700 mb-2">
+														Announced May 9, 2026 — Thank you to everyone who participated in the 25-Ticket Challenge and supported our family reunion!
+													</p>
+													<ul className="mb-4 text-stone-800 font-semibold space-y-2">
+														<li>
+															<span className="block text-lg text-amber-900 font-bold">Men's BBQ Basket</span>
+															<span className="block text-stone-700">Winner: <span className="text-amber-700 font-bold">Vicky Robertson</span></span>
+														</li>
+														<li>
+															<span className="block text-lg text-fuchsia-900 font-bold">Women's Spa Basket</span>
+															<span className="block text-stone-700">Winner: <span className="text-fuchsia-700 font-bold">O'Dell Rich Jr.</span></span>
+														</li>
+														<li>
+															<span className="block text-lg text-blue-900 font-bold">Children's Fun Basket</span>
+															<span className="block text-stone-700">Winner: <span className="text-blue-700 font-bold">Faye Boyd</span></span>
+														</li>
+													</ul>
+													<p className="text-stone-600 text-sm">
+														Stay tuned for more raffles and giveaways throughout the year!
+													</p>
+												</div>
+											</section>
+										</div>
 
 					<div className="bg-destructive/10 border border-destructive/25 rounded-2xl p-6 mb-10">
 						<div className="flex items-start gap-4">

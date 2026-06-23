@@ -295,7 +295,7 @@ const ShoppingCart = ({ isCartOpen, setIsCartOpen }) => {
                           onSubmit={handleCheckout}
                         >
                           <p className="text-xs text-muted-foreground mb-2">
-                            Please provide your details. You will need to send payment via Cash App to $SumlinReunionClub.
+                            Please provide your details. You will need to send payment via Cash App to $SumlinFamilyLegacy.
                           </p>
                           <input
                             type="text"

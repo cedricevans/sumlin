@@ -115,7 +115,7 @@ const Footer = () => {
               </li>
               <li className="text-background/80">
                 <span className="block mb-1">Payment via Cash App:</span>
-                <span className="font-semibold text-primary">$SumlinReunionClub</span>
+                <span className="font-semibold text-primary">$SumlinFamilyLegacy</span>
               </li>
               <li>
                 <Link 

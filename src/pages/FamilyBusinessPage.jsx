@@ -262,7 +262,7 @@ const FamilyBusinessPage = () => {
 									<CreditCard className="h-4 w-4 text-primary mt-1" />
 									<div>
 										<p className="font-medium">Payment handles</p>
-										<p className="text-muted-foreground">Cash App {tenant?.cash_app_handle || '$SumlinReunionClub'}</p>
+										<p className="text-muted-foreground">Cash App {tenant?.cash_app_handle || '$SumlinFamilyLegacy'}</p>
 										<p className="text-muted-foreground">
 											PayPal {tenant?.paypal_donate_url ? 'Available for family support' : 'PayPal link coming soon'}
 										</p>

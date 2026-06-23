@@ -96,7 +96,7 @@ const Contact = () => {
 
 	const tenant = snapshot.tenant;
 	const supportEmail = tenant?.support_email || FAMILY_CONTACT_INFO.email;
-	const cashAppHandle = tenant?.cash_app_handle || '$SumlinReunionClub';
+	const cashAppHandle = tenant?.cash_app_handle || '$SumlinFamilyLegacy';
 
 	const contactChannels = [
 		{

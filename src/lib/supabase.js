@@ -15,7 +15,7 @@ export const supabase = hasSupabaseConfig
 	})
 	: null;
 
-export const sumlinDb = supabase?.schema('sumlin') ?? null;
+export const sumlinDb = supabase ?? null;
 
 export function getSupabaseConnectionLabel() {
 	if (!hasSupabaseConfig) {

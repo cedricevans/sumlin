@@ -8,7 +8,7 @@ import SmoothScroller from '@/components/SmoothScroller';
 import ContactSection from '@/components/ContactSection';
 
 const PAYPAL_BUSINESS_EMAIL = 'dbass@seniorcarexpress.com';
-const CASH_APP_HANDLE = '$SumlinReunionClub';
+const CASH_APP_HANDLE = '$SumlinFamilyLegacy';
 const PAYPAL_DONATE_LINK = `https://www.paypal.com/donate/?business=${encodeURIComponent(PAYPAL_BUSINESS_EMAIL)}&currency_code=USD`;
 
 function formatCurrency(amount) {
@@ -136,12 +136,14 @@ const DonationPage = () => {
         />
       </Helmet>
 
+
       <ParallaxHero
         backgroundImage="https://horizons-cdn.hostinger.com/6ddbc4c1-b479-4ef4-be4a-ff36b8b1842e/b21b2d1ea8690c7803645629877d22a3.jpg"
         title="Support the Family"
         tagline="Every dollar given is an investment in our legacy"
         height="min-h-[60vh]"
       />
+
 
       <section className="section-spacing bg-background">
         <div className="container-custom max-w-4xl">

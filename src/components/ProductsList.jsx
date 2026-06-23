@@ -78,7 +78,7 @@ function formatProductDescription(description) {
     .trim();
 }
 
-const ProductCard = ({ product, index }) => {
+const ProductCard = ({ product, index, archived = false }) => {
   const { addToCart } = useCart();
   const { toast } = useToast();
 
@@ -131,20 +131,26 @@ const ProductCard = ({ product, index }) => {
           <h3 className="text-2xl font-bold mb-3 text-balance text-foreground">{product.title}</h3>
           <div className="mb-6 flex-grow">
             <div className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary mb-3">
-              Fundraiser basket
+              {archived ? '2026 featured basket' : 'Fundraiser basket'}
             </div>
             <p className="text-muted-foreground leading-relaxed text-sm">
               {description}
             </p>
           </div>
           <div className="mt-auto pt-4 border-t border-border/50">
-            <button 
-              onClick={handleAddToCart} 
-              className="w-full gradient-burgundy text-white py-3.5 rounded-xl font-semibold hover:shadow-burgundy hover:scale-[1.02] transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-              <ShoppingCart className="w-5 h-5" /> 
-              Add to cart
-            </button>
+            {archived ? (
+              <div className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm font-semibold text-amber-900">
+                Drawing closed
+              </div>
+            ) : (
+              <button
+                onClick={handleAddToCart}
+                className="w-full gradient-burgundy text-white py-3.5 rounded-xl font-semibold hover:shadow-burgundy hover:scale-[1.02] transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                Add to cart
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -212,7 +218,7 @@ const CartSummaryPrompt = ({ setIsCartOpen }) => {
   );
 };
 
-const ProductsList = ({ setIsCartOpen }) => {
+const ProductsList = ({ setIsCartOpen, archived = false }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -275,10 +281,10 @@ const ProductsList = ({ setIsCartOpen }) => {
     <>
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
         {products.map((product, index) => (
-          <ProductCard key={product.id} product={product} index={index} />
+          <ProductCard key={product.id} product={product} index={index} archived={archived} />
         ))}
       </div>
-      <CartSummaryPrompt setIsCartOpen={setIsCartOpen} />
+      {!archived && <CartSummaryPrompt setIsCartOpen={setIsCartOpen} />}
     </>
   );
 };
