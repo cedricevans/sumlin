@@ -46,6 +46,7 @@ import {
 	resendOrderConfirmation,
 	updateOrderPaymentStatus,
 	updateRegistrationStatus,
+	sendRegistrationConfirmation,
 	watchAdminSession,
 } from '@/lib/sumlinData';
 import {
@@ -925,7 +926,18 @@ const AdminPage = () => {
 		setUpdatingRegistrationId(registrationId);
 		const result = await updateRegistrationStatus(registrationId, status);
 		if (result.ok) {
-			toast({ title: 'Registration updated', description: `Marked as ${status}.` });
+			if (status === 'paid') {
+				const emailResult = await sendRegistrationConfirmation(registrationId);
+				toast({
+					title: emailResult.ok ? 'Registration confirmed' : 'Marked paid, email pending',
+					description: emailResult.ok
+						? 'Payment marked as paid and confirmation email sent to registrant.'
+						: `Payment marked as paid, but the email failed: ${emailResult.message || 'Unknown error'}`,
+					variant: emailResult.ok ? 'default' : 'destructive',
+				});
+			} else {
+				toast({ title: 'Registration updated', description: `Marked as ${status}.` });
+			}
 			await loadDashboard();
 		} else {
 			toast({ title: 'Update failed', description: result.message, variant: 'destructive' });

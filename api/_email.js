@@ -301,6 +301,68 @@ export function buildFamilyCommunicationEmail(payload = {}) {
 	};
 }
 
+export function buildRegistrationEmail({ registration, tenant }) {
+	const supportEmail = tenant?.support_email || process.env.RESEND_EMAIL || 'contact@sumlinfamily.com';
+	const name = registration.registrant_name || registration.name || 'Family';
+	const subject = `You're registered! Sumlin Family Reunion (${registration.reference_code || 'confirmed'})`;
+
+	const attendeeLines = [
+		registration.dues_count > 0 && `Dues ×${registration.dues_count}`,
+		registration.adult_count > 0 && `Adults ×${registration.adult_count}`,
+		registration.teen_count > 0 && `Teens ×${registration.teen_count}`,
+		registration.child_count > 0 && `Children ×${registration.child_count}`,
+		registration.toddler_count > 0 && `Toddlers ×${registration.toddler_count}`,
+		registration.guest_count > 0 && `Guests ×${registration.guest_count}`,
+	].filter(Boolean).join(', ') || 'See registration details';
+
+	const facts = [
+		{ label: 'Reference Code', value: registration.reference_code || 'Pending' },
+		{ label: 'Attendees', value: attendeeLines },
+		{ label: 'Total Paid', value: formatCurrency(registration.total_amount_cents) },
+		{ label: 'Payment Method', value: registration.payment_method || 'Confirmed' },
+	];
+
+	const messageLines = [
+		`Hi ${name}, your payment has been confirmed and your registration for the Sumlin Family Reunion is all set!`,
+		'Please keep this email for your records — you may be asked for your reference code at check-in.',
+		'We will share full event details (schedule, location, activities) with the family as the reunion gets closer.',
+		`Questions? Reply to this email or reach us at ${supportEmail}.`,
+	];
+
+	const html = renderBaseTemplate({
+		previewText: 'Your registration is confirmed — we\'ll see you at the reunion!',
+		eyebrow: 'Registration Confirmed',
+		heading: 'You\'re officially registered!',
+		intro: messageLines[0],
+		sections: [
+			{ type: 'facts', items: facts },
+			...messageLines.slice(1).map((content) => ({ content })),
+		],
+		buttonLabel: 'View Reunion Site',
+		buttonUrl: APP_URL,
+		closingLines: ['We can\'t wait to see you and the whole family there.'],
+	});
+
+	const text = [
+		messageLines[0],
+		'',
+		...facts.map((f) => `${f.label}: ${f.value}`),
+		'',
+		...messageLines.slice(1),
+		'',
+		'With love,',
+		DEFAULT_SIGNATURE,
+	].join('\n');
+
+	return {
+		subject,
+		html,
+		text,
+		to: normalizeEmailList(registration.registrant_email || registration.email),
+		replyTo: normalizeEmailList(supportEmail),
+	};
+}
+
 export async function sendResendEmail({ to, subject, html, text, replyTo = [] }) {
 	const resendApiKey = process.env.RESEND_API_KEY;
 	const fromEmail = process.env.RESEND_EMAIL || process.env.FROM_EMAIL;

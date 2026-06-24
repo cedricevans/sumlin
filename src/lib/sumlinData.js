@@ -648,25 +648,16 @@ export async function saveBusinessListing(payload, slug = DEFAULT_TENANT_SLUG) {
 		};
 	}
 
-	const values = {
-		tenant_id: tenantResult.id,
-		title: payload.title,
-		category: payload.category,
-		description: payload.description,
-		price_label: payload.price_label,
-		is_featured: Boolean(payload.is_featured),
-		sort_order: Number(payload.sort_order) || 0,
-	};
-
-	const result = payload.id
-		? await sumlinDb
-			.from('business_services')
-			.update(values)
-			.eq('id', payload.id)
-			.eq('tenant_id', tenantResult.id)
-		: await sumlinDb
-			.from('business_services')
-			.insert(values);
+	const result = await sumlinDb.rpc('save_business_listing', {
+		p_title:       payload.title,
+		p_category:    payload.category,
+		p_description: payload.description,
+		p_price_label: payload.price_label || null,
+		p_is_featured: Boolean(payload.is_featured),
+		p_sort_order:  Number(payload.sort_order) || 0,
+		p_id:          payload.id || null,
+		target_slug:   slug,
+	});
 
 	if (result.error) {
 		return {
@@ -675,10 +666,7 @@ export async function saveBusinessListing(payload, slug = DEFAULT_TENANT_SLUG) {
 		};
 	}
 
-	return {
-		ok: true,
-		message: payload.id ? 'Business listing updated.' : 'Business listing received.',
-	};
+	return result.data || { ok: true, message: payload.id ? 'Business listing updated.' : 'Business listing added.' };
 }
 
 export async function saveEvent(payload, slug = DEFAULT_TENANT_SLUG) {
@@ -698,29 +686,20 @@ export async function saveEvent(payload, slug = DEFAULT_TENANT_SLUG) {
 		};
 	}
 
-	const values = {
-		tenant_id: tenantResult.id,
-		title: payload.title,
-		event_type: payload.event_type,
-		status: payload.status,
-		description: payload.description,
-		location: payload.location,
-		starts_at: payload.starts_at || null,
-		ends_at: payload.ends_at || null,
-		capacity: payload.capacity ? Number(payload.capacity) : null,
-		google_calendar_event_url: payload.google_calendar_event_url || null,
-		intake_deadline: payload.intake_deadline || null,
-	};
-
-	const result = payload.id
-		? await sumlinDb
-			.from('events')
-			.update(values)
-			.eq('id', payload.id)
-			.eq('tenant_id', tenantResult.id)
-		: await sumlinDb
-			.from('events')
-			.insert(values);
+	const result = await sumlinDb.rpc('save_event', {
+		p_title:                     payload.title,
+		p_event_type:                payload.event_type || 'family',
+		p_status:                    payload.status || 'planned',
+		p_description:               payload.description || null,
+		p_location:                  payload.location || null,
+		p_starts_at:                 payload.starts_at || null,
+		p_ends_at:                   payload.ends_at || null,
+		p_capacity:                  payload.capacity ? Number(payload.capacity) : null,
+		p_google_calendar_event_url: payload.google_calendar_event_url || null,
+		p_intake_deadline:           payload.intake_deadline || null,
+		p_id:                        payload.id || null,
+		target_slug:                 slug,
+	});
 
 	if (result.error) {
 		return {
@@ -729,10 +708,7 @@ export async function saveEvent(payload, slug = DEFAULT_TENANT_SLUG) {
 		};
 	}
 
-	return {
-		ok: true,
-		message: payload.id ? 'Event updated.' : 'Event added.',
-	};
+	return result.data || { ok: true, message: payload.id ? 'Event updated.' : 'Event added.' };
 }
 
 export async function uploadNewsletterDocument(payload, slug = DEFAULT_TENANT_SLUG) {
@@ -781,19 +757,17 @@ export async function uploadNewsletterDocument(payload, slug = DEFAULT_TENANT_SL
 		data: { publicUrl },
 	} = supabase.storage.from(NEWSLETTER_BUCKET).getPublicUrl(filePath);
 
-	const insertResult = await sumlinDb
-		.from('newsletter_documents')
-		.insert({
-			tenant_id: tenantResult.id,
-			title: payload.title,
-			issue_date: payload.issue_date,
-			description: payload.description || null,
-			file_name: payload.file.name,
-			file_path: filePath,
-			file_url: publicUrl,
-			file_size_bytes: payload.file.size || null,
-			mime_type: payload.file.type || null,
-		});
+	const insertResult = await sumlinDb.rpc('save_newsletter_document', {
+		p_title:           payload.title,
+		p_issue_date:      payload.issue_date,
+		p_file_name:       payload.file.name,
+		p_file_path:       filePath,
+		p_file_url:        publicUrl,
+		p_description:     payload.description || null,
+		p_file_size_bytes: payload.file.size || null,
+		p_mime_type:       payload.file.type || null,
+		target_slug:       slug,
+	});
 
 	if (insertResult.error) {
 		await supabase.storage.from(NEWSLETTER_BUCKET).remove([filePath]);
@@ -817,24 +791,20 @@ export async function saveTenantProfile(payload, slug = DEFAULT_TENANT_SLUG) {
 		};
 	}
 
-	const values = {
-		display_name: payload.display_name,
-		support_email: payload.support_email,
-		support_phone: payload.support_phone,
-		business_tagline: payload.business_tagline,
-		business_summary: payload.business_summary,
-		cash_app_handle: payload.cash_app_handle,
-		venmo_handle: payload.venmo_handle,
-		paypal_donate_url: payload.paypal_donate_url || null,
-		google_calendar_public_url: payload.google_calendar_public_url || null,
-		google_calendar_embed_url: payload.google_calendar_embed_url || null,
-		primary_cta_label: payload.primary_cta_label,
-	};
-
-	const result = await sumlinDb
-		.from('tenants')
-		.update(values)
-		.eq('slug', slug);
+	const result = await sumlinDb.rpc('save_tenant_profile', {
+		p_display_name:               payload.display_name || null,
+		p_support_email:              payload.support_email || null,
+		p_support_phone:              payload.support_phone || null,
+		p_business_tagline:           payload.business_tagline || null,
+		p_business_summary:           payload.business_summary || null,
+		p_cash_app_handle:            payload.cash_app_handle || null,
+		p_venmo_handle:               payload.venmo_handle || null,
+		p_paypal_donate_url:          payload.paypal_donate_url || null,
+		p_google_calendar_public_url: payload.google_calendar_public_url || null,
+		p_google_calendar_embed_url:  payload.google_calendar_embed_url || null,
+		p_primary_cta_label:          payload.primary_cta_label || null,
+		target_slug:                  slug,
+	});
 
 	if (result.error) {
 		return {
@@ -843,10 +813,7 @@ export async function saveTenantProfile(payload, slug = DEFAULT_TENANT_SLUG) {
 		};
 	}
 
-	return {
-		ok: true,
-		message: 'Family settings updated.',
-	};
+	return result.data || { ok: true, message: 'Family settings updated.' };
 }
 
 export async function getAdminSession() {
@@ -1191,6 +1158,27 @@ export async function resendOrderConfirmation(orderId, options = {}) {
 			body: JSON.stringify({
 				orderId,
 				variant: options.variant || 'payment-confirmed',
+				slug: options.slug || DEFAULT_TENANT_SLUG,
+			}),
+		});
+
+		const json = await resp.json();
+		return json;
+	} catch (err) {
+		return { ok: false, message: err.message || String(err) };
+	}
+}
+
+export async function sendRegistrationConfirmation(registrationId, options = {}) {
+	if (!registrationId) return { ok: false, message: 'Missing registrationId' };
+
+	try {
+		const headers = await getAdminAuthHeaders();
+		const resp = await fetch('/api/registration-confirmation', {
+			method: 'POST',
+			headers,
+			body: JSON.stringify({
+				registrationId,
 				slug: options.slug || DEFAULT_TENANT_SLUG,
 			}),
 		});
