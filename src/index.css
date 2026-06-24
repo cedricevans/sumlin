@@ -243,19 +243,19 @@
   }
   
   .countdown-unit {
-    @apply flex flex-col items-center justify-center gradient-gold rounded-lg p-1.5 md:p-2 min-w-[2.75rem] md:min-w-[3.5rem] shadow-md transition-transform duration-300 hover:scale-105;
+    @apply flex flex-col items-center justify-center bg-transparent border-2 border-amber-400 rounded-lg p-1.5 md:p-2 min-w-[2.75rem] md:min-w-[3.5rem] shadow-md transition-transform duration-300 hover:scale-105;
   }
-  
+
   .countdown-value {
-    @apply text-sm md:text-lg font-bold text-foreground tabular-nums leading-none;
+    @apply text-sm md:text-lg font-bold text-amber-400 tabular-nums leading-none;
   }
-  
+
   .countdown-label {
-    @apply text-[0.5rem] md:text-[0.65rem] text-foreground/80 uppercase tracking-wider mt-0.5 font-semibold;
+    @apply text-[0.5rem] md:text-[0.65rem] text-amber-400/80 uppercase tracking-wider mt-0.5 font-semibold;
   }
-  
+
   .countdown-separator {
-    @apply text-foreground/50 font-bold text-sm md:text-lg pb-2 md:pb-3 px-0.5;
+    @apply text-amber-400/50 font-bold text-sm md:text-lg pb-2 md:pb-3 px-0.5;
   }
 
   /* Hero Countdown Overrides */

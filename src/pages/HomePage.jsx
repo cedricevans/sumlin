@@ -24,8 +24,8 @@ const HomePage = () => {
         backgroundImage="https://horizons-cdn.hostinger.com/6ddbc4c1-b479-4ef4-be4a-ff36b8b1842e/bc40c07d60cdf4a592ad526b10aeddb5.png"
         title="Sumlin Family Reunion 2026"
         tagline="Rooted in Faith, United in Legacy"
-        ctaText="Support the Reunion"
-        ctaLink="/store"
+        ctaText="Register Now"
+        ctaLink="/events#registration"
         overlayOpacity={0.5}
       />
 
@@ -38,11 +38,16 @@ const HomePage = () => {
               Countdown to Reunion 2026
             </div>
             <CountdownTimer />
-            <div className="space-y-1 text-stone-400 text-sm">
+            <div className="space-y-2 text-stone-400 text-sm">
               <p className="text-stone-200 font-semibold">
                 {FAMILY_REUNION_DETAILS.dateRangeLabel} · {FAMILY_REUNION_DETAILS.locationLabel}
               </p>
-              <p>{FAMILY_REUNION_DETAILS.registrationLabel}</p>
+              <a
+                href={FAMILY_REUNION_DETAILS.registrationUrl}
+                className="inline-block bg-white text-stone-900 px-5 py-2 rounded-lg font-semibold text-sm hover:bg-stone-100 transition-colors duration-200"
+              >
+                Click Here for Registration Information
+              </a>
             </div>
           </div>
         </div>

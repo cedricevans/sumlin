@@ -23,7 +23,7 @@ const Reunion2026Page = () => {
     {
       icon: Clock,
       title: 'Registration',
-      detail: 'Coming Soon',
+      detail: null,
       description: 'Registration details will be shared on the site as soon as they are ready'
     },
     {
@@ -57,9 +57,14 @@ const Reunion2026Page = () => {
               <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
                 The Sumlin Family Reunion 2026 will be a milestone celebration bringing together family members from across the country. This is more than an event it's a homecoming, a celebration of our shared heritage, and an opportunity to strengthen the bonds that unite us.
               </p>
-              <p className="text-base text-primary font-semibold mt-4">
-                {FAMILY_REUNION_DETAILS.registrationLabel}
-              </p>
+              <div className="mt-4">
+                <a
+                  href={FAMILY_REUNION_DETAILS.registrationUrl}
+                  className="inline-block bg-rose-900 text-white px-6 py-2 rounded-lg font-semibold text-sm hover:bg-rose-800 transition-colors duration-200"
+                >
+                  Click Here for Registration Information
+                </a>
+              </div>
             </div>
           </SmoothScroller>
 
@@ -71,7 +76,16 @@ const Reunion2026Page = () => {
                     <detail.icon className="w-8 h-8 text-foreground" />
                   </div>
                   <h3 className="text-sm uppercase tracking-wide text-muted-foreground mb-2">{detail.title}</h3>
-                  <p className="text-2xl font-bold mb-2">{detail.detail}</p>
+                  {detail.detail ? (
+                    <p className="text-2xl font-bold mb-2">{detail.detail}</p>
+                  ) : (
+                    <a
+                      href={FAMILY_REUNION_DETAILS.registrationUrl}
+                      className="inline-block bg-rose-900 text-white px-5 py-2 rounded-lg font-semibold text-sm hover:bg-rose-800 transition-colors duration-200 mb-2"
+                    >
+                      Click Here for Registration Information
+                    </a>
+                  )}
                   <p className="text-muted-foreground">{detail.description}</p>
                 </div>
               </SmoothScroller>

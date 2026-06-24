@@ -23,9 +23,10 @@ export const FAMILY_OFFICERS = [
 export const FAMILY_REUNION_DETAILS = {
 	countdownDate: '2026-09-05T00:00:00',
 	countdownLabel: 'September 5, 2026',
-	dateRangeLabel: '9/5/26 and 9/6/26',
+	dateRangeLabel: '9/4/26, 9/5/26, and 9/6/26',
 	locationLabel: 'Dayton, OH',
 	registrationLabel: 'Registration Information Coming Soon',
+	registrationUrl: '/events#registration',
 };
 
 export const fundraiserRules = {
